@@ -12,15 +12,44 @@
   },
   "private": true,
   "homepage": "https://bitwarden.com",
-  "devDependencies": {
-    "husky": "9.1.7",
-    "lint-staged": "16.3.2",
-    "prettier": "3.8.1"
+  "scripts": {
+    "prepare": "husky",
+    "prettier:fix": "prettier --write .",
+    "prettier": "prettier --check .",
+    "lint:md": "remark . --frail --quiet",
+    "validate": "node scripts/validate-schemas.mjs",
+    "validate:all": "node scripts/validate-schemas.mjs maps/**/*.jsonc",
+    "check": "npm run prettier && npm run lint:md && npm run validate:all",
+    "build": "node scripts/build.mjs",
+    "build:clean": "rm -rf dist && node scripts/build.mjs"
+  },
+  "engines": {
+    "node": ">=22",
+    "npm": ">=11"
   },
   "lint-staged": {
-    "*": "prettier --cache --write --ignore-unknown"
+    "*.json": [
+      "prettier --check"
+    ],
+    "maps/**/*.jsonc": [
+      "node scripts/validate-schemas.mjs"
+    ],
+    "*.md": [
+      "remark --frail --quiet"
+    ]
   },
-  "scripts": {
-    "prepare": "husky"
+  "devDependencies": {
+    "ajv": "8.18.0",
+    "ajv-formats": "3.0.1",
+    "husky": "9.1.7",
+    "lint-staged": "16.4.0",
+    "prettier": "3.8.1",
+    "remark-cli": "12.0.1",
+    "remark-gfm": "4.0.1",
+    "remark-github-blockquote-alert": "2.1.0",
+    "remark-lint-no-trailing-spaces": "4.0.3",
+    "remark-preset-lint-consistent": "6.0.1",
+    "remark-preset-lint-recommended": "7.0.1",
+    "strip-json-comments": "5.0.3"
   }
 }
