@@ -14,8 +14,8 @@
       "type": "object",
       "description": "Maps hostnames to their form descriptions.",
       "propertyNames": {
-        "description": "Hostname with optional non-default port. Must not contain protocol, path, query string, or fragment characters (/, ?, #).",
-        "pattern": "^[^/?#]+$"
+        "description": "Hostname with optional non-default port. Alphanumeric characters, dots, hyphens, underscores, and Unicode characters are allowed. Unicode host keys are normalized to Punycode (ASCII) at build time.",
+        "pattern": "^[^/?#\\s]+(:[0-9]+)?$"
       },
       "additionalProperties": {
         "oneOf": [

@@ -56,12 +56,22 @@ for (const map of maps) {
     console.log(`Validated: ${map.dataFile}`);
   }
 
-  // Warn on www. host keys
+  // Normalize unicode host keys to punycode and warn on www. prefixes
   if (data.hosts) {
     for (const host of Object.keys(data.hosts)) {
-      if (host.startsWith("www.")) {
+      // Normalize unicode to punycode via URL API
+      const normalizedHost = new URL(`http://${host}`).host;
+      if (normalizedHost !== host) {
+        data.hosts[normalizedHost] = data.hosts[host];
+        delete data.hosts[host];
+        console.log(
+          `\x1b[36mNormalized: "${host}" → "${normalizedHost}"\x1b[0m`,
+        );
+      }
+
+      if (normalizedHost.startsWith("www.")) {
         console.warn(
-          `\x1b[33mWarning: ${map.dataFile} - host key "${host}" uses a www. prefix. ` +
+          `\x1b[33mWarning: ${map.dataFile} - host key "${normalizedHost}" uses a www. prefix. ` +
             `Author under the non-www host as canonical unless hosts differ.\x1b[0m`,
         );
       }

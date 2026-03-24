@@ -13,6 +13,7 @@ tag. See the project [README](../../README.md) for broader mapping philosophies.
   - [Limitations](#limitations)
   - [Data Structure Overview](#data-structure-overview)
   - [Host Keys](#host-keys)
+    - [Internationalized Domain Names](#internationalized-domain-names)
     - [The `www` subdomain](#the-www-subdomain)
     - [Ports](#ports)
   - [Pathnames](#pathnames)
@@ -126,6 +127,17 @@ Populated host key values **must** be objects with `forms` and/or `pathnames`
 keys with valid values. Use a `null` value to authoritatively indicate when
 there are no relevant forms across the host's pages. See also:
 [Null and Empty Semantics](#null-and-empty-semantics)
+
+### Internationalized Domain Names
+
+Internationalized domain names (IDNs) that contain non-ASCII characters should
+only be authored using their Unicode form.
+
+Unicode host keys are normalized to Punycode (ASCII) at build time, ensuring that
+consumers of the built Maps will receive ASCII keys:
+
+- `münchen.de` → built as `xn--mnchen-3ya.de`
+- `例え.jp` → built as `xn--r8jz45g.jp`
 
 ### The `www` subdomain
 
