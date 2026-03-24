@@ -43,6 +43,13 @@ jobs:
           else
             TAG=""
           fi
+
+          # Validate tag format if set
+          if [[ -n "$TAG" && ! "$TAG" =~ ^v[0-9]{8}\.[0-9]+$ ]]; then
+            echo "::error::Invalid tag format: '$TAG'. Expected v<YYYYMMDD>.<run> (e.g. v20260324.1)"
+            exit 1
+          fi
+
           echo "tag=$TAG" >> "$GITHUB_OUTPUT"
 
       - name: Create and push tag
