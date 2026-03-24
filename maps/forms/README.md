@@ -410,7 +410,7 @@ Mixed boundary types compose naturally:
 ```
 
 > [!TIP]
-> Remember, `iframes` [cannot be a shadow host](https://developer.mozilla.org/en-US/docs/Web/API/Element/attachShadow#elements_you_can_attach_a_shadow_to).
+> Remember, an `iframe` [cannot be a shadow host](https://developer.mozilla.org/en-US/docs/Web/API/Element/attachShadow#elements_you_can_attach_a_shadow_to).
 
 ## Null and Empty Semantics
 

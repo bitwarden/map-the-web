@@ -1,4 +1,4 @@
-import { readFileSync, writeFileSync, mkdirSync, cpSync } from "fs";
+import { readFileSync, writeFileSync, mkdirSync, rmSync, cpSync } from "fs";
 import { createHash } from "crypto";
 import { basename, dirname, join, relative } from "path";
 import { glob } from "node:fs/promises";
@@ -8,10 +8,14 @@ import stripJsonComments from "strip-json-comments";
 
 const DIST = "dist";
 
+// Clean previous build output
+rmSync(DIST, { recursive: true, force: true });
+
 // Step 1: Find Maps
 
 const maps = [];
 
+// Each map lives one level deep under maps/ (e.g. maps/forms/).
 for await (const schemaFile of glob("maps/*/*.schema.json")) {
   const dir = dirname(schemaFile);
   const name = basename(dir);

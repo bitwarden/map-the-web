@@ -8,7 +8,7 @@ import { glob } from "node:fs/promises";
 const ajv = new Ajv2020({ allErrors: true });
 addFormats(ajv);
 
-let files = process.argv.slice(2);
+let files = process.argv.slice(2).filter((f) => !f.endsWith(".schema.json"));
 
 if (files.length === 0) {
   const matches = glob("maps/**/*.jsonc");

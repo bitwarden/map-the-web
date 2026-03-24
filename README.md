@@ -111,8 +111,7 @@ compatibility.
 ## Glossary
 
 - **Map**: A JSON structure describing a categorical concern of real websites.
-  Each Map focuses on a single concern (e.g. forms) and lives in the `maps/` as a named
-  directory alongside its documentation and schema.
+  Each Map focuses on a single concern (e.g. forms) and lives in a named subdirectory under `maps/` alongside its documentation and schema.
 
 - **Consumer**: Any application or tool that reads and acts on a Map. The Map
   describes what exists on a page; the consumer decides what to do with that
