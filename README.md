@@ -22,7 +22,7 @@ websites. While semantics, standards, and specifications can help software
 developers navigate data concerns on the web, such conventions are sometimes
 incomplete, not widely implemented, or even leave a particular concern
 completely unaddressed. The primary goal of this project is to map out live
-websites which lack the implementation details that would otherwise enable
+websites that lack the implementation details that would otherwise enable
 software to interact with them as intended.
 
 ### Mapping Philosophies
@@ -39,7 +39,8 @@ With the aforementioned goals and intent in mind, Maps should:
   means for those concerns
 - avoid staleness and be kept up-to-date
 
-Because this project strives to deliver accountable curated guidance, the above concerns must ultimately and necessarily be vetted/validated by humans.
+Because this project strives to deliver accountable curated guidance, the above
+concerns must ultimately and necessarily be vetted/validated by humans.
 
 Maps are not intended to replace standard functionalities of the web, only to
 serve as a stopgap pending broader consensus and adoption of accepted standards.
@@ -48,7 +49,8 @@ serve as a stopgap pending broader consensus and adoption of accepted standards.
 
 While this project aspires to map all discovered gaps of the web, this is
 largely expected to be unachievable, given the size and ever-changing nature of
-the web. Consequently Maps should not be consumed as an absolute guarantee; websites can and will change.
+the web. Consequently Maps should not be consumed as an absolute guarantee;
+websites can and will change.
 
 Map-specific limitations can be found in their respective README documents.
 
@@ -61,7 +63,8 @@ the Map's structure and usage.
 
 ### Versioning
 
-This project has two distinct versioning schemes for independent concerns: schema versions and release tags.
+This project has two distinct versioning schemes for independent concerns:
+schema versions and release tags.
 
 #### Schema Versions
 
@@ -111,11 +114,14 @@ compatibility.
 ## Glossary
 
 - **Map**: A JSON structure describing a categorical concern of real websites.
-  Each Map focuses on a single concern (e.g. forms) and lives in a named subdirectory under `maps/` alongside its documentation and schema.
+  Each Map focuses on a single concern (e.g. forms) and lives in a named
+  subdirectory under `maps/` alongside its documentation and schema.
 
 - **Consumer**: Any application or tool that reads and acts on a Map. The Map
   describes what exists on a page; the consumer decides what to do with that
   information.
+
+- **Author**: Any maintainer of source Maps that get built to release channels.
 
 - **Heuristic detection**: Automated inference of page element purposes based on
   attributes, labels, or surrounding markup.

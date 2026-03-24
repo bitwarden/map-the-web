@@ -37,7 +37,7 @@ There is presently no mechanism embedded within Forms Map data for:
 - describing the age of individual host entries
 - annotating entries (descriptions of why a particular selector is needed, etc.)
 - form rendering timings
-- distinguishing URLs by query string and/or fragment which affect rendered form content
+- distinguishing URLs by query string and/or fragment that affect rendered form content
 - describing dynamically-renamed fields (e.g. sites that randomize attribute values on each render)
 - form inputs that represent user confirmation (e.g. agree to terms of service, etc)
 - indicators of irrelevant data at the form field level
@@ -130,11 +130,11 @@ there are no relevant forms across the host's pages. See also:
 
 ### Internationalized Domain Names
 
-Internationalized domain names (IDNs) that contain non-ASCII characters should
-only be authored using their Unicode form.
+Internationalized domain names (IDNs) should be authored using their Unicode form,
+not Punycode.
 
-Unicode host keys are normalized to Punycode (ASCII) at build time, ensuring that
-consumers of the built Maps will receive ASCII keys:
+Unicode host keys are normalized to Punycode (ASCII) at build time, ensuring
+that consumers of the built Maps will receive ASCII keys:
 
 - `münchen.de` → built as `xn--mnchen-3ya.de`
 - `例え.jp` → built as `xn--r8jz45g.jp`
