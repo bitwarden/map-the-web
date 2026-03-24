@@ -4,13 +4,8 @@
 #
 # https://docs.github.com/en/repositories/managing-your-repositorys-settings-and-features/customizing-your-repository/about-code-owners
 
-# Default file owners
-* @bitwarden/dept-architecture
-
-# Claude related files
-.claude/ @bitwarden/team-ai-sme
-.github/workflows/respond.yml @bitwarden/team-ai-sme
-.github/workflows/review-code.yml @bitwarden/team-ai-sme
+# Default file owners.
+* @bitwarden/team-autofill-dev
 
 # Docker-related files
 **/Dockerfile @bitwarden/team-appsec @bitwarden/dept-bre
