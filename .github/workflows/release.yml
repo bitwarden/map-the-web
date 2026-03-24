@@ -14,12 +14,15 @@ on:
 
 jobs:
   release:
+    name: Build and publish release
     runs-on: ubuntu-24.04
     permissions:
       contents: write
     steps:
       - name: Checkout
         uses: actions/checkout@de0fac2e4500dabe0009e67214ff5f5447ce83dd # v6.0.2
+        with:
+          persist-credentials: false
 
       - name: Setup Node
         uses: actions/setup-node@53b83947a5a98c8d113130e565377fae1a50d02f # v6.3.0
@@ -28,18 +31,22 @@ jobs:
           cache-dependency-path: "**/package-lock.json"
           node-version-file: ".nvmrc"
 
-      - run: npm ci
+      - name: Install dependencies
+        run: npm ci
 
       - name: Validate
         run: npm run check
 
       - name: Resolve release tag
         id: release-tag
+        env:
+          GH_REF: ${{ github.ref }}
+          INPUT_TAG: ${{ inputs.tag }}
         run: |
-          if [[ "${{ github.ref }}" == refs/tags/* ]]; then
+          if [[ "$GH_REF" == refs/tags/* ]]; then
             TAG="${GITHUB_REF_NAME}"
-          elif [[ -n "${{ inputs.tag }}" ]]; then
-            TAG="${{ inputs.tag }}"
+          elif [[ -n "$INPUT_TAG" ]]; then
+            TAG="$INPUT_TAG"
           else
             TAG=""
           fi
@@ -54,9 +61,11 @@ jobs:
 
       - name: Create and push tag
         if: inputs.tag != '' && !startsWith(github.ref, 'refs/tags/')
+        env:
+          RELEASE_TAG: ${{ steps.release-tag.outputs.tag }}
         run: |
-          git tag "${{ steps.release-tag.outputs.tag }}"
-          git push origin "${{ steps.release-tag.outputs.tag }}"
+          git tag "$RELEASE_TAG"
+          git push origin "$RELEASE_TAG"
 
       - name: Build
         run: npm run build
@@ -75,14 +84,14 @@ jobs:
         if: steps.release-tag.outputs.tag != ''
         env:
           GH_TOKEN: ${{ github.token }}
+          RELEASE_TAG: ${{ steps.release-tag.outputs.tag }}
         run: |
-          TAG="${{ steps.release-tag.outputs.tag }}"
           TIMESTAMP="$(date -u +%Y-%m-%dT%H:%M:%SZ)"
 
-          gh release create "$TAG" \
-            --title "Release ${TAG}" \
+          gh release create "$RELEASE_TAG" \
+            --title "Release ${RELEASE_TAG}" \
             --notes "$(cat <<EOF
-          ## ${TAG}
+          ## ${RELEASE_TAG}
 
           **Timestamp**: ${TIMESTAMP}
           **Git SHA**: ${GITHUB_SHA}
