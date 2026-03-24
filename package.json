@@ -1,0 +1,26 @@
+{
+  "name": "@bitwarden/map-the-web",
+  "description": "Map the Web offers curated guidance for interacting with websites lacking rich semantics or fully-adopted standards.",
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/bitwarden/map-the-web.git"
+  },
+  "author": "Bitwarden Inc. <hello@bitwarden.com> (https://bitwarden.com)",
+  "license": "SEE LICENSE IN LICENSE.txt",
+  "bugs": {
+    "url": "https://github.com/bitwarden/map-the-web/issues"
+  },
+  "private": true,
+  "homepage": "https://bitwarden.com",
+  "devDependencies": {
+    "husky": "9.1.7",
+    "lint-staged": "16.3.2",
+    "prettier": "3.8.1"
+  },
+  "lint-staged": {
+    "*": "prettier --cache --write --ignore-unknown"
+  },
+  "scripts": {
+    "prepare": "husky"
+  }
+}
