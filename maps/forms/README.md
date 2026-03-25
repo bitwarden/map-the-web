@@ -6,8 +6,9 @@ without relying on heuristic determinations or page-specific detection logic.
 
 This Map describes **the content of a page**. It does not prescribe or imply how
 a consumer of this Map should behave. Additionally, the term "form" here
-describes the user-facing concept, which may or may not utilize the HTML `form`
-tag. See the project [README](../../README.md) for broader mapping philosophies.
+describes the user-facing concept of users supplying data to a website, which
+may or may not utilize the HTML `form` tag. See the project
+[README](../../README.md) for broader mapping philosophies.
 
 - [Forms Map](#forms-map)
   - [Limitations](#limitations)
@@ -32,14 +33,13 @@ tag. See the project [README](../../README.md) for broader mapping philosophies.
 
 ## Limitations
 
-There is presently no mechanism embedded within Forms Map data for:
+There is presently no mechanism embedded within the Forms Map for:
 
 - describing the age of individual host entries
 - annotating entries (descriptions of why a particular selector is needed, etc.)
 - form rendering timings
 - distinguishing URLs by query string and/or fragment that affect rendered form content
 - describing dynamically-renamed fields (e.g. sites that randomize attribute values on each render)
-- form inputs that represent user confirmation (e.g. agree to terms of service, etc)
 - indicators of irrelevant data at the form field level
 
 ## Data Structure Overview
@@ -121,7 +121,8 @@ inheritance:
 
 - `example.com` and `example.com:8443` are separate entries with no inheritance
   between them
-- A rule for `example.com` does **not** apply to `sub.example.com`
+- An entry describing `example.com` does **not** apply to `sub.example.com`
+  (with the potential exception of [www](#the-www-subdomain))
 
 Populated host key values **must** be objects with `forms` and/or `pathnames`
 keys with valid values. Use a `null` value to authoritatively indicate when
@@ -368,7 +369,8 @@ precedence.
 
 The `>>>` combinator represents a boundary crossing from a host element into
 nested content that standard CSS selectors cannot reach. The segments between
-`>>>` are standard CSS selectors. Each `>>>` represents one boundary crossing.
+`>>>` are standard CSS selectors. Each `>>>` represents one boundary crossing
+and must never be "naked" (a selector is required on both sides of the combinator).
 
 > [!IMPORTANT]
 > The `>>>` combinator is not a standard CSS combinator; it is a
