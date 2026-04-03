@@ -27,6 +27,29 @@
     },
     "webtests.dev": {
       "pathnames": {
+        "/forms/login/security-code-multi-input": {
+          "forms": [
+            {
+              "category": "account-login",
+              "container": ["form[action='/login']"],
+              "fields": {
+                "oneTimeCode": [
+                  [
+                    "input[name='otp-code-0']",
+                    "input[name='otp-code-1']",
+                    "input[name='otp-code-2']",
+                    "input[name='otp-code-3']",
+                    "input[name='otp-code-4']",
+                    "input[name='otp-code-5']"
+                  ]
+                ]
+              },
+              "actions": {
+                "submit": ["button[type='submit']"]
+              }
+            }
+          ]
+        },
         "/forms/create/create-account-extended-spec": {
           "forms": [
             {

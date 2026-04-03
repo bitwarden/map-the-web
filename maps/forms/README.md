@@ -34,6 +34,7 @@ may or may not utilize the HTML `form` tag. See the project
       - [Payment Card](#payment-card)
       - [Consent](#consent)
     - [Selector Arrays](#selector-arrays)
+      - [Selector Sequences](#selector-sequences)
     - [Boundary-Crossing Selectors (`>>>`)](#boundary-crossing-selectors-)
       - [Shadow DOM](#shadow-dom)
       - [Iframes](#iframes)
@@ -403,10 +404,17 @@ collects name components separately, use the individual keys.
 
 #### Contact
 
+Where a form collects a phone number as a single field, use `phone`. Where it
+collects phone components separately, use the individual keys.
+
 | Key | Description |
 | --- | --- |
 | `email` | Email address |
-| `phone` | Telephone number |
+| `phone` | Full telephone number (single combined field) |
+| `phoneCountryCode` | Country code (e.g. "1", "44") |
+| `phoneAreaCode` | Area code |
+| `phoneLocal` | Local number (without country or area code) |
+| `phoneExtension` | Extension number |
 | `organization` | Company, organization, or institution |
 
 #### Address
@@ -476,15 +484,21 @@ collects date components separately, use the individual keys.
 
 ### Selector Arrays
 
-Each field key maps to an array of one or more CSS selectors. The array
-conveys cases where that concern may be represented in multiple ways (different
-locations, repeat inputs for user confirmation, etc.). The presence of multiple
-selectors does not imply how a consumer should make use of them (e.g. use all or
-only the first found). Additionally, the _order_ of selectors does not imply
-precedence.
+Each field key maps to an array of one or more items. Each item is either:
+
+- A **selector string** — a single CSS selector targeting one element
+- A **selector sequence** (array of strings) — an ordered list of CSS selectors
+  targeting multiple elements that together compose a single value for the field
+
+The array as a whole represents alternatives for locating the concern. The
+presence of multiple items does not imply how a consumer should make use of them
+(e.g. use all or only the first found). The _order_ of items in the outer array
+does not imply precedence.
 
 > [!IMPORTANT]
 > Cases where input selectors are mutually-exclusive should be represented within independent `forms` array entries.
+
+A username with multiple alternative selectors:
 
 ```json
 {
@@ -495,6 +509,51 @@ precedence.
   ]
 }
 ```
+
+#### Selector Sequences
+
+Some forms split a single value across multiple input elements (e.g. a one-time
+code entered one digit per field). A selector sequence represents this case as
+an ordered array of selectors within the outer alternatives array.
+
+```json
+{
+  "oneTimeCode": [
+    [
+      "input[name='otp-code-0']",
+      "input[name='otp-code-1']",
+      "input[name='otp-code-2']",
+      "input[name='otp-code-3']",
+      "input[name='otp-code-4']",
+      "input[name='otp-code-5']"
+    ]
+  ]
+}
+```
+
+Order is significant within a sequence. The map does not specify how the value
+is split across the elements.
+
+A field may include both individual selectors and sequences as alternatives:
+
+```json
+{
+  "oneTimeCode": [
+    "input#single-otp-field",
+    [
+      "input[name='otp-0']",
+      "input[name='otp-1']",
+      "input[name='otp-2']",
+      "input[name='otp-3']",
+      "input[name='otp-4']",
+      "input[name='otp-5']"
+    ]
+  ]
+}
+```
+
+> [!IMPORTANT]
+> Selector sequences should be avoided if a field key already exists that captures split value concerns (e.g. use selectors for `phoneCountryCode`, `phoneAreaCode`, and `phoneLocal` over `phone` with a selector sequence) as it inherently has greater specificity.
 
 ### Boundary-Crossing Selectors (`>>>`)
 

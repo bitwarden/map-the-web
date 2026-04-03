@@ -132,6 +132,10 @@
         "honorificSuffix",
         "email",
         "phone",
+        "phoneCountryCode",
+        "phoneAreaCode",
+        "phoneLocal",
+        "phoneExtension",
         "organization",
         "streetAddress",
         "addressLine1",
@@ -187,11 +191,22 @@
     },
     "deepSelectorArray": {
       "type": "array",
-      "description": "Unordered alternatives for locating elements of a given concern. The '>>>' combinator indicates boundary crossings (shadow DOM or iframe).",
+      "description": "Alternatives for locating elements of a given concern. Each item is either a single CSS selector (string) or an ordered sequence of selectors (array) representing multiple elements that together compose a single value. The '>>>' combinator indicates boundary crossings (shadow DOM or iframe).",
+      "items": {
+        "oneOf": [
+          { "$ref": "#/$defs/deepSelector" },
+          { "$ref": "#/$defs/deepSelectorSequence" }
+        ]
+      },
+      "minItems": 1
+    },
+    "deepSelectorSequence": {
+      "type": "array",
+      "description": "An ordered sequence of CSS selectors representing multiple elements that together compose a single value for the field. Order is significant; the map does not specify how the value is split across the elements.",
       "items": {
         "$ref": "#/$defs/deepSelector"
       },
-      "minItems": 1
+      "minItems": 2
     },
     "deepSelector": {
       "type": "string",
