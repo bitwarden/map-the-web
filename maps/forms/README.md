@@ -496,7 +496,8 @@ presence of multiple items does not imply how a consumer should make use of them
 does not imply precedence.
 
 > [!IMPORTANT]
-> Cases where input selectors are mutually-exclusive should be represented within independent `forms` array entries.
+> Cases where input selectors are mutually-exclusive should be represented
+> within independent `forms` array entries.
 
 A username with multiple alternative selectors:
 
@@ -553,7 +554,10 @@ A field may include both individual selectors and sequences as alternatives:
 ```
 
 > [!IMPORTANT]
-> Selector sequences should be avoided if a field key already exists that captures split value concerns (e.g. use selectors for `phoneCountryCode`, `phoneAreaCode`, and `phoneLocal` over `phone` with a selector sequence) as it inherently has greater specificity.
+> Selector sequences should be avoided if a field key already exists that
+> captures split value concerns (e.g. use selectors for `phoneCountryCode`,
+> `phoneAreaCode`, and `phoneLocal` over `phone` with a selector sequence) as
+> it inherently has greater specificity.
 
 ### Boundary-Crossing Selectors (`>>>`)
 
@@ -638,14 +642,17 @@ structural interactions (not data) that a consumer may need to trigger.
 | Key | Description |
 | --- | --- |
 | `submit` | Final form submission |
+| `save` | Save or persist the form's current state (e.g. drafts) |
 | `next` | Progression to the next step in a multi-step form |
 | `previous` | Backward navigation in a multi-step form |
 | `cancel` | Cancel or abandon the form |
 | `reset` | Reset the form to its initial state |
 
-Action keys follow the same selector array and boundary-crossing conventions
-as [field keys](#field-keys). See [Selector Arrays](#selector-arrays) and
-[Boundary-Crossing Selectors](#boundary-crossing-selectors-).
+Action values are arrays of CSS selector strings, following the same
+boundary-crossing conventions as field selectors (see
+[Boundary-Crossing Selectors](#boundary-crossing-selectors-)). Unlike field
+selector arrays, action selector arrays should not be described with
+[selector sequences](#selector-sequences).
 
 ## Null and Empty Semantics
 

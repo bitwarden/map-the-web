@@ -89,7 +89,7 @@
           "$ref": "#/$defs/formPurposeCategory"
         },
         "container": {
-          "$ref": "#/$defs/deepSelectorArray",
+          "$ref": "#/$defs/selectorArray",
           "description": "Selectors identifying the form's container element on the page. Optional; used to scope the form's fields and actions within the page."
         },
         "fields": {
@@ -163,9 +163,9 @@
         "consentUser"
       ]
     },
-    "actionsKey": {
+    "actionKey": {
       "description": "Identifies actions that belong to the form. These describe structural interactions (not data) that a consumer may need to trigger.",
-      "enum": ["submit", "next", "previous", "cancel", "reset"]
+      "enum": ["submit", "save", "next", "previous", "cancel", "reset"]
     },
     "fields": {
       "type": "object",
@@ -174,24 +174,32 @@
         "$ref": "#/$defs/fieldKey"
       },
       "additionalProperties": {
-        "$ref": "#/$defs/deepSelectorArray"
+        "$ref": "#/$defs/compositeSelectorArray"
       },
       "minProperties": 1
     },
     "actions": {
       "type": "object",
-      "description": "Maps actions keys to arrays of CSS selectors. Each key identifies a form action or progression element.",
+      "description": "Maps action keys to arrays of CSS selectors. Each key identifies a form action or progression element.",
       "propertyNames": {
-        "$ref": "#/$defs/actionsKey"
+        "$ref": "#/$defs/actionKey"
       },
       "additionalProperties": {
-        "$ref": "#/$defs/deepSelectorArray"
+        "$ref": "#/$defs/selectorArray"
       },
       "minProperties": 1
     },
-    "deepSelectorArray": {
+    "selectorArray": {
       "type": "array",
-      "description": "Alternatives for locating elements of a given concern. Each item is either a single CSS selector (string) or an ordered sequence of selectors (array) representing multiple elements that together compose a single value. The '>>>' combinator indicates boundary crossings (shadow DOM or iframe).",
+      "description": "Alternatives for locating elements of a given concern. The '>>>' combinator indicates boundary crossings (shadow DOM or iframe).",
+      "items": {
+        "$ref": "#/$defs/deepSelector"
+      },
+      "minItems": 1
+    },
+    "compositeSelectorArray": {
+      "type": "array",
+      "description": "Alternatives for locating elements of a given field concern. Each item is either a single CSS selector (string) or an ordered sequence of selectors (array) representing multiple elements that together compose a single value. The '>>>' combinator indicates boundary crossings (shadow DOM or iframe).",
       "items": {
         "oneOf": [
           { "$ref": "#/$defs/deepSelector" },
