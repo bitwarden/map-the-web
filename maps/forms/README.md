@@ -33,6 +33,7 @@ may or may not utilize the HTML `form` tag. See the project
       - [Birthdate](#birthdate)
       - [Payment Card](#payment-card)
       - [Consent](#consent)
+      - [Search](#search)
     - [Selector Arrays](#selector-arrays)
       - [Selector Sequences](#selector-sequences)
     - [Boundary-Crossing Selectors (`>>>`)](#boundary-crossing-selectors-)
@@ -481,6 +482,15 @@ collects date components separately, use the individual keys.
 | `consentTerms` | Terms of service or terms and conditions acceptance |
 | `consentPrivacy` | Privacy policy acceptance |
 | `consentUser` | General user confirmation (e.g. "I agree", "I confirm") |
+
+#### Search
+
+| Key | Description |
+| --- | --- |
+| `searchTerm` | Free-text search query |
+
+> [!TIP]
+> Use specific field keys for context-specific search forms; for example, a search that only deals in emails should use the `email` key name to describe the input and `search` to describe the form category.
 
 ### Selector Arrays
 
