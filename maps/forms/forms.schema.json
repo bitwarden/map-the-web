@@ -19,7 +19,7 @@
       },
       "additionalProperties": {
         "oneOf": [
-          { "$ref": "#/$defs/targetingRules" },
+          { "$ref": "#/$defs/host" },
           {
             "type": "null",
             "description": "All pages on this host are irrelevant to the forms concern."
@@ -31,7 +31,7 @@
   "required": ["version", "hosts"],
   "additionalProperties": false,
   "$defs": {
-    "targetingRules": {
+    "host": {
       "type": "object",
       "description": "Form descriptions and pathname-specific overrides for a host.",
       "properties": {
@@ -88,11 +88,18 @@
         "category": {
           "$ref": "#/$defs/formPurposeCategory"
         },
-        "selectors": {
-          "$ref": "#/$defs/selectors"
+        "container": {
+          "$ref": "#/$defs/deepSelectorArray",
+          "description": "Selectors identifying the form's container element on the page. Optional; used to scope the form's fields and actions within the page."
+        },
+        "fields": {
+          "$ref": "#/$defs/fields"
+        },
+        "actions": {
+          "$ref": "#/$defs/actions"
         }
       },
-      "required": ["selectors"],
+      "required": ["fields"],
       "additionalProperties": false
     },
     "formPurposeCategory": {
@@ -107,12 +114,72 @@
         "identity",
         "payment-card",
         "search",
-        "subscribe"
+        "signup"
       ]
     },
-    "selectors": {
+    "fieldKey": {
+      "description": "Identifies the user data concept that a form field captures. Keys describe the kind of data (not the input's HTML structure). Each key must be actionable: a consumer should be able to determine what value belongs in the field from the key name and form category alone.",
+      "enum": [
+        "username",
+        "password",
+        "newPassword",
+        "oneTimeCode",
+        "fullName",
+        "honorificPrefix",
+        "firstName",
+        "middleName",
+        "lastName",
+        "honorificSuffix",
+        "email",
+        "phone",
+        "organization",
+        "streetAddress",
+        "addressLine1",
+        "addressLine2",
+        "addressLine3",
+        "addressLevel1",
+        "addressLevel2",
+        "addressLevel3",
+        "addressLevel4",
+        "postalCode",
+        "country",
+        "birthdate",
+        "birthdateDay",
+        "birthdateMonth",
+        "birthdateYear",
+        "cardholderName",
+        "cardNumber",
+        "cardExpirationDate",
+        "cardExpirationMonth",
+        "cardExpirationYear",
+        "cardCvv",
+        "cardType",
+        "consentTerms",
+        "consentPrivacy",
+        "consentUser"
+      ]
+    },
+    "actionsKey": {
+      "description": "Identifies actions that belong to the form. These describe structural interactions (not data) that a consumer may need to trigger.",
+      "enum": ["submit", "next", "previous", "cancel", "reset"]
+    },
+    "fields": {
       "type": "object",
-      "description": "Maps selector keys to arrays of CSS selectors. Keys are opaque identifiers whose meaning is defined by the consuming application.",
+      "description": "Maps field keys to arrays of CSS selectors. Each key identifies the user data concept that a form field captures.",
+      "propertyNames": {
+        "$ref": "#/$defs/fieldKey"
+      },
+      "additionalProperties": {
+        "$ref": "#/$defs/deepSelectorArray"
+      },
+      "minProperties": 1
+    },
+    "actions": {
+      "type": "object",
+      "description": "Maps actions keys to arrays of CSS selectors. Each key identifies a form action or progression element.",
+      "propertyNames": {
+        "$ref": "#/$defs/actionsKey"
+      },
       "additionalProperties": {
         "$ref": "#/$defs/deepSelectorArray"
       },
