@@ -1,11 +1,11 @@
 {
   "$schema": "https://json-schema.org/draft/2020-12/schema",
-  "$id": "https://raw.githubusercontent.com/bitwarden/map-the-web/main/maps/forms/forms.schema.json",
+  "$id": "https://raw.githubusercontent.com/bitwarden/map-the-web/main/maps/forms/forms.v1.schema.json",
   "title": "Forms Map",
   "description": "Describes the locations of form fields on web pages using CSS selectors. See README.md for full documentation.",
   "type": "object",
   "properties": {
-    "version": {
+    "schemaVersion": {
       "type": "string",
       "const": "1.0.0",
       "description": "Schema version this file conforms to. Must match the version expected by the schema."
@@ -28,7 +28,7 @@
       }
     }
   },
-  "required": ["version", "hosts"],
+  "required": ["schemaVersion", "hosts"],
   "additionalProperties": false,
   "$defs": {
     "host": {

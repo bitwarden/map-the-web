@@ -68,7 +68,7 @@ schema versions and release tags.
 
 #### Schema Versions
 
-Each Map file includes a required top-level `version` field that identifies
+Each Map file includes a required top-level `schemaVersion` field that identifies
 which revision of its schema the file conforms to. Schema versions use
 [semantic versioning](https://semver.org/):
 
@@ -77,7 +77,7 @@ which revision of its schema the file conforms to. Schema versions use
   category values)
 - **Patch**: Documentation or schema clarifications with no data-level impact
 
-Consumers should check the `version` field before processing a Map and reject or
+Consumers should check the `schemaVersion` field before processing a Map and reject or
 warn on unrecognized major versions. Build filenames include the schema major
 version (e.g. `forms.v1.json`), so a breaking schema change can ship alongside
 the previous version (`forms.v1.json` and `forms.v2.json` in the same release),
@@ -110,6 +110,14 @@ Example: <https://github.com/bitwarden/map-the-web/releases/latest/download/form
 Each release includes a `manifest.json` with build metadata (timestamp, git SHA,
 and per-map schema versions) that consumers can use to check staleness or verify
 compatibility.
+
+Each release also includes the corresponding schema file for each Map (e.g.
+`forms.v1.schema.json` alongside `forms.v1.json`). Consumers that validate Map
+data should validate against the schema included in the same release, as minor
+version bumps may introduce new fields or values that would not pass validation
+against a stale schema copy. Consumers that do not validate should be prepared
+to gracefully handle unrecognized fields or values introduced by minor or patch
+schema changes.
 
 ## Glossary
 

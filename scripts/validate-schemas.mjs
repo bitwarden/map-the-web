@@ -27,7 +27,18 @@ let hasErrors = false;
 for (const file of files) {
   const dir = dirname(file);
   const name = basename(file, ".jsonc");
-  const schemaPath = join(dir, `${name}.schema.json`);
+
+  // Parse data first to read schemaVersion for schema file lookup
+  const data = JSON.parse(stripJsonComments(readFileSync(file, "utf-8")));
+
+  if (!data.schemaVersion) {
+    console.error(`\x1b[31mNo schemaVersion found in ${file}\x1b[0m`);
+    hasErrors = true;
+    continue;
+  }
+
+  const majorVersion = data.schemaVersion.split(".")[0];
+  const schemaPath = join(dir, `${name}.v${majorVersion}.schema.json`);
 
   if (!existsSync(schemaPath)) {
     console.error(
@@ -37,7 +48,6 @@ for (const file of files) {
     continue;
   }
 
-  const data = JSON.parse(stripJsonComments(readFileSync(file, "utf-8")));
   const schema = JSON.parse(readFileSync(schemaPath, "utf-8"));
 
   const validate = ajv.compile(schema);

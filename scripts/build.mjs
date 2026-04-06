@@ -16,7 +16,8 @@ rmSync(DIST, { recursive: true, force: true });
 const maps = [];
 
 // Each map lives one level deep under maps/ (e.g. maps/forms/).
-for await (const schemaFile of glob("maps/*/*.schema.json")) {
+// Schema files are versioned: <name>.v<major>.schema.json
+for await (const schemaFile of glob("maps/*/*.v*.schema.json")) {
   const dir = dirname(schemaFile);
   const name = basename(dir);
   const dataFile = join(dir, `${name}.jsonc`);
@@ -108,7 +109,7 @@ for (const map of maps) {
   mkdirSync(outDir, { recursive: true });
 
   // Extract major version for filename suffix
-  const majorVersion = map.data.version.split(".")[0];
+  const majorVersion = map.data.schemaVersion.split(".")[0];
   const versionedName = `${map.name}.v${majorVersion}`;
 
   // Minify data JSON
@@ -121,11 +122,14 @@ for (const map of maps) {
   const outSchemaFile = join(outDir, `${versionedName}.schema.json`);
   cpSync(map.schemaFile, outSchemaFile);
 
-  // Record in manifest
-  manifest.maps[map.name] = {
-    version: map.data.version,
+  // Record in manifest (array per map to support multiple schema versions)
+  if (!manifest.maps[map.name]) {
+    manifest.maps[map.name] = [];
+  }
+  manifest.maps[map.name].push({
+    schemaVersion: map.data.schemaVersion,
     files: [relative(DIST, outDataFile), relative(DIST, outSchemaFile)],
-  };
+  });
 
   // Compute checksums
   for (const f of [outDataFile, outSchemaFile]) {

@@ -58,7 +58,7 @@ There is presently no mechanism embedded within the Forms Map for:
 
 ```json
 {
-  "version": "1.0.0",
+  "schemaVersion": "1.0.0",
   "hosts": {
     "<host>": {
       "forms": [ ... ],           // optional — site-wide fallback
@@ -78,7 +78,7 @@ A complex entry may look like:
 
 ```json
 {
-  "version": "1.0.0",
+  "schemaVersion": "1.0.0",
   "hosts": {
     "example.com": {
       "forms": [
@@ -185,7 +185,7 @@ must start with `/`.
 
 ```json
 {
-  "version": "1.0.0",
+  "schemaVersion": "1.0.0",
   "hosts": {
     "example.com": {
       "forms": [
