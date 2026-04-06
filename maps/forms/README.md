@@ -118,9 +118,14 @@ A complex entry may look like:
 The required top-level `hosts` object contains all host entries in the Map. An
 empty `hosts` object (`{}`) is valid and represents a Map with no entries.
 
+The Forms Map is scoped to pages served over HTTP and HTTPS. Other URI schemes
+(e.g. `ftp`, `file`, `chrome`) are out of scope. Because the protocol is not
+included in host keys, entries implicitly cover both `http` and `https` for a
+given host (see also: [Ports](#ports)).
+
 Each key in the `hosts` object is a **host**: a hostname, or a hostname with a
 port when a non-default port is used. Do not include the protocol, path, query
-string, or fragment. Do not include default ports such as `443` and `80`.
+string, or fragment.
 
 ```json
 {
@@ -166,17 +171,24 @@ canonical. Do not add a separate `www.` entry unless the site differs at the
 
 ### Ports
 
-Include the port in the key **only** when it is non-default. Default ports
-(`:443` for HTTPS, `:80` for HTTP) are stripped by standard URL parsers
-(`URL.host`) and should not appear in keys.
+Non-default ports are always included in the key. Default ports (`:443` for
+HTTPS, `:80` for HTTP) should be omitted unless the site serves different
+content over HTTP and HTTPS. In that rare case, include the default port
+explicitly to distinguish the entries (e.g. `example.com:443` for HTTPS-only
+content, `example.com:80` for HTTP-only content). When no explicit default-port
+entry exists, consumers should assume the entry applies to both protocols.
 
-| URL                        | Key                                |
-| -------------------------- | ---------------------------------- |
-| `https://example.com`      | `example.com`                      |
-| `https://example.com:443`  | `example.com` (default port, omit) |
-| `https://example.com:8443` | `example.com:8443`                 |
-| `http://example.com:3000`  | `example.com:3000`                 |
-| `http://example.com:80`    | `example.com` (default port, omit) |
+Standard URL parsers (`URL.host`) strip default ports, so consumers that
+encounter an explicit default-port key will need to handle the lookup
+accordingly.
+
+| URL                        | Key                                                      |
+| -------------------------- | -------------------------------------------------------- |
+| `https://example.com`      | `example.com`                                            |
+| `https://example.com:443`  | `example.com` (default port, omit unless HTTP differs)   |
+| `https://example.com:8443` | `example.com:8443`                                       |
+| `http://example.com:3000`  | `example.com:3000`                                       |
+| `http://example.com:80`    | `example.com` (default port, omit unless HTTPS differs)  |
 
 ## Pathnames
 
