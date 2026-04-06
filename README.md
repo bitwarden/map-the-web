@@ -58,7 +58,7 @@ Map-specific limitations can be found in their respective README documents.
 
 Each Map lives in its own subdirectory under `maps/`, named after its core
 concern (e.g. `maps/forms/`). A Map directory contains the JSON data file
-(`forms.jsonc`), its schema (`forms.schema.json`), and a `README.md` documenting
+(`forms.jsonc`), its versioned schema (e.g. `forms.v1.schema.json`), and a `README.md` documenting
 the Map's structure and usage.
 
 ### Versioning

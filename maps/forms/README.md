@@ -490,7 +490,9 @@ collects date components separately, use the individual keys.
 | `searchTerm` | Free-text search query |
 
 > [!TIP]
-> Use specific field keys for context-specific search forms; for example, a search that only deals in emails should use the `email` key name to describe the input and `search` to describe the form category.
+> Use specific field keys for context-specific search forms; for example, a
+> search that only deals in emails should use the `email` key name to describe
+> the input and `search` to describe the form category.
 
 ### Selector Arrays
 
@@ -661,7 +663,7 @@ structural interactions (not data) that a consumer may need to trigger.
 Action values are arrays of CSS selector strings, following the same
 boundary-crossing conventions as field selectors (see
 [Boundary-Crossing Selectors](#boundary-crossing-selectors-)). Unlike field
-selector arrays, action selector arrays should not be described with
+selector arrays, action selector arrays do not support
 [selector sequences](#selector-sequences).
 
 ## Null and Empty Semantics
