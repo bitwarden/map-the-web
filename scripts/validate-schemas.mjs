@@ -59,7 +59,7 @@ for (const file of files) {
       if (host.startsWith("www.")) {
         console.warn(
           `\x1b[33mWarning: ${file} - host key "${host}" uses a www. prefix. ` +
-            `Author under the non-www host as canonical unless hosts differ. ` +
+            `Author under the non-www host unless the www-prefixed host differs in a relevant way. ` +
             `See the ${name} Map README for guidance.\x1b[0m`,
         );
       }

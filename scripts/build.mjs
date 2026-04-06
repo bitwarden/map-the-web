@@ -72,7 +72,7 @@ for (const map of maps) {
       if (normalizedHost.startsWith("www.")) {
         console.warn(
           `\x1b[33mWarning: ${map.dataFile} - host key "${normalizedHost}" uses a www. prefix. ` +
-            `Author under the non-www host as canonical unless hosts differ.\x1b[0m`,
+            `Author under the non-www host unless the www-prefixed host differs in some relevant way.\x1b[0m`,
         );
       }
     }
