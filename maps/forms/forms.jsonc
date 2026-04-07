@@ -4,6 +4,7 @@
     "bankofamerica.com": {
       "forms": [
         {
+          "category": "account-login",
           "fields": {
             "username": ["input#oid"],
             "password": ["input#pass"]
@@ -16,6 +17,7 @@
         "/login": {
           "forms": [
             {
+              "category": "account-login",
               "fields": {
                 "username": ["input#oid"],
                 "password": ["input#pass"]

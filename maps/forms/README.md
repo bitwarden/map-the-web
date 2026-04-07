@@ -4,7 +4,7 @@ The Forms Map (`forms.jsonc`) describes the locations of form fields on web page
 using CSS selectors. It enables consuming applications to locate specific fields
 without relying on heuristic determinations or page-specific detection logic.
 
-This Map describes **the content of a page**. It does not prescribe or imply how
+This Map describes the page. It does not prescribe or imply how
 a consumer of this Map should behave. Additionally, the term "form" here
 describes the user-facing concept of users supplying data to a website, which
 may or may not utilize the HTML `form` tag. See the project
@@ -51,12 +51,12 @@ There is presently no mechanism embedded within the Forms Map for:
 - annotating entries (descriptions of why a particular selector is needed, etc.)
 - form rendering timings
 - distinguishing URLs by query string and/or fragment that affect rendered form content
-- describing dynamically-renamed fields (e.g. sites that randomize attribute values on each render)
+- fields which lack any static targetable qualities (e.g. sites that randomize tag name/attribute values on each render)
 - indicators of irrelevant data at the form field level
 
 ## Data Structure Overview
 
-```json
+```jsonc
 {
   "schemaVersion": "1.0.0",
   "hosts": {
@@ -127,7 +127,7 @@ Each key in the `hosts` object is a **host**: a hostname, or a hostname with a
 port when a non-default port is used. Do not include the protocol, path, query
 string, or fragment.
 
-```json
+```jsonc
 {
   "hosts": {
     "example.com": { ... },
@@ -202,6 +202,7 @@ must start with `/`.
     "example.com": {
       "forms": [
         {
+          "category": "account-login",
           "fields": {
             "username": ["input#user"],
             "password": ["input#pass"]
@@ -212,6 +213,7 @@ must start with `/`.
         "/login": {
           "forms": [
             {
+              "category": "account-login",
               "fields": {
                 "username": ["input#login-email"],
                 "password": ["input#login-pass"]
@@ -336,7 +338,7 @@ A page may have more than one logical form. Each gets its own entry in the
 
 ### Category
 
-The optional `category` field describes the form's purpose. Consumers may use
+The required `category` field describes the form's purpose. Consumers may use
 this to enrich the context of their actions (e.g. skip forms that are not
 relevant to their concerns).
 
@@ -351,9 +353,6 @@ relevant to their concerns).
 | `payment-card`     | Credit/debit card payment                          |
 | `search`           | Search form                                        |
 | `signup`           | Newsletter, sweepstakes, unsubscribe, or general contact signup (not account creation) |
-
-When `category` is omitted, the form's purpose is unspecified. Consumers should
-not infer purpose from the absence of a category.
 
 ## Container
 
@@ -472,6 +471,10 @@ collects date components separately, use the individual keys.
 
 #### Payment Card
 
+A combined expiration field (`cardExpirationDate`) is not the same as separate
+month and year fields (`cardExpirationMonth` / `cardExpirationYear`). Use the
+key that matches the actual input structure on the page.
+
 | Key | Description |
 | --- | --- |
 | `cardholderName` | Name as printed on card |
@@ -481,11 +484,6 @@ collects date components separately, use the individual keys.
 | `cardExpirationYear` | Expiration year |
 | `cardCvv` | Security code (CVV / CVC / CSC) |
 | `cardType` | Card network or brand (Visa, Mastercard, etc.) |
-
-> [!IMPORTANT]
-> A combined expiration field (`cardExpirationDate`) is not the same as separate
-> month and year fields (`cardExpirationMonth` / `cardExpirationYear`). Use the
-> key that matches the actual input structure on the page.
 
 #### Consent
 

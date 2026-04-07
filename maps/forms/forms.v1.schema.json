@@ -99,12 +99,12 @@
           "$ref": "#/$defs/actions"
         }
       },
-      "required": ["fields"],
+      "required": ["category", "fields"],
       "additionalProperties": false
     },
     "formPurposeCategory": {
       "type": "string",
-      "description": "Optional descriptor of the form's purpose.",
+      "description": "Categorical descriptor of the form's purpose.",
       "enum": [
         "account-creation",
         "account-login",
