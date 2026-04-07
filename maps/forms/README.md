@@ -162,13 +162,13 @@ string, or fragment.
 }
 ```
 
-Host keys are **exact-match only**. There is no wildcard, suffix, or domain
-inheritance:
+Host keys must be **exact hosts**. Entries must not assume equivalence between
+a host and its subdomains, or between a host and its non-default port
+counterparts:
 
-- `example.com` and `example.com:8443` are separate entries with no inheritance
-  between them
-- An entry describing `example.com` does **not** apply to `sub.example.com`
+- `example.com` and `sub.example.com` require separate entries
   (with the potential exception of [www](#the-www-subdomain))
+- `example.com` and `example.com:8443` require separate entries
 
 Populated host key values **must** be objects with `forms` and/or `pathnames`
 keys with valid values. Use a `null` value to authoritatively indicate when
