@@ -12,6 +12,7 @@ may or may not utilize the HTML `form` tag. See the project
 
 - [Forms Map](#forms-map)
   - [Limitations](#limitations)
+  - [Schema Version Bumps](#schema-version-bumps)
   - [Data Structure Overview](#data-structure-overview)
   - [Host Keys](#host-keys)
     - [Internationalized Domain Names](#internationalized-domain-names)
@@ -53,6 +54,30 @@ There is presently no mechanism embedded within the Forms Map for:
 - distinguishing URLs by query string and/or fragment that affect rendered form content
 - fields which lack any static targetable qualities (e.g. sites that randomize tag name/attribute values on each render)
 - indicators of irrelevant data at the form field level
+
+## Schema Version Bumps
+
+See the project [README](../../README.md#schema-versions) for general versioning
+guidance. The following table describes what constitutes each type of version
+bump for the Forms Map schema:
+
+| Change | Bump |
+| --- | --- |
+| Schema description or documentation changes | Patch |
+| Tightening a validation pattern that does not reject previously-valid data | Patch |
+| Adding a new field key, action key, or category | Minor |
+| Adding a new optional property to a form entry | Minor |
+| Removing or renaming a key, category, or required property | Major |
+| Making a previously optional property required | Major |
+| Changing the meaning of an existing key | Major |
+| Changing the structure of an existing property | Major |
+
+> [!NOTE]
+> Adding new enum values (field keys, action keys, categories) is a minor bump
+> because consumers should gracefully handle unrecognized values. However,
+> consumers that validate Map data against a schema must use the schema included
+> in the same release (see [Releases](../../README.md#releases)); a stale schema
+> copy will reject data containing newly added values.
 
 ## Data Structure Overview
 

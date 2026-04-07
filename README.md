@@ -72,16 +72,22 @@ Each Map file includes a required top-level `schemaVersion` field that identifie
 which revision of its schema the file conforms to. Schema versions use
 [semantic versioning](https://semver.org/):
 
-- **Major**: Breaking changes to the data structure or semantics
+- **Major**: Breaking changes to the data structure or semantics (e.g.
+  removing/renaming required properties, adding required properties)
 - **Minor**: Backwards-compatible additions (e.g. new optional properties, new
-  category values)
+  enum values)
 - **Patch**: Documentation or schema clarifications with no data-level impact
 
-Consumers should check the `schemaVersion` field before processing a Map and reject or
-warn on unrecognized major versions. Build filenames include the schema major
-version (e.g. `forms.v1.json`), so a breaking schema change can ship alongside
-the previous version (`forms.v1.json` and `forms.v2.json` in the same release),
-allowing legacy consumers to continue fetching the version they support.
+Consumers who wish to validate their Map data should check the
+`schemaVersion` field before processing a Map and reject or warn on unrecognized
+major versions. Build filenames include the
+schema major version (e.g. `forms.v1.json`), so a breaking schema change can
+ship alongside the previous version (`forms.v1.json` and `forms.v2.json` in the
+same release), allowing legacy consumers to continue fetching the version they
+support.
+
+Map-specific versioning guidance can be found in their respective README
+documents.
 
 #### Release Tags
 
