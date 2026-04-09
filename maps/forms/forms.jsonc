@@ -1,0 +1,82 @@
+{
+  "schemaVersion": "1.0.0",
+  "hosts": {
+    "bankofamerica.com": {
+      "forms": [
+        {
+          "category": "account-login",
+          "fields": {
+            "username": ["input#oid"],
+            "password": ["input#pass"]
+          }
+        }
+      ]
+    },
+    "factorio.com": {
+      "pathnames": {
+        "/login": {
+          "forms": [
+            {
+              "category": "account-login",
+              "fields": {
+                "username": ["input#oid"],
+                "password": ["input#pass"]
+              }
+            }
+          ]
+        }
+      }
+    },
+    "webtests.dev": {
+      "pathnames": {
+        "/forms/login/security-code-multi-input": {
+          "forms": [
+            {
+              "category": "account-login",
+              "container": ["form[action='/login']"],
+              "fields": {
+                "oneTimeCode": [
+                  [
+                    "input[name='otp-code-0']",
+                    "input[name='otp-code-1']",
+                    "input[name='otp-code-2']",
+                    "input[name='otp-code-3']",
+                    "input[name='otp-code-4']",
+                    "input[name='otp-code-5']"
+                  ]
+                ]
+              },
+              "actions": {
+                "submit": ["button[type='submit']"]
+              }
+            }
+          ]
+        },
+        "/forms/create/create-account-extended-spec": {
+          "forms": [
+            {
+              "category": "account-creation",
+              "container": ["form[action='/account']"],
+              "fields": {
+                "email": ["input#email"],
+                "newPassword": ["input#password"],
+                "fullName": ["input#full-name"],
+                "organization": ["input#company-name"],
+                "phone": ["input#phone-number"],
+                "addressLine1": ["input#address"],
+                "addressLine2": ["input#address-ext"],
+                "addressLevel2": ["input#city"],
+                "addressLevel1": ["input#state"],
+                "country": ["input#country"],
+                "postalCode": ["input#postcode"]
+              },
+              "actions": {
+                "submit": ["button[type='submit']"]
+              }
+            }
+          ]
+        }
+      }
+    }
+  }
+}

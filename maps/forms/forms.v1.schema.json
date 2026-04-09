@@ -1,0 +1,226 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://raw.githubusercontent.com/bitwarden/map-the-web/main/maps/forms/forms.v1.schema.json",
+  "title": "Forms Map",
+  "description": "Describes the locations of form fields on web pages using CSS selectors. See README.md for full documentation.",
+  "type": "object",
+  "properties": {
+    "schemaVersion": {
+      "type": "string",
+      "const": "1.0.0",
+      "description": "Schema version this file conforms to. Must match the version expected by the schema."
+    },
+    "hosts": {
+      "type": "object",
+      "description": "Maps hostnames to their form descriptions.",
+      "propertyNames": {
+        "description": "Hostname with optional non-default port. Alphanumeric characters, dots, hyphens, underscores, and Unicode characters are allowed. Unicode host keys are normalized to Punycode (ASCII) at build time.",
+        "pattern": "^[^/?#\\s]+(:[0-9]+)?$"
+      },
+      "additionalProperties": {
+        "oneOf": [
+          { "$ref": "#/$defs/host" },
+          {
+            "type": "null",
+            "description": "All pages on this host are irrelevant to the forms concern."
+          }
+        ]
+      }
+    }
+  },
+  "required": ["schemaVersion", "hosts"],
+  "additionalProperties": false,
+  "$defs": {
+    "host": {
+      "type": "object",
+      "description": "Form descriptions and pathname-specific overrides for a host.",
+      "properties": {
+        "forms": {
+          "$ref": "#/$defs/formContentArray",
+          "description": "Site-wide fallback form descriptions. Used when no pathname-specific entry matches."
+        },
+        "pathnames": {
+          "$ref": "#/$defs/pathnames"
+        }
+      },
+      "additionalProperties": false,
+      "minProperties": 1
+    },
+    "pathnames": {
+      "type": "object",
+      "description": "Maps URL pathnames to page-specific form descriptions. Keys must start with '/'.",
+      "additionalProperties": {
+        "oneOf": [
+          {
+            "type": "object",
+            "properties": {
+              "forms": {
+                "$ref": "#/$defs/formContentArray",
+                "description": "Form descriptions for this specific pathname."
+              }
+            },
+            "required": ["forms"],
+            "additionalProperties": false
+          },
+          {
+            "type": "null",
+            "description": "This specific page is irrelevant to the forms concern."
+          }
+        ]
+      },
+      "propertyNames": {
+        "description": "URL pathname starting with '/'. Must not contain query strings or fragments, and must not have a trailing slash (excepting a sole '/' value itself).",
+        "pattern": "^/([^?#/]+(/[^?#/]+)*)?$"
+      },
+      "minProperties": 1
+    },
+    "formContentArray": {
+      "type": "array",
+      "items": {
+        "$ref": "#/$defs/formContent"
+      },
+      "minItems": 1
+    },
+    "formContent": {
+      "type": "object",
+      "description": "Describes one logical form on a page. 'Form' refers to the user-facing concept and does not require an HTML <form> element.",
+      "properties": {
+        "category": {
+          "$ref": "#/$defs/formPurposeCategory"
+        },
+        "container": {
+          "$ref": "#/$defs/selectorArray",
+          "description": "Selectors identifying the form's container element on the page. Optional; used to scope the form's fields and actions within the page."
+        },
+        "fields": {
+          "$ref": "#/$defs/fields"
+        },
+        "actions": {
+          "$ref": "#/$defs/actions"
+        }
+      },
+      "required": ["category", "fields"],
+      "additionalProperties": false
+    },
+    "formPurposeCategory": {
+      "type": "string",
+      "description": "Categorical descriptor of the form's purpose.",
+      "enum": [
+        "account-creation",
+        "account-login",
+        "account-recovery",
+        "account-update",
+        "address",
+        "identity",
+        "payment-card",
+        "search",
+        "signup"
+      ]
+    },
+    "fieldKey": {
+      "description": "Identifies the user data concept that a form field captures. Keys describe the kind of data (not the input's HTML structure). Each key must be actionable: a consumer should be able to determine what value belongs in the field from the key name and form category alone.",
+      "enum": [
+        "username",
+        "password",
+        "newPassword",
+        "oneTimeCode",
+        "fullName",
+        "honorificPrefix",
+        "firstName",
+        "middleName",
+        "lastName",
+        "honorificSuffix",
+        "email",
+        "phone",
+        "phoneCountryCode",
+        "phoneAreaCode",
+        "phoneLocal",
+        "phoneExtension",
+        "organization",
+        "streetAddress",
+        "addressLine1",
+        "addressLine2",
+        "addressLine3",
+        "addressLevel1",
+        "addressLevel2",
+        "addressLevel3",
+        "addressLevel4",
+        "postalCode",
+        "country",
+        "birthdate",
+        "birthdateDay",
+        "birthdateMonth",
+        "birthdateYear",
+        "cardholderName",
+        "cardNumber",
+        "cardExpirationDate",
+        "cardExpirationMonth",
+        "cardExpirationYear",
+        "cardCvv",
+        "cardType",
+        "consentTerms",
+        "consentPrivacy",
+        "consentUser",
+        "searchTerm"
+      ]
+    },
+    "actionKey": {
+      "description": "Identifies actions that belong to the form. These describe structural interactions (not data) that a consumer may need to trigger.",
+      "enum": ["submit", "save", "next", "previous", "cancel", "reset"]
+    },
+    "fields": {
+      "type": "object",
+      "description": "Maps field keys to arrays of CSS selectors. Each key identifies the user data concept that a form field captures.",
+      "propertyNames": {
+        "$ref": "#/$defs/fieldKey"
+      },
+      "additionalProperties": {
+        "$ref": "#/$defs/compositeSelectorArray"
+      },
+      "minProperties": 1
+    },
+    "actions": {
+      "type": "object",
+      "description": "Maps action keys to arrays of CSS selectors. Each key identifies a form action or progression element.",
+      "propertyNames": {
+        "$ref": "#/$defs/actionKey"
+      },
+      "additionalProperties": {
+        "$ref": "#/$defs/selectorArray"
+      },
+      "minProperties": 1
+    },
+    "selectorArray": {
+      "type": "array",
+      "description": "Alternatives for locating elements of a given concern. The '>>>' combinator indicates boundary crossings (shadow DOM or iframe).",
+      "items": {
+        "$ref": "#/$defs/deepSelector"
+      },
+      "minItems": 1
+    },
+    "compositeSelectorArray": {
+      "type": "array",
+      "description": "Alternatives for locating elements of a given field concern. Each item is either a single CSS selector (string) or an ordered sequence of selectors (array) representing multiple elements that together compose a single value. The '>>>' combinator indicates boundary crossings (shadow DOM or iframe).",
+      "items": {
+        "oneOf": [
+          { "$ref": "#/$defs/deepSelector" },
+          { "$ref": "#/$defs/deepSelectorSequence" }
+        ]
+      },
+      "minItems": 1
+    },
+    "deepSelectorSequence": {
+      "type": "array",
+      "description": "An ordered sequence of CSS selectors representing multiple elements that together compose a single value for the field. Order is significant; the map does not specify how the value is split across the elements.",
+      "items": {
+        "$ref": "#/$defs/deepSelector"
+      },
+      "minItems": 2
+    },
+    "deepSelector": {
+      "type": "string",
+      "description": "A CSS selector, optionally using '>>>' to pierce shadow DOM or iframe boundaries.",
+      "minLength": 1
+    }
+  }
+}

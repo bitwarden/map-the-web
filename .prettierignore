@@ -1,0 +1,10 @@
+# Build directories
+build
+dist
+node_modules
+
+# Bitwarden template/config files
+.github/
+
+# remark handles markdown formatting
+*.md
