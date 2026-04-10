@@ -49,7 +49,6 @@ may or may not utilize the HTML `form` tag. See the project
 There is presently no mechanism embedded within the Forms Map for:
 
 - describing the age of individual host entries
-- annotating entries (descriptions of why a particular selector is needed, etc.)
 - form rendering timings
 - distinguishing URLs by query string and/or fragment that affect rendered form content
 - fields which lack any static targetable qualities (e.g. sites that randomize tag name/attribute values on each render)
