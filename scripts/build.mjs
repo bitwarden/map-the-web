@@ -118,21 +118,18 @@ const checksums = [];
 mkdirSync(DIST, { recursive: true });
 
 for (const map of maps) {
-  const outDir = join(DIST, "maps", map.name);
-  mkdirSync(outDir, { recursive: true });
-
   // Extract major version for filename suffix
   const majorVersion = map.data.schemaVersion.split(".")[0];
   const versionedName = `${map.name}.v${majorVersion}`;
 
   // Minify data JSON
   const minified = JSON.stringify(map.data);
-  const outDataFile = join(outDir, `${versionedName}.json`);
+  const outDataFile = join(DIST, `${versionedName}.json`);
   writeFileSync(outDataFile, minified);
   console.log(`Minified: ${outDataFile} (${minified.length} bytes)`);
 
   // Copy schema as-is
-  const outSchemaFile = join(outDir, `${versionedName}.schema.json`);
+  const outSchemaFile = join(DIST, `${versionedName}.schema.json`);
   cpSync(map.schemaFile, outSchemaFile);
 
   // Compute content hash for data file
