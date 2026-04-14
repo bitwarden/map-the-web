@@ -29,6 +29,36 @@
     },
     "webtests.dev": {
       "pathnames": {
+        "/forms/login/simple": {
+          "forms": [
+            {
+              "category": "account-login",
+              "container": ["form[action='/login']"],
+              "fields": {
+                "username": ["input#username"]
+              },
+              "actions": {
+                "submit": ["button[type='submit']"]
+              }
+            }
+          ]
+        },
+        "/forms/login/ambiguous-inputs": {
+          "forms": [
+            {
+              "category": "account-login",
+              "container": ["div.ambiguous-inputs-container"],
+              "fields": {
+                // The input type for password here is "text"
+                "password": ["input[name='p']"],
+                "username": ["input[name='u']"]
+              },
+              "actions": {
+                "submit": ["button#ambiguous-inputs-go"]
+              }
+            }
+          ]
+        },
         "/forms/login/security-code-multi-input": {
           "forms": [
             {
