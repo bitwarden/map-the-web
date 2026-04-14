@@ -92,15 +92,19 @@ if (hasErrors) {
 // Step 3: Optimize and Build Maps
 
 const buildId = process.env.BUILD_ID || `local-${Date.now()}`;
-const gitSha = process.env.GITHUB_SHA || (() => {
-  try {
-    const sha = execSync("git rev-parse HEAD", { encoding: "utf-8" }).trim();
-    const dirty = execSync("git status --porcelain", { encoding: "utf-8" }).trim();
-    return dirty ? `${sha}-dirty` : sha;
-  } catch {
-    return "unknown";
-  }
-})();
+const gitSha =
+  process.env.GITHUB_SHA ||
+  (() => {
+    try {
+      const sha = execSync("git rev-parse HEAD", { encoding: "utf-8" }).trim();
+      const dirty = execSync("git status --porcelain", {
+        encoding: "utf-8",
+      }).trim();
+      return dirty ? `${sha}-dirty` : sha;
+    } catch {
+      return "unknown";
+    }
+  })();
 
 const manifest = {
   buildId,
