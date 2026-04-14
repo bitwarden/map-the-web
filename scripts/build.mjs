@@ -1,3 +1,4 @@
+import { execSync } from "child_process";
 import { readFileSync, writeFileSync, mkdirSync, rmSync, cpSync } from "fs";
 import { createHash } from "crypto";
 import { basename, dirname, join, relative } from "path";
@@ -91,7 +92,15 @@ if (hasErrors) {
 // Step 3: Optimize and Build Maps
 
 const buildId = process.env.BUILD_ID || `local-${Date.now()}`;
-const gitSha = process.env.GITHUB_SHA || "unknown";
+const gitSha = process.env.GITHUB_SHA || (() => {
+  try {
+    const sha = execSync("git rev-parse HEAD", { encoding: "utf-8" }).trim();
+    const dirty = execSync("git status --porcelain", { encoding: "utf-8" }).trim();
+    return dirty ? `${sha}-dirty` : sha;
+  } catch {
+    return "unknown";
+  }
+})();
 
 const manifest = {
   buildId,
@@ -122,14 +131,20 @@ for (const map of maps) {
   const outSchemaFile = join(outDir, `${versionedName}.schema.json`);
   cpSync(map.schemaFile, outSchemaFile);
 
-  // Record in manifest (array per map to support multiple schema versions)
+  // Compute content hash for data file
+  const dataHash = createHash("sha256")
+    .update(readFileSync(outDataFile))
+    .digest("hex");
+
+  // Record in manifest (object keyed by version)
   if (!manifest.maps[map.name]) {
-    manifest.maps[map.name] = [];
+    manifest.maps[map.name] = {};
   }
-  manifest.maps[map.name].push({
-    schemaVersion: map.data.schemaVersion,
-    files: [relative(DIST, outDataFile), relative(DIST, outSchemaFile)],
-  });
+  manifest.maps[map.name][`v${majorVersion}`] = {
+    name: basename(outDataFile),
+    cid: `sha256:${dataHash}`,
+    schema: basename(outSchemaFile),
+  };
 
   // Compute checksums
   for (const f of [outDataFile, outSchemaFile]) {
