@@ -106,4 +106,4 @@ jobs:
             --latest \
             dist/manifest.json \
             dist/checksums.sha256 \
-            dist/maps/**/*.json
+            dist/*.v*.json
