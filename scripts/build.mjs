@@ -142,7 +142,7 @@ for (const map of maps) {
     manifest.maps[map.name] = {};
   }
   manifest.maps[map.name][`v${majorVersion}`] = {
-    name: basename(outDataFile),
+    filename: basename(outDataFile),
     cid: `sha256:${dataHash}`,
     schema: basename(outSchemaFile),
   };
