@@ -5,12 +5,6 @@ on:
     tags:
       - "v*"
   workflow_dispatch:
-    inputs:
-      tag:
-        description:
-          "Release tag (e.g. v20260324.1). Leave empty for a dry run."
-        type: string
-        required: false
 
 jobs:
   release:
@@ -41,18 +35,32 @@ jobs:
         id: release-tag
         env:
           GH_REF: ${{ github.ref }}
-          INPUT_TAG: ${{ inputs.tag }}
+          GH_TOKEN: ${{ github.token }}
+          GH_REPO: ${{ github.repository }}
         run: |
           if [[ "$GH_REF" == refs/tags/* ]]; then
             TAG="${GITHUB_REF_NAME}"
-          elif [[ -n "$INPUT_TAG" ]]; then
-            TAG="$INPUT_TAG"
           else
-            TAG=""
+            TODAY="v$(date -u +%Y%m%d)"
+            # Find the highest run number for today's date prefix
+            LATEST=$(gh api "repos/$GH_REPO/git/matching-refs/tags/${TODAY}." \
+              --jq '.[].ref' 2>/dev/null \
+              | sed 's|refs/tags/||' \
+              | sort -t. -k2 -n \
+              | tail -1)
+
+            if [[ -n "$LATEST" ]]; then
+              LAST_RUN="${LATEST##*.}"
+              NEXT_RUN=$((LAST_RUN + 1))
+            else
+              NEXT_RUN=1
+            fi
+
+            TAG="${TODAY}.${NEXT_RUN}"
           fi
 
-          # Validate tag format if set
-          if [[ -n "$TAG" && ! "$TAG" =~ ^v[0-9]{8}\.[0-9]+$ ]]; then
+          # Validate tag format
+          if [[ ! "$TAG" =~ ^v[0-9]{8}\.[0-9]+$ ]]; then
             echo "::error::Invalid tag format: '$TAG'. Expected v<YYYYMMDD>.<run> (e.g. v20260324.1)"
             exit 1
           fi
@@ -60,7 +68,7 @@ jobs:
           echo "tag=$TAG" >> "$GITHUB_OUTPUT"
 
       - name: Create tag
-        if: inputs.tag != '' && !startsWith(github.ref, 'refs/tags/')
+        if: ${{ !startsWith(github.ref, 'refs/tags/') }}
         env:
           GH_TOKEN: ${{ github.token }}
           GH_REPO: ${{ github.repository }}
@@ -73,9 +81,7 @@ jobs:
       - name: Build
         run: npm run build
         env:
-          BUILD_ID:
-            ${{ steps.release-tag.outputs.tag || format('dry-run-{0}',
-            github.run_number) }}
+          BUILD_ID: ${{ steps.release-tag.outputs.tag }}
 
       - name: Upload build artifacts
         uses: actions/upload-artifact@ea165f8d65b6e75b540449e92b4886f43607fa02 # v4.6.2
@@ -84,7 +90,6 @@ jobs:
           path: dist/
 
       - name: Create release
-        if: steps.release-tag.outputs.tag != ''
         env:
           GH_TOKEN: ${{ github.token }}
           RELEASE_TAG: ${{ steps.release-tag.outputs.tag }}
