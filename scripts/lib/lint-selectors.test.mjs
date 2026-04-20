@@ -539,6 +539,69 @@ describe("state-dependent pseudo-classes", () => {
 });
 
 // ---------------------------------------------------------------------------
+// Nested fragility inside functional pseudo-classes
+// ---------------------------------------------------------------------------
+
+describe("nested fragility inside functional pseudos", () => {
+  it("warns on a positional pseudo nested inside :not()", () => {
+    const warnings = warningsFor("input#email:not(:nth-child(2))");
+    const positional = warnings.filter((w) =>
+      /Positional pseudo-class/.test(w.message),
+    );
+    assert.equal(positional.length, 1);
+    assert.match(positional[0].message, /:nth-child/);
+  });
+
+  it("warns on a state pseudo nested inside :is()", () => {
+    const warnings = warningsFor("input#email:is(:hover, :focus)");
+    const state = warnings.filter((w) =>
+      /State-dependent pseudo-class/.test(w.message),
+    );
+    assert.equal(state.length, 1);
+  });
+
+  it("warns on a sibling combinator nested inside :has()", () => {
+    const warnings = warningsFor("form#login:has(+ button#submit)");
+    const sibling = warnings.filter((w) =>
+      /Sibling combinator/.test(w.message),
+    );
+    assert.equal(sibling.length, 1);
+  });
+
+  it("warns on a context pseudo nested inside :where()", () => {
+    const warnings = warningsFor("input#email:where(:lang(en))");
+    const context = warnings.filter((w) =>
+      /Context-dependent pseudo-class/.test(w.message),
+    );
+    assert.equal(context.length, 1);
+  });
+
+  it("errors on a pseudo-element nested inside :not()", () => {
+    const errors = errorsFor("input#email:not(::placeholder)");
+    const pseudoEl = errors.filter((e) => /Pseudo-element/.test(e.message));
+    assert.equal(pseudoEl.length, 1);
+  });
+
+  it("errors on a namespaced token nested inside :not()", () => {
+    const errors = errorsFor("input#email:not(svg|rect)");
+    const ns = errors.filter((e) =>
+      /Namespace-qualified token/.test(e.message),
+    );
+    assert.equal(ns.length, 1);
+  });
+
+  it("does not flag a bare element wrapped in :not() as a bare element error", () => {
+    // :not(input) is semantically "not an input", not a target; our target-
+    // identity checks (bare element, class-only, ID-only) stay at top level.
+    const errors = errorsFor("div#wrapper:not(input)");
+    const bareElementErrors = errors.filter((e) =>
+      /Bare element selector/.test(e.message),
+    );
+    assert.equal(bareElementErrors.length, 0);
+  });
+});
+
+// ---------------------------------------------------------------------------
 // Errors: root / shadow-root pseudo-classes
 // ---------------------------------------------------------------------------
 
@@ -737,6 +800,34 @@ describe("duplicate selectors", () => {
     const { warnings } = lintMapData(data);
     const dupes = warnings.filter((w) => /Duplicate/.test(w.message));
     assert.equal(dupes.length, 0);
+  });
+
+  it("reports the duplicate at its real index when a sequence is interleaved", () => {
+    // Original array: [string, [sequence], duplicate-of-first-string]
+    // The duplicate lives at index 2 in the author's file, even though
+    // a non-string sits between the two duplicated strings.
+    const data = {
+      hosts: {
+        "example.com": {
+          forms: [
+            {
+              category: "account-login",
+              fields: {
+                username: [
+                  "input#user",
+                  ["input#otp-0", "input#otp-1"],
+                  "input#user",
+                ],
+              },
+            },
+          ],
+        },
+      },
+    };
+    const { warnings } = lintMapData(data);
+    const dupes = warnings.filter((w) => /Duplicate/.test(w.message));
+    assert.equal(dupes.length, 1);
+    assert.match(dupes[0].location, /\[2\]$/);
   });
 });
 

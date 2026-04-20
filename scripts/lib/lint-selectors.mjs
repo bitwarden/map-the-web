@@ -185,6 +185,29 @@ function combinatorDepth(tokens) {
 }
 
 /**
+ * Walk a token list, yielding every token including those nested inside
+ * functional pseudo-classes (e.g., :not(...), :is(...), :has(...)).
+ * Pseudos with string .data (e.g., :lang("en")) are not descended into.
+ */
+function* walkTokens(tokens) {
+  for (const t of tokens) {
+    yield t;
+    if (t.type === "pseudo" && Array.isArray(t.data)) {
+      for (const subGroup of t.data) {
+        yield* walkTokens(subGroup);
+      }
+    }
+  }
+}
+
+/**
+ * Return a flat array of every token, descending into functional pseudos.
+ */
+function collectAllTokens(tokens) {
+  return [...walkTokens(tokens)];
+}
+
+/**
  * Find positional pseudo-classes in a token list.
  */
 function findPositionalPseudos(tokens) {
@@ -294,6 +317,12 @@ function checkBoundaryCombinator(raw) {
 /**
  * Split a selector string on the >>> boundary combinator, returning the
  * individual CSS segments to parse independently.
+ *
+ * Known limitation: this is a naive string split and will misinterpret ">>>"
+ * if it appears literally inside an attribute value (e.g., `[data-x=">>>"]`).
+ * This has not come up in practice for form selectors; if it does, this
+ * should be replaced with a tokenizing split that respects bracket/quote
+ * regions.
  */
 function splitBoundarySegments(raw) {
   return raw.split(BOUNDARY_COMBINATOR).map((s) => s.trim());
@@ -362,7 +391,11 @@ export function lintSelector(raw, location) {
     // css-what returns an array of selector lists (comma-separated groups).
     // Each group is an array of tokens.
     for (const tokens of parsedSelectors) {
-      const atRuleTags = findAtRuleTags(tokens);
+      // Token-level checks that should also apply inside functional pseudos
+      // (e.g., :not(:nth-child(2)) still carries positional fragility).
+      const allTokens = collectAllTokens(tokens);
+
+      const atRuleTags = findAtRuleTags(allTokens);
       if (atRuleTags.length > 0) {
         errors.push({
           location: formattedLocation,
@@ -373,7 +406,7 @@ export function lintSelector(raw, location) {
         });
       }
 
-      const pseudoElements = findPseudoElements(tokens);
+      const pseudoElements = findPseudoElements(allTokens);
       if (pseudoElements.length > 0) {
         errors.push({
           location: formattedLocation,
@@ -384,7 +417,7 @@ export function lintSelector(raw, location) {
         });
       }
 
-      const namespaced = findNamespacedTokens(tokens);
+      const namespaced = findNamespacedTokens(allTokens);
       if (namespaced.length > 0) {
         errors.push({
           location: formattedLocation,
@@ -395,7 +428,7 @@ export function lintSelector(raw, location) {
         });
       }
 
-      const rootPseudos = findRootPseudos(tokens);
+      const rootPseudos = findRootPseudos(allTokens);
       if (rootPseudos.length > 0) {
         errors.push({
           location: formattedLocation,
@@ -406,6 +439,8 @@ export function lintSelector(raw, location) {
         });
       }
 
+      // Target-identity checks apply to the top-level compound only;
+      // :not(input) means "not an input", which is not the same as "target an input".
       if (hasUniversal(tokens)) {
         errors.push({
           location: formattedLocation,
@@ -432,7 +467,7 @@ export function lintSelector(raw, location) {
         });
       }
 
-      // Deep nesting warning
+      // Deep nesting warning — top-level structural concern only.
       const depth = combinatorDepth(tokens);
       if (depth > MAX_COMBINATOR_DEPTH) {
         warnings.push({
@@ -446,7 +481,7 @@ export function lintSelector(raw, location) {
       }
 
       // Positional pseudo-class warning
-      const positionals = findPositionalPseudos(tokens);
+      const positionals = findPositionalPseudos(allTokens);
       if (positionals.length > 0) {
         warnings.push({
           location: formattedLocation,
@@ -458,7 +493,7 @@ export function lintSelector(raw, location) {
       }
 
       // State-dependent pseudo-class warning
-      const statePseudos = findStatePseudos(tokens);
+      const statePseudos = findStatePseudos(allTokens);
       if (statePseudos.length > 0) {
         warnings.push({
           location: formattedLocation,
@@ -471,7 +506,7 @@ export function lintSelector(raw, location) {
       }
 
       // Context-dependent pseudo-class warning
-      const contextPseudos = findContextDependentPseudos(tokens);
+      const contextPseudos = findContextDependentPseudos(allTokens);
       if (contextPseudos.length > 0) {
         warnings.push({
           location: formattedLocation,
@@ -484,7 +519,7 @@ export function lintSelector(raw, location) {
       }
 
       // Sibling combinator warning
-      const siblingCombinators = findSiblingCombinators(tokens);
+      const siblingCombinators = findSiblingCombinators(allTokens);
       if (siblingCombinators.length > 0) {
         warnings.push({
           location: formattedLocation,
@@ -613,9 +648,10 @@ function lintSelectorArray(selectors, context, errors, warnings) {
  * Lint a compositeSelectorArray (items can be strings or arrays of strings).
  */
 function lintCompositeSelectorArray(selectors, context, errors, warnings) {
-  // Duplicate check on top-level string entries only
-  const topLevelStrings = selectors.filter((s) => typeof s === "string");
-  checkDuplicates(topLevelStrings, context, warnings);
+  // Duplicate check on top-level string entries. Pass the original array so
+  // the reported selectorIndex reflects the author's file position; nested
+  // sequence arrays are skipped by `checkDuplicates`'s non-string guard.
+  checkDuplicates(selectors, context, warnings);
 
   for (let i = 0; i < selectors.length; i++) {
     const item = selectors[i];
