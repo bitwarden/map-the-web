@@ -504,6 +504,118 @@ describe("state-dependent pseudo-classes", () => {
     );
     assert.equal(stateWarnings.length, 0);
   });
+
+  it("warns on :modal", () => {
+    const warnings = warningsFor("dialog#confirm:modal");
+    const stateWarnings = warnings.filter((w) =>
+      /State-dependent pseudo-class/.test(w.message),
+    );
+    assert.equal(stateWarnings.length, 1);
+  });
+
+  it("warns on :open", () => {
+    const warnings = warningsFor("details#faq:open");
+    const stateWarnings = warnings.filter((w) =>
+      /State-dependent pseudo-class/.test(w.message),
+    );
+    assert.equal(stateWarnings.length, 1);
+  });
+
+  it("warns on :popover-open", () => {
+    const warnings = warningsFor("div#menu:popover-open");
+    const stateWarnings = warnings.filter((w) =>
+      /State-dependent pseudo-class/.test(w.message),
+    );
+    assert.equal(stateWarnings.length, 1);
+  });
+
+  it("warns on :fullscreen", () => {
+    const warnings = warningsFor("video#player:fullscreen");
+    const stateWarnings = warnings.filter((w) =>
+      /State-dependent pseudo-class/.test(w.message),
+    );
+    assert.equal(stateWarnings.length, 1);
+  });
+});
+
+// ---------------------------------------------------------------------------
+// Errors: root / shadow-root pseudo-classes
+// ---------------------------------------------------------------------------
+
+describe("root / shadow-root pseudo-classes", () => {
+  it("reports an error for :host", () => {
+    const errors = errorsFor(":host");
+    const rootErrors = errors.filter((e) =>
+      /Root-context pseudo-class/.test(e.message),
+    );
+    assert.equal(rootErrors.length, 1);
+    assert.match(rootErrors[0].message, /:host/);
+  });
+
+  it("reports an error for :host() with an argument", () => {
+    const errors = errorsFor(":host(.login)");
+    const rootErrors = errors.filter((e) =>
+      /Root-context pseudo-class/.test(e.message),
+    );
+    assert.equal(rootErrors.length, 1);
+  });
+
+  it("reports an error for :host-context()", () => {
+    const errors = errorsFor(":host-context(main)");
+    const rootErrors = errors.filter((e) =>
+      /Root-context pseudo-class/.test(e.message),
+    );
+    assert.equal(rootErrors.length, 1);
+  });
+
+  it("reports an error for :root", () => {
+    const errors = errorsFor(":root input#email");
+    const rootErrors = errors.filter((e) =>
+      /Root-context pseudo-class/.test(e.message),
+    );
+    assert.equal(rootErrors.length, 1);
+    assert.match(rootErrors[0].message, /:root/);
+  });
+});
+
+// ---------------------------------------------------------------------------
+// Warnings: context-dependent pseudo-classes
+// ---------------------------------------------------------------------------
+
+describe("context-dependent pseudo-classes", () => {
+  it("warns on :scope", () => {
+    const warnings = warningsFor(":scope > input#email");
+    const ctxWarnings = warnings.filter((w) =>
+      /Context-dependent pseudo-class/.test(w.message),
+    );
+    assert.equal(ctxWarnings.length, 1);
+    assert.match(ctxWarnings[0].message, /:scope/);
+  });
+
+  it("warns on :lang()", () => {
+    const warnings = warningsFor("input#email:lang(en)");
+    const ctxWarnings = warnings.filter((w) =>
+      /Context-dependent pseudo-class/.test(w.message),
+    );
+    assert.equal(ctxWarnings.length, 1);
+    assert.match(ctxWarnings[0].message, /:lang/);
+  });
+
+  it("warns on :dir()", () => {
+    const warnings = warningsFor("input#email:dir(ltr)");
+    const ctxWarnings = warnings.filter((w) =>
+      /Context-dependent pseudo-class/.test(w.message),
+    );
+    assert.equal(ctxWarnings.length, 1);
+  });
+
+  it("warns on :defined", () => {
+    const warnings = warningsFor("custom-input#email:defined");
+    const ctxWarnings = warnings.filter((w) =>
+      /Context-dependent pseudo-class/.test(w.message),
+    );
+    assert.equal(ctxWarnings.length, 1);
+  });
 });
 
 // ---------------------------------------------------------------------------

@@ -62,9 +62,32 @@ const STATE_PSEUDOS = new Set([
   "read-write",
   "placeholder-shown",
   "blank",
+  // Dialog / popover / details state
+  "modal",
+  "open",
+  "closed",
+  "popover-open",
+  // Media / viewport state
+  "fullscreen",
+  "picture-in-picture",
   // Tree content state
   "empty",
 ]);
+
+/**
+ * Pseudo-classes that reference a root or shadow-root context rather than a
+ * form field. We cross shadow boundaries with ">>>", so these are redundant
+ * or point at elements that cannot be form fields.
+ */
+const ROOT_PSEUDOS = new Set(["host", "host-context", "root"]);
+
+/**
+ * Pseudo-classes whose behavior depends on the query-time context
+ * (caller's scope, document language/direction, custom element registration).
+ * Their outcomes are not controlled by the map and make selectors less
+ * portable across consumers.
+ */
+const CONTEXT_DEPENDENT_PSEUDOS = new Set(["scope", "lang", "dir", "defined"]);
 
 // ---------------------------------------------------------------------------
 // Helpers
@@ -176,6 +199,24 @@ function findPositionalPseudos(tokens) {
 function findStatePseudos(tokens) {
   return tokens
     .filter((t) => t.type === "pseudo" && STATE_PSEUDOS.has(t.name))
+    .map((t) => `:${t.name}`);
+}
+
+/**
+ * Find root / shadow-root pseudo-classes in a token list.
+ */
+function findRootPseudos(tokens) {
+  return tokens
+    .filter((t) => t.type === "pseudo" && ROOT_PSEUDOS.has(t.name))
+    .map((t) => `:${t.name}`);
+}
+
+/**
+ * Find context-dependent pseudo-classes in a token list.
+ */
+function findContextDependentPseudos(tokens) {
+  return tokens
+    .filter((t) => t.type === "pseudo" && CONTEXT_DEPENDENT_PSEUDOS.has(t.name))
     .map((t) => `:${t.name}`);
 }
 
@@ -354,6 +395,17 @@ export function lintSelector(raw, location) {
         });
       }
 
+      const rootPseudos = findRootPseudos(tokens);
+      if (rootPseudos.length > 0) {
+        errors.push({
+          location: formattedLocation,
+          selector: raw,
+          message:
+            `Root-context pseudo-class ${rootPseudos.join(", ")} does not represent a form field. ` +
+            `Target the field element directly; use ">>>" to cross shadow boundaries when needed.`,
+        });
+      }
+
       if (hasUniversal(tokens)) {
         errors.push({
           location: formattedLocation,
@@ -414,6 +466,19 @@ export function lintSelector(raw, location) {
           message:
             `State-dependent pseudo-class ${statePseudos.join(", ")} matches only when the element is in a specific state; ` +
             `the field may not be in that state when the selector is consumed. ` +
+            `Prefer targeting by stable attributes when possible.`,
+        });
+      }
+
+      // Context-dependent pseudo-class warning
+      const contextPseudos = findContextDependentPseudos(tokens);
+      if (contextPseudos.length > 0) {
+        warnings.push({
+          location: formattedLocation,
+          selector: raw,
+          message:
+            `Context-dependent pseudo-class ${contextPseudos.join(", ")} depends on how the consumer queries the page ` +
+            `(scope, document language/direction, custom element registration). ` +
             `Prefer targeting by stable attributes when possible.`,
         });
       }
