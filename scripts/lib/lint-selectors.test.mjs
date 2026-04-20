@@ -715,6 +715,202 @@ describe("ID-only target", () => {
 });
 
 // ---------------------------------------------------------------------------
+// Errors: empty-value substring / prefix / suffix matchers
+// ---------------------------------------------------------------------------
+
+describe("empty-value attribute matchers", () => {
+  it("errors on [attr*='']", () => {
+    const errors = errorsFor("input[name*='']");
+    const substring = errors.filter((e) =>
+      /substring\/prefix\/suffix operator/.test(e.message),
+    );
+    assert.equal(substring.length, 1);
+    assert.match(substring[0].message, /\[name\*=''\]/);
+  });
+
+  it("errors on [attr^='']", () => {
+    const errors = errorsFor("input[id^='']");
+    const substring = errors.filter((e) =>
+      /substring\/prefix\/suffix operator/.test(e.message),
+    );
+    assert.equal(substring.length, 1);
+    assert.match(substring[0].message, /\[id\^=''\]/);
+  });
+
+  it("errors on [attr$='']", () => {
+    const errors = errorsFor("input[id$='']");
+    const substring = errors.filter((e) =>
+      /substring\/prefix\/suffix operator/.test(e.message),
+    );
+    assert.equal(substring.length, 1);
+    assert.match(substring[0].message, /\[id\$=''\]/);
+  });
+
+  it("does not flag a non-empty substring match", () => {
+    const { errors, warnings } = lintSelector("input[name*='user']", loc());
+    assert.equal(errors.length, 0);
+    assert.equal(warnings.length, 0);
+  });
+
+  it("does not flag the existence matcher [attr]", () => {
+    const { errors, warnings } = lintSelector("input[name]", loc());
+    assert.equal(errors.length, 0);
+    assert.equal(warnings.length, 0);
+  });
+
+  it("does not flag exact-match empty value [attr='']", () => {
+    // `[name='']` has a specific meaning (matches when attr value is
+    // literally the empty string) — not the same as "[name]".
+    const { errors, warnings } = lintSelector("input[name='']", loc());
+    assert.equal(errors.length, 0);
+    assert.equal(warnings.length, 0);
+  });
+
+  it("does not flag when nested inside :not()", () => {
+    // :not([class*='']) is a valid construct meaning "without a class attr";
+    // assume the author knows what they're doing.
+    const errors = errorsFor("input#email:not([class*=''])");
+    const substring = errors.filter((e) =>
+      /substring\/prefix\/suffix operator/.test(e.message),
+    );
+    assert.equal(substring.length, 0);
+  });
+
+  it("errors on [attr~=''] as an always-false matcher", () => {
+    const errors = errorsFor("input[class~='']");
+    const alwaysFalse = errors.filter((e) =>
+      /matches no elements/.test(e.message),
+    );
+    assert.equal(alwaysFalse.length, 1);
+    assert.match(alwaysFalse[0].message, /\[class~=''\]/);
+  });
+
+  it("does not flag a non-empty word match with ~=", () => {
+    const { errors, warnings } = lintSelector("input[class~='primary']", loc());
+    assert.equal(errors.length, 0);
+    assert.equal(warnings.length, 0);
+  });
+});
+
+// ---------------------------------------------------------------------------
+// Errors: empty-or-whitespace-only selector
+// ---------------------------------------------------------------------------
+
+describe("empty-or-whitespace-only selector", () => {
+  it("errors on a whitespace-only selector", () => {
+    const errors = errorsFor("   ");
+    const empty = errors.filter((e) =>
+      /Selector is empty or contains only whitespace/.test(e.message),
+    );
+    assert.equal(empty.length, 1);
+  });
+
+  it("errors on a tab-only selector", () => {
+    const errors = errorsFor("\t");
+    const empty = errors.filter((e) =>
+      /Selector is empty or contains only whitespace/.test(e.message),
+    );
+    assert.equal(empty.length, 1);
+  });
+
+  it("errors on an empty segment between >>> combinators", () => {
+    // ">>> input" is caught by the boundary-at-start check. A middle empty
+    // segment between two >>> combinators falls through to the
+    // parsedSelectors.length === 0 branch.
+    const errors = errorsFor("input#a >>>    >>> input#b");
+    const emptySegment = errors.filter((e) =>
+      /Segment between ">>>"/.test(e.message),
+    );
+    assert.equal(emptySegment.length, 1);
+  });
+});
+
+// ---------------------------------------------------------------------------
+// Warnings: container selector targets a non-container tag
+// ---------------------------------------------------------------------------
+
+describe("container non-container target", () => {
+  function containerLoc() {
+    return {
+      host: "example.com",
+      category: "account-login",
+      kind: "container",
+      key: "container",
+      selectorIndex: 0,
+    };
+  }
+
+  it("warns when a container targets <input>", () => {
+    const { warnings } = lintSelector("input#email", containerLoc());
+    const misuse = warnings.filter((w) =>
+      /Container selector targets/.test(w.message),
+    );
+    assert.equal(misuse.length, 1);
+    assert.match(misuse[0].message, /<input>/);
+  });
+
+  it("warns when a container targets <button>", () => {
+    const { warnings } = lintSelector("button#submit", containerLoc());
+    const misuse = warnings.filter((w) =>
+      /Container selector targets/.test(w.message),
+    );
+    assert.equal(misuse.length, 1);
+  });
+
+  it("warns when a container targets <option>", () => {
+    const { warnings } = lintSelector("option#choice", containerLoc());
+    const misuse = warnings.filter((w) =>
+      /Container selector targets/.test(w.message),
+    );
+    assert.equal(misuse.length, 1);
+  });
+
+  it("does not warn when a container targets a wrapping element", () => {
+    for (const ok of ["form#login", "div#login-wrapper", "section#auth"]) {
+      const { warnings } = lintSelector(ok, containerLoc());
+      const misuse = warnings.filter((w) =>
+        /Container selector targets/.test(w.message),
+      );
+      assert.equal(misuse.length, 0, `unexpected misuse warning for: ${ok}`);
+    }
+  });
+
+  it("does not warn on the same selector under fields.*", () => {
+    const { warnings } = lintSelector("input#email", loc());
+    const misuse = warnings.filter((w) =>
+      /Container selector targets/.test(w.message),
+    );
+    assert.equal(misuse.length, 0);
+  });
+
+  it("only inspects the final >>> segment", () => {
+    // Left side is an iframe (not in the denylist); final target is form.
+    // The intermediate <input> in a chain like this wouldn't happen in
+    // practice; this just confirms we don't falsely flag intermediates.
+    const { warnings } = lintSelector(
+      "iframe#auth-frame >>> form#login",
+      containerLoc(),
+    );
+    const misuse = warnings.filter((w) =>
+      /Container selector targets/.test(w.message),
+    );
+    assert.equal(misuse.length, 0);
+  });
+
+  it("does flag when the final >>> segment targets a non-container", () => {
+    const { warnings } = lintSelector(
+      "iframe#auth-frame >>> input#email",
+      containerLoc(),
+    );
+    const misuse = warnings.filter((w) =>
+      /Container selector targets/.test(w.message),
+    );
+    assert.equal(misuse.length, 1);
+    assert.match(misuse[0].message, /<input>/);
+  });
+});
+
+// ---------------------------------------------------------------------------
 // Warnings: selector length
 // ---------------------------------------------------------------------------
 
@@ -737,11 +933,11 @@ describe("selector length", () => {
 });
 
 // ---------------------------------------------------------------------------
-// Warnings: duplicates
+// Errors: duplicates
 // ---------------------------------------------------------------------------
 
 describe("duplicate selectors", () => {
-  it("warns on duplicate selectors within a field's selector array", () => {
+  it("errors on duplicate selectors within a field's selector array", () => {
     const data = {
       hosts: {
         "example.com": {
@@ -756,12 +952,12 @@ describe("duplicate selectors", () => {
         },
       },
     };
-    const { warnings } = lintMapData(data);
-    const dupes = warnings.filter((w) => /Duplicate/.test(w.message));
+    const { errors } = lintMapData(data);
+    const dupes = errors.filter((e) => /Duplicate/.test(e.message));
     assert.equal(dupes.length, 1);
   });
 
-  it("warns on duplicates within a selector sequence", () => {
+  it("errors on duplicates within a selector sequence", () => {
     const data = {
       hosts: {
         "example.com": {
@@ -776,12 +972,12 @@ describe("duplicate selectors", () => {
         },
       },
     };
-    const { warnings } = lintMapData(data);
-    const dupes = warnings.filter((w) => /Duplicate/.test(w.message));
+    const { errors } = lintMapData(data);
+    const dupes = errors.filter((e) => /Duplicate/.test(e.message));
     assert.equal(dupes.length, 1);
   });
 
-  it("does not warn on the same selector in different fields", () => {
+  it("does not flag the same selector in different fields", () => {
     const data = {
       hosts: {
         "example.com": {
@@ -797,8 +993,10 @@ describe("duplicate selectors", () => {
         },
       },
     };
-    const { warnings } = lintMapData(data);
-    const dupes = warnings.filter((w) => /Duplicate/.test(w.message));
+    const { errors, warnings } = lintMapData(data);
+    const dupes = [...errors, ...warnings].filter((w) =>
+      /Duplicate/.test(w.message),
+    );
     assert.equal(dupes.length, 0);
   });
 
@@ -824,8 +1022,8 @@ describe("duplicate selectors", () => {
         },
       },
     };
-    const { warnings } = lintMapData(data);
-    const dupes = warnings.filter((w) => /Duplicate/.test(w.message));
+    const { errors } = lintMapData(data);
+    const dupes = errors.filter((e) => /Duplicate/.test(e.message));
     assert.equal(dupes.length, 1);
     assert.match(dupes[0].location, /\[2\]$/);
   });

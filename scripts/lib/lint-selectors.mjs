@@ -89,6 +89,47 @@ const ROOT_PSEUDOS = new Set(["host", "host-context", "root"]);
  */
 const CONTEXT_DEPENDENT_PSEUDOS = new Set(["scope", "lang", "dir", "defined"]);
 
+/**
+ * Element tags that are unlikely to be the target of a `container` selector
+ * (leaf form controls, void elements, head-only elements). Hitting one of
+ * these in a container usually indicates a field selector placed in the
+ * wrong key.
+ */
+const NON_CONTAINER_TAGS = new Set([
+  "input",
+  "select",
+  "textarea",
+  "button",
+  "option",
+  "optgroup",
+  "a",
+  "img",
+  "br",
+  "hr",
+  "script",
+  "style",
+  "meta",
+  "link",
+  "title",
+]);
+
+/**
+ * Attribute-matcher actions (css-what names) that, with an empty value, are
+ * equivalent to the existence check `[attr]`. Authors who write these almost
+ * always mean something else.
+ */
+const EXISTENCE_EQUIVALENT_ACTIONS = new Map([
+  ["any", "*="],
+  ["start", "^="],
+  ["end", "$="],
+]);
+
+/**
+ * Attribute-matcher actions (css-what names) that, with an empty value, match
+ * no elements at all. `~=` requires a non-empty whitespace-separated word.
+ */
+const ALWAYS_FALSE_EMPTY_ACTIONS = new Map([["element", "~="]]);
+
 // ---------------------------------------------------------------------------
 // Helpers
 // ---------------------------------------------------------------------------
@@ -277,6 +318,49 @@ function findNamespacedTokens(tokens) {
 }
 
 /**
+ * If the target compound's tag is in NON_CONTAINER_TAGS, return that tag
+ * name; otherwise return null. Used only when linting `container` entries.
+ */
+function findNonContainerTarget(tokens) {
+  const compound = getLastCompound(tokens);
+  const tag = compound.find((t) => t.type === "tag");
+  if (tag && NON_CONTAINER_TAGS.has(tag.name)) {
+    return tag.name;
+  }
+  return null;
+}
+
+/**
+ * Find attribute matchers that use an operator equivalent to existence check
+ * when the value is empty (*=, ^=, $= with empty value).
+ */
+function findExistenceEquivalentEmpty(tokens) {
+  return tokens
+    .filter(
+      (t) =>
+        t.type === "attribute" &&
+        EXISTENCE_EQUIVALENT_ACTIONS.has(t.action) &&
+        t.value === "",
+    )
+    .map((t) => `[${t.name}${EXISTENCE_EQUIVALENT_ACTIONS.get(t.action)}'']`);
+}
+
+/**
+ * Find attribute matchers that match no elements when the value is empty
+ * (~= with empty value).
+ */
+function findAlwaysFalseEmpty(tokens) {
+  return tokens
+    .filter(
+      (t) =>
+        t.type === "attribute" &&
+        ALWAYS_FALSE_EMPTY_ACTIONS.has(t.action) &&
+        t.value === "",
+    )
+    .map((t) => `[${t.name}${ALWAYS_FALSE_EMPTY_ACTIONS.get(t.action)}'']`);
+}
+
+/**
  * Return which sibling combinators (if any) appear in a token list.
  */
 function findSiblingCombinators(tokens) {
@@ -340,6 +424,19 @@ export function lintSelector(raw, location) {
   const warnings = [];
   const formattedLocation = formatLocation(location);
 
+  // Empty-or-whitespace-only selector: schema's minLength:1 allows these
+  // through (e.g. "   "), but they describe nothing.
+  if (raw.trim() === "") {
+    errors.push({
+      location: formattedLocation,
+      selector: raw,
+      message:
+        `Selector is empty or contains only whitespace. ` +
+        `Remove the entry or provide a valid selector.`,
+    });
+    return { errors, warnings };
+  }
+
   // Length warning
   if (raw.length > MAX_SELECTOR_LENGTH) {
     warnings.push({
@@ -364,7 +461,9 @@ export function lintSelector(raw, location) {
 
   // Parse and check each segment between >>> boundaries
   const segments = splitBoundarySegments(raw);
-  for (const segment of segments) {
+  for (let segIndex = 0; segIndex < segments.length; segIndex++) {
+    const segment = segments[segIndex];
+    const isFinalSegment = segIndex === segments.length - 1;
     let parsedSelectors;
     try {
       parsedSelectors = parseCss(segment);
@@ -373,6 +472,20 @@ export function lintSelector(raw, location) {
         location: formattedLocation,
         selector: raw,
         message: `Invalid CSS syntax in segment "${segment}" - ${e.message}`,
+      });
+      continue;
+    }
+
+    // An empty parse result means the segment is empty or whitespace-only
+    // (css-what returns [] rather than throwing for these). In a >>> chain
+    // this manifests as ">>>" with blank content between two crossings.
+    if (parsedSelectors.length === 0) {
+      errors.push({
+        location: formattedLocation,
+        selector: raw,
+        message:
+          `Segment between ">>>" combinators is empty or contains only whitespace. ` +
+          `Remove the extra ">>>" or provide a selector for the boundary crossing.`,
       });
       continue;
     }
@@ -540,6 +653,48 @@ export function lintSelector(raw, location) {
             `Prefer including the element type (e.g., \`input#email\`) for added specificity and in cases where ids are (inappropriately) duplicated.`,
         });
       }
+
+      // Empty-value attribute matcher errors (top-level only; nested
+      // inside :not() may be intentional — e.g., "has no class attr").
+      const existenceEq = findExistenceEquivalentEmpty(tokens);
+      if (existenceEq.length > 0) {
+        const firstAttr = existenceEq[0].match(/\[(\w+)/)?.[1] ?? "attr";
+        errors.push({
+          location: formattedLocation,
+          selector: raw,
+          message:
+            `Attribute matcher ${existenceEq.join(", ")} uses a substring/prefix/suffix operator with an empty value, ` +
+            `which is equivalent to the existence check \`[${firstAttr}]\`. ` +
+            `Either drop the operator and value, or provide a non-empty value to match against.`,
+        });
+      }
+
+      const alwaysFalse = findAlwaysFalseEmpty(tokens);
+      if (alwaysFalse.length > 0) {
+        errors.push({
+          location: formattedLocation,
+          selector: raw,
+          message:
+            `Attribute matcher ${alwaysFalse.join(", ")} uses \`~=\` with an empty value, ` +
+            `which requires a non-empty whitespace-separated word and so matches no elements. ` +
+            `Either drop the operator and value, or provide a non-empty word to match against.`,
+        });
+      }
+
+      // Container-misuse warning: only when linting a `container` entry,
+      // and only on the final segment (the actual target after any >>>).
+      if (location.kind === "container" && isFinalSegment) {
+        const badTag = findNonContainerTarget(tokens);
+        if (badTag) {
+          warnings.push({
+            location: formattedLocation,
+            selector: raw,
+            message:
+              `Container selector targets <${badTag}>, which is not typically a wrapping element. ` +
+              `If this selector identifies a form field, move it under \`fields\`; if it identifies an action, move it under \`actions\`.`,
+          });
+        }
+      }
     }
   }
 
@@ -635,7 +790,7 @@ function lintForms(forms, context, errors, warnings) {
  * Lint a selectorArray (array of selector strings).
  */
 function lintSelectorArray(selectors, context, errors, warnings) {
-  checkDuplicates(selectors, context, warnings);
+  checkDuplicates(selectors, context, errors);
 
   for (let i = 0; i < selectors.length; i++) {
     const result = lintSelector(selectors[i], { ...context, selectorIndex: i });
@@ -651,7 +806,7 @@ function lintCompositeSelectorArray(selectors, context, errors, warnings) {
   // Duplicate check on top-level string entries. Pass the original array so
   // the reported selectorIndex reflects the author's file position; nested
   // sequence arrays are skipped by `checkDuplicates`'s non-string guard.
-  checkDuplicates(selectors, context, warnings);
+  checkDuplicates(selectors, context, errors);
 
   for (let i = 0; i < selectors.length; i++) {
     const item = selectors[i];
@@ -661,7 +816,7 @@ function lintCompositeSelectorArray(selectors, context, errors, warnings) {
       warnings.push(...result.warnings);
     } else if (Array.isArray(item)) {
       // Selector sequence - lint each entry in the sequence
-      checkDuplicates(item, { ...context, selectorIndex: i }, warnings);
+      checkDuplicates(item, { ...context, selectorIndex: i }, errors);
       for (let j = 0; j < item.length; j++) {
         const result = lintSelector(item[j], {
           ...context,
@@ -678,7 +833,7 @@ function lintCompositeSelectorArray(selectors, context, errors, warnings) {
 /**
  * Check for duplicate selector strings within an array.
  */
-function checkDuplicates(selectors, context, warnings) {
+function checkDuplicates(selectors, context, errors) {
   const seen = new Set();
   for (let i = 0; i < selectors.length; i++) {
     const s = typeof selectors[i] === "string" ? selectors[i] : null;
@@ -690,7 +845,7 @@ function checkDuplicates(selectors, context, warnings) {
         ...context,
         selectorIndex: i,
       });
-      warnings.push({
+      errors.push({
         location: formattedLocation,
         selector: s,
         message: `Duplicate selector "${s}" in the same array. This is likely a copy-paste error.`,
