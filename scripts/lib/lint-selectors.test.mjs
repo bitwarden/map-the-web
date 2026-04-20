@@ -888,6 +888,54 @@ describe("lintMapData traversal", () => {
 });
 
 // ---------------------------------------------------------------------------
+// Attribute matchers: explicitly supported
+// ---------------------------------------------------------------------------
+
+describe("attribute matchers are supported", () => {
+  const matchers = [
+    { pattern: "[attr]", selector: "[name]" },
+    { pattern: "[attr=value]", selector: "[name='username']" },
+    { pattern: "[attr*=value]", selector: "[name*='user']" },
+    { pattern: "[attr^=value]", selector: "[id^='field-']" },
+    { pattern: "[attr$=value]", selector: "[id$='-input']" },
+    { pattern: "[attr~=value]", selector: "[class~='primary']" },
+    { pattern: "[attr|=value]", selector: "[lang|='en']" },
+    { pattern: "[attr=value i]", selector: "[name='username' i]" },
+  ];
+
+  for (const { pattern, selector } of matchers) {
+    it(`allows ${pattern} matcher: ${selector}`, () => {
+      const { errors, warnings } = lintSelector(`input${selector}`, loc());
+      assert.equal(errors.length, 0, `unexpected error: ${errors[0]?.message}`);
+      assert.equal(
+        warnings.length,
+        0,
+        `unexpected warning: ${warnings[0]?.message}`,
+      );
+    });
+  }
+
+  it("allows attribute matchers as the sole qualifier on an element", () => {
+    const { errors, warnings } = lintSelector(
+      "input[autocomplete='new-password']",
+      loc(),
+    );
+    assert.equal(errors.length, 0);
+    assert.equal(warnings.length, 0);
+  });
+
+  it("allows combining attribute matchers with other qualifiers", () => {
+    const { errors, warnings } = lintSelector(
+      // `required` attribute not to be confused with `:required` pseudo-class
+      "input#email[type^='email-'][required]",
+      loc(),
+    );
+    assert.equal(errors.length, 0);
+    assert.equal(warnings.length, 0);
+  });
+});
+
+// ---------------------------------------------------------------------------
 // Clean selectors: no false positives
 // ---------------------------------------------------------------------------
 
