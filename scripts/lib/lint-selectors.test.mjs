@@ -274,9 +274,235 @@ describe("positional pseudo-classes", () => {
     assert.match(warnings[0].message, /:last-of-type/);
   });
 
-  it("does not warn on non-positional pseudos", () => {
-    const warnings = warningsFor("input:focus");
+  it("does not warn on functional pseudos", () => {
+    const warnings = warningsFor("input:not([type='hidden'])");
     assert.equal(warnings.length, 0);
+  });
+});
+
+// ---------------------------------------------------------------------------
+// Errors: comma-separated selector list
+// ---------------------------------------------------------------------------
+
+describe("comma-separated selector list", () => {
+  it("reports an error for a top-level comma list", () => {
+    const errors = errorsFor("input#a, input#b");
+    const commaErrors = errors.filter((e) =>
+      /Comma-separated selector list/.test(e.message),
+    );
+    assert.equal(commaErrors.length, 1);
+  });
+
+  it("reports the comma error once regardless of how many alternatives", () => {
+    const errors = errorsFor("input#a, input#b, input#c");
+    const commaErrors = errors.filter((e) =>
+      /Comma-separated selector list/.test(e.message),
+    );
+    assert.equal(commaErrors.length, 1);
+  });
+
+  it("does not flag a comma inside an attribute value", () => {
+    const errors = errorsFor("input[data-tags='one,two']");
+    assert.equal(errors.length, 0);
+  });
+});
+
+// ---------------------------------------------------------------------------
+// Errors: pseudo-elements
+// ---------------------------------------------------------------------------
+
+describe("pseudo-elements", () => {
+  it("reports an error for ::before", () => {
+    const errors = errorsFor("input::before");
+    assert.equal(errors.length, 1);
+    assert.match(errors[0].message, /Pseudo-element/);
+    assert.match(errors[0].message, /::before/);
+  });
+
+  it("reports an error for ::placeholder", () => {
+    const errors = errorsFor("input::placeholder");
+    assert.equal(errors.length, 1);
+    assert.match(errors[0].message, /::placeholder/);
+  });
+
+  it("reports an error for ::after", () => {
+    const errors = errorsFor("input::after");
+    assert.equal(errors.length, 1);
+    assert.match(errors[0].message, /::after/);
+  });
+
+  it("reports a single pseudo-element error for a bare ::before", () => {
+    const errors = errorsFor("::before");
+    assert.equal(errors.length, 1);
+    assert.match(errors[0].message, /Pseudo-element/);
+    assert.match(errors[0].message, /::before/);
+  });
+});
+
+// ---------------------------------------------------------------------------
+// Errors: at-rule tokens
+// ---------------------------------------------------------------------------
+
+describe("at-rule tokens", () => {
+  it("reports an error for @media", () => {
+    const errors = errorsFor("@media screen");
+    const atRuleErrors = errors.filter((e) => /At-rule token/.test(e.message));
+    assert.equal(atRuleErrors.length, 1);
+    assert.match(atRuleErrors[0].message, /@media/);
+  });
+
+  it("reports an error for @keyframes", () => {
+    const errors = errorsFor("@keyframes fade");
+    const atRuleErrors = errors.filter((e) => /At-rule token/.test(e.message));
+    assert.equal(atRuleErrors.length, 1);
+  });
+});
+
+// ---------------------------------------------------------------------------
+// Errors: namespace separator
+// ---------------------------------------------------------------------------
+
+describe("namespace separator", () => {
+  it("reports an error for a named namespace prefix on a tag", () => {
+    const errors = errorsFor("svg|rect");
+    const nsErrors = errors.filter((e) =>
+      /Namespace-qualified token/.test(e.message),
+    );
+    assert.equal(nsErrors.length, 1);
+    assert.match(nsErrors[0].message, /svg\|rect/);
+  });
+
+  it("reports an error for a redundant html| prefix", () => {
+    const errors = errorsFor("html|input");
+    const nsErrors = errors.filter((e) =>
+      /Namespace-qualified token/.test(e.message),
+    );
+    assert.equal(nsErrors.length, 1);
+    assert.match(nsErrors[0].message, /html\|input/);
+  });
+
+  it("reports an error for the wildcard namespace (*|foo)", () => {
+    const errors = errorsFor("*|foo");
+    const nsErrors = errors.filter((e) =>
+      /Namespace-qualified token/.test(e.message),
+    );
+    assert.equal(nsErrors.length, 1);
+    assert.match(nsErrors[0].message, /\*\|foo/);
+  });
+
+  it("reports an error for the empty namespace (|foo)", () => {
+    const errors = errorsFor("|foo");
+    const nsErrors = errors.filter((e) =>
+      /Namespace-qualified token/.test(e.message),
+    );
+    assert.equal(nsErrors.length, 1);
+  });
+
+  it("reports an error for a namespaced attribute selector", () => {
+    const errors = errorsFor("input[html|lang]");
+    const nsErrors = errors.filter((e) =>
+      /Namespace-qualified token/.test(e.message),
+    );
+    assert.equal(nsErrors.length, 1);
+    assert.match(nsErrors[0].message, /\[html\|lang\]/);
+  });
+
+  it("does not flag a selector without namespace prefixes", () => {
+    const errors = errorsFor("input[lang='en']");
+    const nsErrors = errors.filter((e) =>
+      /Namespace-qualified token/.test(e.message),
+    );
+    assert.equal(nsErrors.length, 0);
+  });
+});
+
+// ---------------------------------------------------------------------------
+// Warnings: sibling combinators
+// ---------------------------------------------------------------------------
+
+describe("sibling combinators", () => {
+  it("warns on the adjacent sibling combinator (+)", () => {
+    const warnings = warningsFor("input#a + button#b");
+    const siblingWarnings = warnings.filter((w) =>
+      /Sibling combinator/.test(w.message),
+    );
+    assert.equal(siblingWarnings.length, 1);
+    assert.match(siblingWarnings[0].message, /\+/);
+  });
+
+  it("warns on the general sibling combinator (~)", () => {
+    const warnings = warningsFor("input#a ~ button#b");
+    const siblingWarnings = warnings.filter((w) =>
+      /Sibling combinator/.test(w.message),
+    );
+    assert.equal(siblingWarnings.length, 1);
+    assert.match(siblingWarnings[0].message, /~/);
+  });
+
+  it("does not warn on descendant or child combinators", () => {
+    const descendant = warningsFor("form#login input#email").filter((w) =>
+      /Sibling combinator/.test(w.message),
+    );
+    const child = warningsFor("form#login > input#email").filter((w) =>
+      /Sibling combinator/.test(w.message),
+    );
+    assert.equal(descendant.length, 0);
+    assert.equal(child.length, 0);
+  });
+});
+
+// ---------------------------------------------------------------------------
+// Warnings: state-dependent pseudo-classes
+// ---------------------------------------------------------------------------
+
+describe("state-dependent pseudo-classes", () => {
+  it("warns on :focus", () => {
+    const warnings = warningsFor("input#email:focus");
+    const stateWarnings = warnings.filter((w) =>
+      /State-dependent pseudo-class/.test(w.message),
+    );
+    assert.equal(stateWarnings.length, 1);
+    assert.match(stateWarnings[0].message, /:focus/);
+  });
+
+  it("warns on :hover", () => {
+    const warnings = warningsFor("button#go:hover");
+    const stateWarnings = warnings.filter((w) =>
+      /State-dependent pseudo-class/.test(w.message),
+    );
+    assert.equal(stateWarnings.length, 1);
+  });
+
+  it("warns on :checked", () => {
+    const warnings = warningsFor("input#agree:checked");
+    const stateWarnings = warnings.filter((w) =>
+      /State-dependent pseudo-class/.test(w.message),
+    );
+    assert.equal(stateWarnings.length, 1);
+  });
+
+  it("warns on :required", () => {
+    const warnings = warningsFor("input#email:required");
+    const stateWarnings = warnings.filter((w) =>
+      /State-dependent pseudo-class/.test(w.message),
+    );
+    assert.equal(stateWarnings.length, 1);
+  });
+
+  it("warns on :disabled", () => {
+    const warnings = warningsFor("input#email:disabled");
+    const stateWarnings = warnings.filter((w) =>
+      /State-dependent pseudo-class/.test(w.message),
+    );
+    assert.equal(stateWarnings.length, 1);
+  });
+
+  it("does not warn on positional pseudos (distinct warning family)", () => {
+    const warnings = warningsFor("input#email:first-child");
+    const stateWarnings = warnings.filter((w) =>
+      /State-dependent pseudo-class/.test(w.message),
+    );
+    assert.equal(stateWarnings.length, 0);
   });
 });
 

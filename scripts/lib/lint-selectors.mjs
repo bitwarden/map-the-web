@@ -26,6 +26,46 @@ const POSITIONAL_PSEUDOS = new Set([
   "last-of-type",
 ]);
 
+/**
+ * Pseudo-classes whose match depends on element state at query time,
+ * which may not be consistent with state at authoring time.
+ */
+const STATE_PSEUDOS = new Set([
+  // User interaction
+  "hover",
+  "focus",
+  "focus-within",
+  "focus-visible",
+  "active",
+  // Link / navigation
+  "link",
+  "visited",
+  "any-link",
+  "local-link",
+  "target",
+  "target-within",
+  // Form state
+  "checked",
+  "indeterminate",
+  "default",
+  "disabled",
+  "enabled",
+  "required",
+  "optional",
+  "valid",
+  "invalid",
+  "user-valid",
+  "user-invalid",
+  "in-range",
+  "out-of-range",
+  "read-only",
+  "read-write",
+  "placeholder-shown",
+  "blank",
+  // Tree content state
+  "empty",
+]);
+
 // ---------------------------------------------------------------------------
 // Helpers
 // ---------------------------------------------------------------------------
@@ -130,6 +170,63 @@ function findPositionalPseudos(tokens) {
     .map((t) => `:${t.name}`);
 }
 
+/**
+ * Find state-dependent pseudo-classes in a token list.
+ */
+function findStatePseudos(tokens) {
+  return tokens
+    .filter((t) => t.type === "pseudo" && STATE_PSEUDOS.has(t.name))
+    .map((t) => `:${t.name}`);
+}
+
+/**
+ * Find pseudo-elements in a token list.
+ */
+function findPseudoElements(tokens) {
+  return tokens
+    .filter((t) => t.type === "pseudo-element")
+    .map((t) => `::${t.name}`);
+}
+
+/**
+ * Find tag tokens whose name starts with "@" (at-rules mis-parsed as tags).
+ */
+function findAtRuleTags(tokens) {
+  return tokens
+    .filter((t) => t.type === "tag" && t.name.startsWith("@"))
+    .map((t) => t.name);
+}
+
+/**
+ * Find namespace-qualified tokens and return readable renderings of each
+ * (e.g., "svg|rect", "*|foo", "[html|lang]").
+ */
+function findNamespacedTokens(tokens) {
+  return tokens
+    .filter((t) => t.namespace != null)
+    .map((t) => {
+      const name = t.name ?? "*";
+      const prefix = t.namespace;
+      const rendering = `${prefix}|${name}`;
+      return t.type === "attribute" ? `[${rendering}]` : rendering;
+    });
+}
+
+/**
+ * Return which sibling combinators (if any) appear in a token list.
+ */
+function findSiblingCombinators(tokens) {
+  const found = [];
+  for (const t of tokens) {
+    if (t.type === "adjacent") {
+      found.push("+");
+    } else if (t.type === "sibling") {
+      found.push("~");
+    }
+  }
+  return found;
+}
+
 // ---------------------------------------------------------------------------
 // Full-selector checks (operate on the raw selector string)
 // ---------------------------------------------------------------------------
@@ -210,9 +307,53 @@ export function lintSelector(raw, location) {
       continue;
     }
 
+    // Selector list (comma) check — fires once per segment
+    if (parsedSelectors.length > 1) {
+      errors.push({
+        location: formattedLocation,
+        selector: raw,
+        message:
+          `Comma-separated selector list in "${segment}" is not allowed. ` +
+          `List each alternative as its own entry in the selector array instead.`,
+      });
+    }
+
     // css-what returns an array of selector lists (comma-separated groups).
     // Each group is an array of tokens.
     for (const tokens of parsedSelectors) {
+      const atRuleTags = findAtRuleTags(tokens);
+      if (atRuleTags.length > 0) {
+        errors.push({
+          location: formattedLocation,
+          selector: raw,
+          message:
+            `At-rule token "${atRuleTags[0]}" is not a valid selector. ` +
+            `Remove it; at-rules (\`@media\`, \`@keyframes\`, etc.) only apply to CSS stylesheets, not DOM queries.`,
+        });
+      }
+
+      const pseudoElements = findPseudoElements(tokens);
+      if (pseudoElements.length > 0) {
+        errors.push({
+          location: formattedLocation,
+          selector: raw,
+          message:
+            `Pseudo-element ${pseudoElements.join(", ")} does not represent a real DOM element. ` +
+            `Target the underlying element directly (e.g., the \`input\` whose placeholder is styled, not \`::placeholder\`).`,
+        });
+      }
+
+      const namespaced = findNamespacedTokens(tokens);
+      if (namespaced.length > 0) {
+        errors.push({
+          location: formattedLocation,
+          selector: raw,
+          message:
+            `Namespace-qualified token ${namespaced.join(", ")} is not supported. ` +
+            `Forms are matched against HTML elements in the default namespace; remove the namespace prefix.`,
+        });
+      }
+
       if (hasUniversal(tokens)) {
         errors.push({
           location: formattedLocation,
@@ -260,6 +401,31 @@ export function lintSelector(raw, location) {
           selector: raw,
           message:
             `Positional pseudo-class ${positionals.join(", ")} is fragile; it depends on node order which may not be guaranteed. ` +
+            `Prefer targeting by ID, name, or other stable attributes when possible.`,
+        });
+      }
+
+      // State-dependent pseudo-class warning
+      const statePseudos = findStatePseudos(tokens);
+      if (statePseudos.length > 0) {
+        warnings.push({
+          location: formattedLocation,
+          selector: raw,
+          message:
+            `State-dependent pseudo-class ${statePseudos.join(", ")} matches only when the element is in a specific state; ` +
+            `the field may not be in that state when the selector is consumed. ` +
+            `Prefer targeting by stable attributes when possible.`,
+        });
+      }
+
+      // Sibling combinator warning
+      const siblingCombinators = findSiblingCombinators(tokens);
+      if (siblingCombinators.length > 0) {
+        warnings.push({
+          location: formattedLocation,
+          selector: raw,
+          message:
+            `Sibling combinator ${siblingCombinators.join(", ")} depends on document order, which may not be guaranteed. ` +
             `Prefer targeting by ID, name, or other stable attributes when possible.`,
         });
       }
