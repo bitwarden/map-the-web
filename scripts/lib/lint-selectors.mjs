@@ -147,11 +147,15 @@ export function formatLocation(location) {
   parts.push(`[${location.category}]`);
   parts.push(`${location.kind}.${location.key}`);
 
-  if (location.seqIndex != null) {
-    parts.push(`sequence[${location.seqIndex}]`);
+  // `selectorIndex`: position in the outer alternatives array
+  // `sequenceIndex`: position within a selector sequence (when applicable)
+  // Output reads outside-in: the outer container first, then the inner item.
+  if (location.sequenceIndex != null) {
+    parts.push(`sequence[${location.selectorIndex}]`);
+    parts.push(`[${location.sequenceIndex}]`);
+  } else {
+    parts.push(`[${location.selectorIndex}]`);
   }
-
-  parts.push(`[${location.selectorIndex}]`);
 
   return parts.join(" > ");
 }
@@ -815,13 +819,19 @@ function lintCompositeSelectorArray(selectors, context, errors, warnings) {
       errors.push(...result.errors);
       warnings.push(...result.warnings);
     } else if (Array.isArray(item)) {
-      // Selector sequence - lint each entry in the sequence
-      checkDuplicates(item, { ...context, selectorIndex: i }, errors);
+      // Selector sequence - lint each entry in order.
+      //
+      // Intentionally do NOT dedupe within a sequence. The outer composite
+      // array conveys distinct locations where a single value/concept is
+      // represented; duplicates there are always invalid and caught above.
+      // An inner sequence describes how a single value is split across
+      // inputs at one location, and we expect additional authoring guidance to
+      // use duplicate entries; flagging duplicates here would preclude that.
       for (let j = 0; j < item.length; j++) {
         const result = lintSelector(item[j], {
           ...context,
           selectorIndex: i,
-          seqIndex: j,
+          sequenceIndex: j,
         });
         errors.push(...result.errors);
         warnings.push(...result.warnings);
@@ -831,22 +841,23 @@ function lintCompositeSelectorArray(selectors, context, errors, warnings) {
 }
 
 /**
- * Check for duplicate selector strings within an array.
+ * Check for duplicate selector strings within a top-level alternatives array
+ * (`selectorArray` or `compositeSelectorArray`). Non-string items (e.g., nested
+ * selector sequences) are skipped; duplicates inside a sequence are allowed
+ * and handled by the caller.
  */
 function checkDuplicates(selectors, context, errors) {
   const seen = new Set();
   for (let i = 0; i < selectors.length; i++) {
     const s = typeof selectors[i] === "string" ? selectors[i] : null;
+
     if (s == null) {
       continue;
     }
+
     if (seen.has(s)) {
-      const formattedLocation = formatLocation({
-        ...context,
-        selectorIndex: i,
-      });
       errors.push({
-        location: formattedLocation,
+        location: formatLocation({ ...context, selectorIndex: i }),
         selector: s,
         message: `Duplicate selector "${s}" in the same array. This is likely a copy-paste error.`,
       });

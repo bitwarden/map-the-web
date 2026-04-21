@@ -60,18 +60,18 @@ describe("formatLocation", () => {
     );
   });
 
-  it("includes sequence index when present", () => {
+  it("reads outside-in for a sequence location (composite position first, then inner position)", () => {
     const result = formatLocation({
       host: "example.com",
       category: "account-login",
       kind: "fields",
       key: "oneTimeCode",
-      selectorIndex: 0,
-      seqIndex: 3,
+      selectorIndex: 0, // composite position of the sequence
+      sequenceIndex: 3, // inner position within the sequence
     });
     assert.equal(
       result,
-      "example.com > [account-login] > fields.oneTimeCode > sequence[3] > [0]",
+      "example.com > [account-login] > fields.oneTimeCode > sequence[0] > [3]",
     );
   });
 });
@@ -957,7 +957,11 @@ describe("duplicate selectors", () => {
     assert.equal(dupes.length, 1);
   });
 
-  it("errors on duplicates within a selector sequence", () => {
+  it("does NOT flag duplicates within a selector sequence (reserved for split-value semantics)", () => {
+    // Inner sequences describe how a single value is split across inputs at
+    // one location. Duplicate entries are reserved for future "group these
+    // character positions into the same input" semantics (e.g., partial-
+    // value fields). Only the outer composite array dedupes.
     const data = {
       hosts: {
         "example.com": {
@@ -974,7 +978,7 @@ describe("duplicate selectors", () => {
     };
     const { errors } = lintMapData(data);
     const dupes = errors.filter((e) => /Duplicate/.test(e.message));
-    assert.equal(dupes.length, 1);
+    assert.equal(dupes.length, 0);
   });
 
   it("does not flag the same selector in different fields", () => {
