@@ -463,11 +463,27 @@ export function lintSelector(raw, location) {
     return { errors, warnings };
   }
 
-  // Parse and check each segment between >>> boundaries
+  // Walk each `>>>`-separated segment: (1) reject empties explicitly, then
+  // (2) parse what's left. Keeping the empty-segment check separate from
+  // `parseCss` avoids relying on parser behavior for `""` (which returns `[]`
+  // rather than throwing) and makes the remediation message specific to
+  // the `">>>"` chain case.
   const segments = splitBoundarySegments(raw);
   for (let segIndex = 0; segIndex < segments.length; segIndex++) {
     const segment = segments[segIndex];
     const isFinalSegment = segIndex === segments.length - 1;
+
+    if (segment === "") {
+      errors.push({
+        location: formattedLocation,
+        selector: raw,
+        message:
+          `Segment between ">>>" combinators is empty or contains only whitespace. ` +
+          `Remove the extra ">>>" or provide a selector for the boundary crossing.`,
+      });
+      continue;
+    }
+
     let parsedSelectors;
     try {
       parsedSelectors = parseCss(segment);
@@ -476,20 +492,6 @@ export function lintSelector(raw, location) {
         location: formattedLocation,
         selector: raw,
         message: `Invalid CSS syntax in segment "${segment}" - ${e.message}`,
-      });
-      continue;
-    }
-
-    // An empty parse result means the segment is empty or whitespace-only
-    // (css-what returns [] rather than throwing for these). In a >>> chain
-    // this manifests as ">>>" with blank content between two crossings.
-    if (parsedSelectors.length === 0) {
-      errors.push({
-        location: formattedLocation,
-        selector: raw,
-        message:
-          `Segment between ">>>" combinators is empty or contains only whitespace. ` +
-          `Remove the extra ">>>" or provide a selector for the boundary crossing.`,
       });
       continue;
     }
