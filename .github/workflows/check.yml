@@ -31,4 +31,7 @@ jobs:
         run: npm ci
 
       - name: Run checks
+        env:
+          # Gates inline PR annotations from the forms map selector linter
+          ENABLE_SELECTOR_LINT_PR_FEEDBACK: ${{ vars.ENABLE_SELECTOR_LINT_PR_FEEDBACK }}
         run: npm run check
