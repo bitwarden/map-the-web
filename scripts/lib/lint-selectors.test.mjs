@@ -222,6 +222,38 @@ describe("boundary combinator (>>>) structure", () => {
     assert.equal(errors.length, 1);
     assert.match(errors[0].message, /Bare element selector/);
   });
+
+  it("continues processing past a leading-boundary misuse to aggregate more errors", () => {
+    // ">>>" at start is reported, AND the bare-element target on the right
+    // is also flagged in the same pass.
+    const errors = errorsFor(">>> input");
+    const startErr = errors.filter((e) => /starts with/.test(e.message));
+    const bareErr = errors.filter((e) =>
+      /Bare element selector/.test(e.message),
+    );
+    assert.equal(startErr.length, 1);
+    assert.equal(bareErr.length, 1);
+  });
+
+  it("continues processing past a trailing-boundary misuse to aggregate more errors", () => {
+    const errors = errorsFor("input >>>");
+    const endErr = errors.filter((e) => /ends with/.test(e.message));
+    const bareErr = errors.filter((e) =>
+      /Bare element selector/.test(e.message),
+    );
+    assert.equal(endErr.length, 1);
+    assert.equal(bareErr.length, 1);
+  });
+
+  it("reports both start and end boundary misuses when both are present", () => {
+    // ">>> input#x >>>" previously stopped at the start error; now both
+    // edge violations are surfaced in a single pass.
+    const errors = errorsFor(">>> input#x >>>");
+    const startErr = errors.filter((e) => /starts with/.test(e.message));
+    const endErr = errors.filter((e) => /ends with/.test(e.message));
+    assert.equal(startErr.length, 1);
+    assert.equal(endErr.length, 1);
+  });
 });
 
 // ---------------------------------------------------------------------------

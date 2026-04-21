@@ -384,22 +384,37 @@ function findSiblingCombinators(tokens) {
 // ---------------------------------------------------------------------------
 
 /**
- * Validate boundary combinator (>>>) usage. Returns an error message if
- * the combinator appears at the start or end of the selector.
+ * Validate boundary combinator (>>>) usage at the edges of the raw selector.
+ *
+ * Returns an object carrying:
+ *   - messages: zero, one, or two error messages (start and/or end misuse).
+ *     A selector like ">>> x >>>" can misuse the combinator at both ends.
+ *   - sanitized: the selector with any leading/trailing ">>>" stripped, so
+ *     the caller can keep aggregating other errors against the remainder
+ *     rather than bailing at the first boundary violation.
  */
 function checkBoundaryCombinator(raw) {
-  const trimmed = raw.trim();
-  if (!trimmed.includes(BOUNDARY_COMBINATOR)) {
-    return null;
+  let sanitized = raw.trim();
+  const messages = [];
+
+  if (!sanitized.includes(BOUNDARY_COMBINATOR)) {
+    return { messages, sanitized };
   }
 
-  if (trimmed.startsWith(BOUNDARY_COMBINATOR)) {
-    return `Selector starts with "${BOUNDARY_COMBINATOR}" - a boundary crossing requires a host element reference on the left side`;
+  if (sanitized.startsWith(BOUNDARY_COMBINATOR)) {
+    messages.push(
+      `Selector starts with "${BOUNDARY_COMBINATOR}" - a boundary crossing requires a host element reference on the left side`,
+    );
+    sanitized = sanitized.slice(BOUNDARY_COMBINATOR.length).trim();
   }
-  if (trimmed.endsWith(BOUNDARY_COMBINATOR)) {
-    return `Selector ends with "${BOUNDARY_COMBINATOR}" - a boundary crossing requires a target selector on the right side`;
+  if (sanitized.endsWith(BOUNDARY_COMBINATOR)) {
+    messages.push(
+      `Selector ends with "${BOUNDARY_COMBINATOR}" - a boundary crossing requires a target selector on the right side`,
+    );
+    sanitized = sanitized.slice(0, -BOUNDARY_COMBINATOR.length).trim();
   }
-  return null;
+
+  return { messages, sanitized };
 }
 
 /**
@@ -452,14 +467,20 @@ export function lintSelector(raw, location) {
     });
   }
 
-  // Boundary combinator structural check
-  const boundaryError = checkBoundaryCombinator(raw);
-  if (boundaryError) {
-    errors.push({
-      location: formattedLocation,
-      selector: raw,
-      message: boundaryError,
-    });
+  // Boundary combinator structural check. Collect any edge-misuse errors
+  // and continue processing against the sanitized remainder so the author
+  // gets all applicable errors (e.g., boundary misuse *and* a bare-element
+  // target) in one pass rather than having to fix them serially.
+  const { messages: boundaryMessages, sanitized } =
+    checkBoundaryCombinator(raw);
+  for (const message of boundaryMessages) {
+    errors.push({ location: formattedLocation, selector: raw, message });
+  }
+
+  // If stripping the edge-misuse tokens left nothing to lint, stop here;
+  // further checks would either throw or emit a redundant empty-segment
+  // error for what is really the same problem.
+  if (sanitized === "") {
     return { errors, warnings };
   }
 
@@ -468,7 +489,7 @@ export function lintSelector(raw, location) {
   // `parseCss` avoids relying on parser behavior for `""` (which returns `[]`
   // rather than throwing) and makes the remediation message specific to
   // the `">>>"` chain case.
-  const segments = splitBoundarySegments(raw);
+  const segments = splitBoundarySegments(sanitized);
   for (let segIndex = 0; segIndex < segments.length; segIndex++) {
     const segment = segments[segIndex];
     const isFinalSegment = segIndex === segments.length - 1;
