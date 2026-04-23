@@ -182,6 +182,7 @@ not Punycode.
 Unicode host keys are normalized to Punycode (ASCII) at build time, ensuring
 that consumers of the built Maps will receive ASCII keys:
 
+<!-- cspell:disable-next-line -->
 - `münchen.de` → built as `xn--mnchen-3ya.de`
 - `例え.jp` → built as `xn--r8jz45g.jp`
 

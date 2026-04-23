@@ -17,9 +17,10 @@
     "prettier:fix": "prettier --write .",
     "prettier": "prettier --check .",
     "lint:md": "remark . --frail --quiet",
+    "lint:selectors": "node scripts/lint-selectors.mjs",
     "validate": "node scripts/validate-schemas.mjs",
-    "validate:all": "node scripts/validate-schemas.mjs maps/**/*.jsonc",
-    "check": "npm run prettier && npm run lint:md && npm run validate:all",
+    "check": "npm run prettier && npm run lint:md && npm run validate && npm run lint:selectors",
+    "test": "node --test scripts/**/*.test.mjs",
     "build": "node scripts/build.mjs",
     "build:clean": "rm -rf dist && node scripts/build.mjs"
   },
@@ -34,6 +35,9 @@
     "maps/**/*.jsonc": [
       "node scripts/validate-schemas.mjs"
     ],
+    "maps/forms/*.jsonc": [
+      "node scripts/lint-selectors.mjs"
+    ],
     "*.md": [
       "remark --frail --quiet"
     ]
@@ -41,6 +45,7 @@
   "devDependencies": {
     "ajv": "8.18.0",
     "ajv-formats": "3.0.1",
+    "css-what": "8.0.0",
     "husky": "9.1.7",
     "lint-staged": "16.4.0",
     "prettier": "3.8.1",
