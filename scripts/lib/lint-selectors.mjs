@@ -590,7 +590,7 @@ export function lintSelector(raw, location) {
             `Replace with a specific element type, ID, or attribute selector.`,
         });
       } else if (isBareElement(tokens)) {
-        errors.push({
+        warnings.push({
           location: formattedLocation,
           selector: raw,
           message:
