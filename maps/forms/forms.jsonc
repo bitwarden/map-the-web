@@ -49,7 +49,10 @@
                 "firstName": ["input[name='firstname']"],
                 "lastName": ["input[name='lastname']"],
                 "username": ["input[name='email']"],
-                "newPassword": ["input#create-password", "input#create-password-confirmation"]
+                "newPassword": [
+                  "input#create-password",
+                  "input#create-password-confirmation"
+                ]
               },
               "actions": {
                 "submit": ["button[type='submit']"]
