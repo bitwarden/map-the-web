@@ -12,6 +12,32 @@
         }
       ]
     },
+    "datacamp.com": {
+      "pathnames": {
+        "/": {
+          "forms": [
+            {
+              "category": "account-creation",
+              "fields": {
+                "email": ["input#intro-user_email"],
+                "newPassword": ["input#intro-user_password"]
+              }
+            }
+          ]
+        },
+        "/users/sign_up": {
+          "forms": [
+            {
+              "category": "account-creation",
+              "fields": {
+                "email": ["input#user_email"],
+                "newPassword": ["input#user_password"]
+              }
+            }
+          ]
+        }
+      }
+    },
     "factorio.com": {
       "pathnames": {
         "/login": {
