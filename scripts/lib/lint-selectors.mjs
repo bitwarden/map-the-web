@@ -776,6 +776,7 @@ export function lintMapData(data) {
 function lintForms(forms, context, errors, warnings) {
   for (const form of forms) {
     const category = form.category || "unknown";
+    lintPasswordFieldSemantics(form, category, context, errors);
 
     // Container selectors
     if (form.container) {
@@ -886,5 +887,50 @@ function checkDuplicates(selectors, context, errors) {
       });
     }
     seen.add(s);
+  }
+}
+
+/** Reject password key mismatches for login vs creation forms. */
+function lintPasswordFieldSemantics(form, category, context, errors) {
+  const fields = form.fields;
+  if (!fields) {
+    return;
+  }
+
+  const headSelector = (selectors) =>
+    Array.isArray(selectors) && typeof selectors[0] === "string"
+      ? selectors[0]
+      : null;
+
+  if (category === "account-login" && Object.hasOwn(fields, "newPassword")) {
+    errors.push({
+      location: formatLocation({
+        ...context,
+        category,
+        kind: "fields",
+        key: "newPassword",
+        selectorIndex: 0,
+      }),
+      selector: headSelector(fields.newPassword),
+      message:
+        `Field key "newPassword" should not be used for ${category} forms. ` +
+        `Use "password" for login password fields.`,
+    });
+  }
+
+  if (category === "account-creation" && Object.hasOwn(fields, "password")) {
+    errors.push({
+      location: formatLocation({
+        ...context,
+        category,
+        kind: "fields",
+        key: "password",
+        selectorIndex: 0,
+      }),
+      selector: headSelector(fields.password),
+      message:
+        `Field key "password" should not be used for ${category} forms. ` +
+        `Use "newPassword" for new or confirmation password fields.`,
+    });
   }
 }

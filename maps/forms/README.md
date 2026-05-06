@@ -354,7 +354,7 @@ A page may have more than one logical form. Each gets its own entry in the
       "category": "account-creation",
       "fields": {
         "username": ["#register-email"],
-        "password": ["#register-pass"]
+        "newPassword": ["#register-pass"]
       }
     }
   ]
