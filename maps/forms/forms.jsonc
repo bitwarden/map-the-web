@@ -27,6 +27,39 @@
         }
       }
     },
+    "rowleycompany.com": {
+      "pathnames": {
+        "/checkout/cart": {
+          "forms": [
+            {
+              "category": "account-login",
+              "container": ["aside.loginpopup #popup-account-login"],
+              "fields": {
+                "username": ["input#login-email"],
+                "password": ["input[name='login[password]']"]
+              },
+              "actions": {
+                "submit": ["button[type='submit']"]
+              }
+            },
+            {
+              "category": "account-creation",
+              "container": ["aside.loginpopup #popup-create-account"],
+              "fields": {
+                "firstName": ["input[name='firstname']"],
+                "lastName": ["input[name='lastname']"],
+                "username": ["input[name='email']"],
+                "password": ["input#create-password"],
+                "newPassword": ["input#create-password-confirmation"]
+              },
+              "actions": {
+                "submit": ["button[type='submit']"]
+              }
+            }
+          ]
+        }
+      }
+    },
     "webtests.dev": {
       "pathnames": {
         "/forms/login/simple": {
