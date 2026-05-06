@@ -1291,3 +1291,63 @@ describe("clean selectors produce no issues", () => {
     });
   }
 });
+
+// ---------------------------------------------------------------------------
+// lintMapData: password field semantics
+// ---------------------------------------------------------------------------
+
+describe("password field semantics", () => {
+  function lintExampleForm(fields, category) {
+    return lintMapData({
+      hosts: {
+        "example.com": {
+          forms: [{ category, fields }],
+        },
+      },
+    });
+  }
+
+  function semanticErrors(fields, category, pattern) {
+    return lintExampleForm(fields, category).errors.filter((e) =>
+      pattern.test(e.message),
+    );
+  }
+
+  it("allows account-creation with newPassword", () => {
+    const { errors } = lintExampleForm(
+      { email: ["input#email"], newPassword: ["input#pw"] },
+      "account-creation",
+    );
+    assert.equal(errors.length, 0);
+  });
+
+  it("allows account-login with password", () => {
+    const { errors } = lintExampleForm(
+      { username: ["input#user"], password: ["input#pw"] },
+      "account-login",
+    );
+    assert.equal(errors.length, 0);
+  });
+
+  it("errors when account-creation uses password instead of newPassword", () => {
+    assert.equal(
+      semanticErrors(
+        { email: ["input#email"], password: ["input#password"] },
+        "account-creation",
+        /should not be used for account-creation/,
+      ).length,
+      1,
+    );
+  });
+
+  it("errors when account-login uses newPassword instead of password", () => {
+    assert.equal(
+      semanticErrors(
+        { username: ["input#user"], newPassword: ["input#pass"] },
+        "account-login",
+        /should not be used for account-login/,
+      ).length,
+      1,
+    );
+  });
+});
