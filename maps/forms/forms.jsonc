@@ -19,7 +19,7 @@
             {
               "category": "account-creation",
               "fields": {
-                "email": ["input#intro-user_email"],
+                "username": ["input#intro-user_email"],
                 "newPassword": ["input#intro-user_password"]
               }
             }
@@ -30,7 +30,7 @@
             {
               "category": "account-creation",
               "fields": {
-                "email": ["input#user_email"],
+                "username": ["input#user_email"],
                 "newPassword": ["input#user_password"]
               }
             }
