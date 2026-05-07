@@ -45,6 +45,23 @@
               }
             }
           ]
+        },
+        "/tracks/career": {
+          "forms": [
+            {
+              "category": "account-creation",
+              "container": ["form[action='/users'][data-testid='form-signup']"],
+              "fields": {
+                "username": ["input#-user_email"],
+                "newPassword": ["input#-user_password"]
+              },
+              "actions": {
+                "submit": [
+                  "button[data-trackid='form-signup-cta'][type='submit']"
+                ]
+              }
+            }
+          ]
         }
       }
     },
