@@ -36,10 +36,10 @@
               "container": ["aside.loginpopup form.form-login"],
               "fields": {
                 "username": ["input#login-email"],
-                "password": ["input[name='login[password]']"]
+                "password": ["aside.loginpopup input[name='login[password]']"]
               },
               "actions": {
-                "submit": ["button[type='submit']"]
+                "submit": ["aside.loginpopup form.form-login button[type='submit']"]
               }
             },
             {
@@ -48,7 +48,7 @@
               "fields": {
                 "firstName": ["input[name='firstname']"],
                 "lastName": ["input[name='lastname']"],
-                "username": ["input[name='email']"],
+                "username": ["form#create-form input[name='email']"],
                 "newPassword": [
                   "input#create-password",
                   "input#create-password-confirmation"
