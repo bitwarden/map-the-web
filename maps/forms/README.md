@@ -383,7 +383,8 @@ relevant to their concerns).
 
 The optional `container` property is a selector array identifying the form's
 container element on the page. This is used to scope the form's fields and
-actions within the page, and does not require referencing a literal HTML `<form>` element.
+actions within the page, and is often represented by a literal HTML `<form>`
+element or closest relevant enclosing container if none is present.
 
 ```json
 {

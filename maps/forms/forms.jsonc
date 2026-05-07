@@ -33,7 +33,7 @@
           "forms": [
             {
               "category": "account-login",
-              "container": ["aside.loginpopup #popup-account-login"],
+              "container": ["aside.loginpopup form.form-login"],
               "fields": {
                 "username": ["input#login-email"],
                 "password": ["input[name='login[password]']"]
@@ -44,7 +44,7 @@
             },
             {
               "category": "account-creation",
-              "container": ["aside.loginpopup #popup-create-account"],
+              "container": ["form#create-form"],
               "fields": {
                 "firstName": ["input[name='firstname']"],
                 "lastName": ["input[name='lastname']"],
@@ -55,7 +55,7 @@
                 ]
               },
               "actions": {
-                "submit": ["button[type='submit']"]
+                "submit": ["#create-form button[type='submit']"]
               }
             }
           ]
