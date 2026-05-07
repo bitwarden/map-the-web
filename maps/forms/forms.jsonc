@@ -39,7 +39,9 @@
                 "password": ["aside.loginpopup input[name='login[password]']"]
               },
               "actions": {
-                "submit": ["aside.loginpopup form.form-login button[type='submit']"]
+                "submit": [
+                  "aside.loginpopup form.form-login button[type='submit']"
+                ]
               }
             },
             {
