@@ -18,9 +18,13 @@
           "forms": [
             {
               "category": "account-creation",
+              "container": ["form[action='/users'][data-testid='form-signup']"],
               "fields": {
                 "username": ["input#intro-user_email"],
                 "newPassword": ["input#intro-user_password"]
+              },
+              "actions": {
+                "submit": ["button[data-trackid='form-signup-cta'][type='submit']"]
               }
             }
           ]
@@ -29,9 +33,13 @@
           "forms": [
             {
               "category": "account-creation",
+              "container": ["form#user_register_form"],
               "fields": {
                 "username": ["input#user_email"],
                 "newPassword": ["input#user_password"]
+              },
+              "actions": {
+                "submit": ["input#user_submit"]
               }
             }
           ]
