@@ -24,7 +24,9 @@
                 "newPassword": ["input#intro-user_password"]
               },
               "actions": {
-                "submit": ["button[data-trackid='form-signup-cta'][type='submit']"]
+                "submit": [
+                  "button[data-trackid='form-signup-cta'][type='submit']"
+                ]
               }
             }
           ]
