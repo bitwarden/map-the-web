@@ -80,6 +80,24 @@
         }
       }
     },
+    "gamespot.com": {
+      "pathnames": {
+        "/login-signup": {
+          "forms": [
+            {
+              "category": "account-login",
+              "fields": {
+                "password": ["#form__password"],
+                "username": ["#form__username"]
+              },
+              "actions": {
+                "submit": ["input[type=\"submit\"]"]
+              }
+            }
+          ]
+        }
+      }
+    },
     "webtests.dev": {
       "pathnames": {
         "/forms/login/simple": {
