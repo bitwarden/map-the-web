@@ -97,7 +97,7 @@ jobs:
           TIMESTAMP="$(date -u +%Y-%m-%dT%H:%M:%SZ)"
 
           gh release create "$RELEASE_TAG" \
-            --title "Release ${RELEASE_TAG}" \
+            --title "${RELEASE_TAG}" \
             --notes "$(cat <<EOF
           ## ${RELEASE_TAG}
 
