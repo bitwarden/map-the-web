@@ -20,6 +20,7 @@ semantics or fully-adopted standards.
     - [Versioning](#versioning)
       - [Schema Versions](#schema-versions)
       - [Release Tags](#release-tags)
+      - [Prerelease Maps](#prerelease-maps)
     - [Releases](#releases)
   - [Glossary](#glossary)
 
@@ -95,6 +96,10 @@ ship alongside the previous version (`forms.v1.json` and `forms.v2.json` in the
 same release), allowing legacy consumers to continue fetching the version they
 support.
 
+The major/minor/patch rules above apply once a Map has reached a stable major
+version (`1.0.0` or later). Maps still under initial development use a separate
+prerelease scheme; see [Prerelease Maps](#prerelease-maps).
+
 Map-specific versioning guidance can be found in their respective README
 documents.
 
@@ -104,6 +109,35 @@ Release tags use a date-based format: `v<YYYYMMDD>.<run>` (e.g. `v20260324.1`).
 The date indicates when the build was produced; the run number disambiguates
 multiple releases on the same day. Release tags reflect changes to Map _data_
 (new or updated host entries) and are independent of schema versions.
+
+#### Prerelease Maps
+
+A Map is considered **prerelease** when its `schemaVersion` major component is
+`0` (e.g. `0.1.0`, `0.7.2`). This follows the [semantic versioning](https://semver.org/#spec-item-4)
+convention that `0.y.z` versions are reserved for initial development, where
+"anything MAY change at any time" and "the public API SHOULD NOT be considered
+stable".
+
+Prerelease Maps carry no compatibility, stability, or longevity promises:
+
+- The schema, key sets, value semantics, and overall structure may change in
+  any way between releases. The major/minor/patch bump rules described in
+  [Schema Versions](#schema-versions) do not apply within `0.y.z`; version
+  bumps are at the Map author's discretion.
+- A prerelease Map may be removed from a release entirely without prior
+  deprecation, notice, or transition period.
+- Consumers should treat each release as effectively independent and re-verify
+  their integration when updating.
+
+Build filenames follow the same major-version convention as stable Maps. A Map
+at `schemaVersion: "0.3.0"` builds to `<map name>.v0.json` and ships alongside
+its schema as `<map name>.v0.schema.json`.
+
+When a prerelease Map reaches stability, its `schemaVersion` bumps to `1.0.0`
+and subsequent releases produce `<map name>.v1.json`. The corresponding
+`<map name>.v0.json` artifacts may continue to ship for a transition window or
+may be dropped from the very next release; consumers must not rely on `v0`
+artifacts remaining available once a `v1` exists.
 
 ### Releases
 
@@ -148,3 +182,7 @@ schema changes.
 
 - **Heuristic detection**: Automated inference of page element purposes based on
   attributes, labels, or surrounding markup.
+
+- **Prerelease Map**: A Map whose `schemaVersion` major component is `0`. Its
+  shape, contents, and continued availability carry no compatibility or
+  longevity guarantees. See [Prerelease Maps](#prerelease-maps).
