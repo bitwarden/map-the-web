@@ -68,7 +68,7 @@ Map-specific limitations can be found in their respective README documents.
 
 Each Map lives in its own subdirectory under `maps/`, named after its core
 concern (e.g. `maps/forms/`). A Map directory contains the JSON data file
-(`forms.jsonc`), its versioned schema (e.g. `forms.v1.schema.json`), and a `README.md` documenting
+(`forms.jsonc`), its versioned schema (e.g. `forms.v0.schema.json`), and a `README.md` documenting
 the Map's structure and usage.
 
 ### Versioning
@@ -148,20 +148,23 @@ SHA-256 checksums.
 
 ```text
 Latest build (always points to the newest release):
-https://<project URL>/releases/latest/download/<map name>.v1.json
+https://<project URL>/releases/latest/download/<map name>.v<N>.json
 
 Pinned build (locked to a specific release tag):
-https://<project URL>/releases/download/<tag>/<map name>.v1.json
+https://<project URL>/releases/download/<tag>/<map name>.v<N>.json
 ```
 
-Example: <https://github.com/bitwarden/map-the-web/releases/latest/download/forms.v1.json>
+`<N>` is the schema major version (e.g. `0` for prerelease Maps, `1` for the
+first stable major).
+
+Example: <https://github.com/bitwarden/map-the-web/releases/latest/download/forms.v0.json>
 
 Each release includes a `manifest.json` with build metadata (timestamp, git SHA,
 and per-map schema versions) that consumers can use to check staleness or verify
 compatibility.
 
 Each release also includes the corresponding schema file for each Map (e.g.
-`forms.v1.schema.json` alongside `forms.v1.json`). Consumers that validate Map
+`forms.v0.schema.json` alongside `forms.v0.json`). Consumers that validate Map
 data should validate against the schema included in the same release, as minor
 version bumps may introduce new fields or values that would not pass validation
 against a stale schema copy. Consumers that do not validate should be prepared
