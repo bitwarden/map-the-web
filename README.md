@@ -3,6 +3,15 @@
 Map the Web offers curated guidance for interacting with websites lacking rich
 semantics or fully-adopted standards.
 
+> [!IMPORTANT]
+> This project is in an non-stable, experimental state.
+>
+> Schemas, data shapes,
+> release cadence, and tag conventions may change without notice and without
+> backwards-compatibility guarantees. Individual Maps may be added, restructured,
+> or removed between releases. Consumers should be prepared for breaking changes.
+> See [Versioning](#versioning) for the current scheme.
+
 - [Let's Map the Web!](#lets-map-the-web)
   - [Goals and Intent](#goals-and-intent)
     - [Mapping Philosophies](#mapping-philosophies)
