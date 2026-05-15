@@ -2,6 +2,7 @@ import { lintMapData } from "./lib/lint-selectors.mjs";
 import stripJsonComments from "strip-json-comments";
 import { readFileSync } from "fs";
 import { glob } from "node:fs/promises";
+import { red, yellow, green, dim } from "./utils.mjs";
 
 // ---------------------------------------------------------------------------
 // Environment configuration
@@ -14,15 +15,6 @@ const inGitHubActions = process.env.GITHUB_ACTIONS === "true";
 const prFeedbackEnabled =
   process.env.ENABLE_SELECTOR_LINT_PR_FEEDBACK === "true";
 const emitAnnotations = inGitHubActions && prFeedbackEnabled;
-
-// ---------------------------------------------------------------------------
-// Helpers
-// ---------------------------------------------------------------------------
-
-const red = (s) => `\x1b[31m${s}\x1b[0m`;
-const yellow = (s) => `\x1b[33m${s}\x1b[0m`;
-const green = (s) => `\x1b[32m${s}\x1b[0m`;
-const dim = (s) => `\x1b[2m${s}\x1b[0m`;
 
 /**
  * Best-effort line-number lookup for a lint finding. Progressively narrows

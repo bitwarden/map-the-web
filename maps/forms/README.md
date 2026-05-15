@@ -15,7 +15,7 @@ may or may not utilize the HTML `form` tag. See the project
 > Its schema, field/action key sets, value semantics, and host entries may
 > change in any way between releases, and the Map itself may be dropped from
 > a release without notice. The "Schema Version Bumps" rubric below describes
-> the rules that will apply once the Map graduates to `1.0.0`; under `0.y.z`.
+> the rules that will apply once the Map graduates to `1.0.0`.
 > See the project README's [Prerelease Maps](../../README.md#prerelease-maps)
 > section for full prerelease semantics.
 

@@ -6,6 +6,7 @@ import { glob } from "node:fs/promises";
 import Ajv2020 from "ajv/dist/2020.js";
 import addFormats from "ajv-formats";
 import stripJsonComments from "strip-json-comments";
+import { red, yellow, green, cyan } from "./utils.mjs";
 
 const DIST = "dist";
 
@@ -31,7 +32,7 @@ if (maps.length === 0) {
 }
 
 console.log(
-  `Found ${maps.length} map(s): ${maps.map((m) => m.name).join(", ")}`,
+  `Found ${maps.length} map schema(s) to build:\n${maps.map((m) => `${m.name}: ${m.schemaFile}`).join("\n")}`,
 );
 
 // Step 2: Validate Maps
@@ -49,13 +50,13 @@ for (const map of maps) {
 
   const validate = ajv.compile(schema);
   if (!validate(data)) {
-    console.error(`Validation failed: ${map.dataFile}`);
+    console.error(red(`Validation failed: ${map.dataFile}, ${map.schemaFile}`));
     for (const err of validate.errors) {
       console.error(`  ${err.instancePath || "/"}: ${err.message}`);
     }
     hasErrors = true;
   } else {
-    console.log(`Validated: ${map.dataFile}`);
+    console.log(green(`Validated: ${map.dataFile}, ${map.schemaFile}`));
   }
 
   // Normalize unicode host keys to punycode and warn on www. prefixes
@@ -66,15 +67,15 @@ for (const map of maps) {
       if (normalizedHost !== host) {
         data.hosts[normalizedHost] = data.hosts[host];
         delete data.hosts[host];
-        console.log(
-          `\x1b[36mNormalized: "${host}" → "${normalizedHost}"\x1b[0m`,
-        );
+        console.log(cyan(`Normalized: "${host}" → "${normalizedHost}"`));
       }
 
       if (normalizedHost.startsWith("www.")) {
         console.warn(
-          `\x1b[33mWarning: ${map.dataFile} - host key "${normalizedHost}" uses a www. prefix. ` +
-            `Prefer adding host entries without the "www." prefix, unless rules differ between the "www." and un-prefixed domains.\x1b[0m`,
+          yellow(
+            `Warning: ${map.dataFile} - host key "${normalizedHost}" uses a www. prefix. ` +
+              `Prefer adding host entries without the "www." prefix, unless rules differ between the "www." and un-prefixed domains.`,
+          ),
         );
       }
     }
