@@ -111,8 +111,8 @@ console.log(
     .join("\n")}`,
 );
 
-// Step 2: Load each Map's source, identify its latest schema, run migrations
-// for older majors, and validate every per-schema payload.
+// Step 2: Load each Map's source, identify its latest schema, project the
+// source data into each older target via its registered migration.
 
 const ajv = new Ajv2020({ allErrors: true });
 addFormats(ajv);

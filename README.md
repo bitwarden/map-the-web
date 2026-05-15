@@ -4,7 +4,7 @@ Map the Web offers curated guidance for interacting with websites lacking rich
 semantics or fully-adopted standards.
 
 > [!IMPORTANT]
-> This project is in an non-stable, experimental state.
+> This project is in a non-stable, experimental state.
 >
 > Schemas, data shapes,
 > release cadence, and tag conventions may change without notice and without
