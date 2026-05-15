@@ -383,7 +383,8 @@ relevant to their concerns).
 
 The optional `container` property is a selector array identifying the form's
 container element on the page. This is used to scope the form's fields and
-actions within the page, and does not require referencing a literal HTML `<form>` element.
+actions within the page, and is often represented by a literal HTML `<form>`
+tag or closest relevant/enclosing container if no relevant `<form>` is present.
 
 ```json
 {
@@ -400,7 +401,8 @@ actions within the page, and does not require referencing a literal HTML `<form>
 The `fields` object maps keys to arrays of CSS selectors. Each key identifies
 the **user data concept** that a form field captures. A consumer should be
 able to determine what value belongs in the field from the key name and form
-[category](#category) alone.
+[category](#category) alone. Selector specificity should not rely on other
+selectors (e.g. `container` selector).
 
 ```json
 {
