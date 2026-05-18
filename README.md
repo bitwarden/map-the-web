@@ -21,6 +21,7 @@ semantics or fully-adopted standards.
       - [Schema Versions](#schema-versions)
       - [Release Tags](#release-tags)
       - [Prerelease Maps](#prerelease-maps)
+      - [Backwards Compatibility](#backwards-compatibility)
     - [Releases](#releases)
   - [Glossary](#glossary)
 
@@ -126,6 +127,8 @@ Prerelease Maps carry no compatibility, stability, or longevity promises:
   bumps are at the Map author's discretion.
 - A prerelease Map may be removed from a release entirely without prior
   deprecation, notice, or transition period.
+- The [Backwards Compatibility](#backwards-compatibility) commitment does not
+  apply to prerelease Maps.
 - Consumers should treat each release as effectively independent and re-verify
   their integration when updating.
 
@@ -138,6 +141,35 @@ and subsequent releases produce `<map name>.v1.json`. The corresponding
 `<map name>.v0.json` artifacts may continue to ship for a transition window or
 may be dropped from the very next release; consumers must not rely on `v0`
 artifacts remaining available once a `v1` exists.
+
+#### Backwards Compatibility
+
+For Maps at a stable major version (`1.0.0` or later), this project commits
+to supporting the schema **one major version back** from the current major
+version for a **minimum of six months** after the current major version first
+releases. During this window, each release contains both
+`<map name>.v<N>.json` and `<map name>.v<N-1>.json` artifacts (and their
+corresponding schemas), so consumers can upgrade on their own timeline.
+
+After the six-month window, support for `v<N-1>` may be extended or dropped
+from subsequent releases without further warning. Consumers depending on `v<N-1>`
+should plan to upgrade within that window, or pin to a specific release tag
+that still includes the artifact.
+
+When a Map's source data is promoted to a new major version, older majors
+that still ship are marked as **superseded** with the standard
+[JSON Schema 2020-12 `"deprecated"`](https://json-schema.org/draft/2020-12/json-schema-validation#name-deprecated)
+keyword at the root of each affected schema, and the release manifest
+mirrors this with `"deprecated": true` on each matching version entry. The
+flag signals only that a newer major exists and consumers should plan to
+upgrade — it is independent of the support-window timing above. A
+deprecated major may still be within its six-month window or already past
+it. Consumers are encouraged to read the manifest and surface a warning to
+their maintainers prompting an
+upgrade; consumers that run a JSON Schema validator that surfaces annotations
+against the shipped schema will also see the deprecation.
+
+This commitment does not apply to [Prerelease Maps](#prerelease-maps).
 
 ### Releases
 
@@ -161,7 +193,8 @@ Example: <https://github.com/bitwarden/map-the-web/releases/latest/download/form
 
 Each release includes a `manifest.json` with build metadata (timestamp, git SHA,
 and per-map schema versions) that consumers can use to check staleness or verify
-compatibility.
+compatibility. A `manifest.schema.json` is shipped alongside so consumers can
+validate the manifest's shape against the same contract the build enforces.
 
 Each release also includes the corresponding schema file for each Map (e.g.
 `forms.v0.schema.json` alongside `forms.v0.json`). Consumers that validate Map

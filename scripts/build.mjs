@@ -120,6 +120,30 @@ addFormats(ajv);
 let hasErrors = false;
 
 for (const map of maps) {
+  // Warn when more than one of a Map's schemas is non-deprecated. The
+  // typical healthy state is exactly one non-deprecated schema (the current
+  // source's major). Older majors that still ship should carry
+  // `"deprecated": true` once superseded; a draft schema for a future
+  // major will also be non-deprecated but is a legitimate case to surface
+  // for the maintainer's quick sanity-check.
+  const nonDeprecatedSchemas = map.schemas.filter(
+    (s) => s.schema.deprecated !== true,
+  );
+
+  if (nonDeprecatedSchemas.length > 1) {
+    const versions = [...nonDeprecatedSchemas]
+      .sort((a, b) => b.major - a.major)
+      .map((s) => `v${s.major}`)
+      .join(", ");
+
+    console.warn(
+      yellow(
+        `Warning: ${map.name} has ${nonDeprecatedSchemas.length} non-deprecated schemas (${versions}). ` +
+          `If any of these are no longer current (superseded by a newer major), mark them with "deprecated": true at the schema root.`,
+      ),
+    );
+  }
+
   const sourceData = JSON.parse(
     stripJsonComments(readFileSync(map.dataFile, "utf-8")),
   );
@@ -214,6 +238,18 @@ for (const map of maps) {
       hasErrors = true;
     } else {
       console.log(green(`Validated: ${map.dataFile} → ${target.file}`));
+      // The JSON Schema 2020-12 `deprecated` keyword at the schema root
+      // signals a schema version that has entered its sunset period. The
+      // flag rides along with the built schema artifact (copied as-is) and
+      // is also mirrored into the manifest entry below so consumers can
+      // detect it without running a validator.
+      if (target.schema.deprecated === true) {
+        console.warn(
+          yellow(
+            `Notice: ${target.file} is marked deprecated; the v${target.major} artifact will ship with deprecated=true in the manifest.`,
+          ),
+        );
+      }
     }
 
     map.builds.push({ target, payload });
@@ -274,6 +310,7 @@ for (const map of maps) {
       filename: basename(outDataFile),
       cid: `sha256:${dataHash}`,
       schema: basename(outSchemaFile),
+      ...(target.schema.deprecated === true ? { deprecated: true } : {}),
     };
 
     for (const f of [outDataFile, outSchemaFile]) {

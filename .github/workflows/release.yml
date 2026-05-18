@@ -96,6 +96,29 @@ jobs:
         run: |
           TIMESTAMP="$(date -u +%Y-%m-%dT%H:%M:%SZ)"
 
+          # Build a Deprecations section from any manifest entries flagged with
+          # `deprecated: true`. Empty when no deprecations are present.
+          DEPRECATED_LIST=$(jq -r '
+            [
+              .maps | to_entries[] as $map
+              | $map.value | to_entries[]
+              | select(.value.deprecated == true)
+              | "- `\($map.key) \(.key)` (`\(.value.filename)`)"
+            ] | join("\n")
+          ' dist/manifest.json)
+
+          if [[ -n "$DEPRECATED_LIST" ]]; then
+            DEPRECATIONS_SECTION="
+          ## Deprecations
+
+          The following schema versions have been superseded by a newer major and are marked deprecated in this release. Consumers using them should plan to upgrade:
+
+          ${DEPRECATED_LIST}
+          "
+          else
+            DEPRECATIONS_SECTION=""
+          fi
+
           gh release create "$RELEASE_TAG" \
             --title "${RELEASE_TAG}" \
             --notes "$(cat <<EOF
@@ -103,12 +126,14 @@ jobs:
 
           **Timestamp**: ${TIMESTAMP}
           **Git SHA**: ${GITHUB_SHA}
-
+          ${DEPRECATIONS_SECTION}
           See \`manifest.json\` for build metadata and per-map schema versions.
+          See \`manifest.schema.json\` for the manifest's contract.
           See \`checksums.sha256\` to verify asset integrity.
           EOF
           )" \
             --latest \
             dist/manifest.json \
+            dist/manifest.schema.json \
             dist/checksums.sha256 \
             dist/*.v*.json
