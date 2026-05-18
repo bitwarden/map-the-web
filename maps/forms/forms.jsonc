@@ -85,13 +85,27 @@
         "/login-signup": {
           "forms": [
             {
-              "category": "account-login",
+              "category": "account-creation",
+              "container": ["#registerform-virtual"],
               "fields": {
-                "password": ["#form__password"],
-                "username": ["#form__username"]
+                "birthdateDay": ["#gamespot-bday-day"],
+                "birthdateMonth": ["#gamespot-bday-month"],
+                "birthdateYear": ["#gamespot-bday-year"],
+                "username": ["#user_email_register", "#user_reg_register"]
               },
               "actions": {
-                "submit": ["input[type=\"submit\"]"]
+                "submit": ["#wp-submit-register"]
+              }
+            },
+            {
+              "category": "account-login",
+              "container": ["#loginform-virtual"],
+              "fields": {
+                "password": ["#user_pass"],
+                "username": ["#user_login"]
+              },
+              "actions": {
+                "submit": ["#wp-submit"]
               }
             }
           ]
