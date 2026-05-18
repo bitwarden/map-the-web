@@ -2,6 +2,16 @@ import { lintMapData } from "./lib/lint-selectors.mjs";
 import stripJsonComments from "strip-json-comments";
 import { readFileSync } from "fs";
 import { glob } from "node:fs/promises";
+import { execFileSync } from "node:child_process";
+
+// ---------------------------------------------------------------------------
+// Helpers
+// ---------------------------------------------------------------------------
+
+const red = (s) => `\x1b[31m${s}\x1b[0m`;
+const yellow = (s) => `\x1b[33m${s}\x1b[0m`;
+const green = (s) => `\x1b[32m${s}\x1b[0m`;
+const dim = (s) => `\x1b[2m${s}\x1b[0m`;
 
 // ---------------------------------------------------------------------------
 // Environment configuration
@@ -15,14 +25,48 @@ const prFeedbackEnabled =
   process.env.ENABLE_SELECTOR_LINT_PR_FEEDBACK === "true";
 const emitAnnotations = inGitHubActions && prFeedbackEnabled;
 
-// ---------------------------------------------------------------------------
-// Helpers
-// ---------------------------------------------------------------------------
+// On pull_request runs, scope inline annotations to lines this PR actually
+// changes. Findings on untouched lines still log to the console so nothing is
+// silently dropped, but they don't add inline noise to files reviewers
+// aren't looking at.
+const isPullRequest = process.env.GITHUB_EVENT_NAME === "pull_request";
+const baseRef = process.env.GITHUB_BASE_REF;
+const scopeAnnotationsToDiff = emitAnnotations && isPullRequest && !!baseRef;
 
-const red = (s) => `\x1b[31m${s}\x1b[0m`;
-const yellow = (s) => `\x1b[33m${s}\x1b[0m`;
-const green = (s) => `\x1b[32m${s}\x1b[0m`;
-const dim = (s) => `\x1b[2m${s}\x1b[0m`;
+/**
+ * Return the set of post-image line numbers the current branch changes in
+ * `file` relative to the PR base ref. Returns null when the diff can't be
+ * computed (e.g., base ref not fetched), signaling callers to fall back to
+ * emitting every annotation.
+ */
+function getChangedLinesForFile(file) {
+  let output;
+  try {
+    output = execFileSync(
+      "git",
+      ["diff", "--unified=0", `origin/${baseRef}...`, "--", file],
+      { encoding: "utf-8", stdio: ["ignore", "pipe", "pipe"] },
+    );
+  } catch {
+    return null;
+  }
+
+  const changed = new Set();
+  for (const line of output.split("\n")) {
+    // Hunk header: "@@ -<old-start>[,<old-count>] +<new-start>[,<new-count>] @@"
+    const match = /^@@ -\d+(?:,\d+)? \+(\d+)(?:,(\d+))? @@/.exec(line);
+    if (!match) {
+      continue;
+    }
+    const start = parseInt(match[1], 10);
+    // A count of 0 means deletion-only at that position; no added lines to annotate.
+    const count = match[2] != null ? parseInt(match[2], 10) : 1;
+    for (let i = 0; i < count; i++) {
+      changed.add(start + i);
+    }
+  }
+  return changed;
+}
 
 /**
  * Best-effort line-number lookup for a lint finding. Progressively narrows
@@ -154,6 +198,31 @@ for (const file of files) {
     continue;
   }
 
+  let changedLines;
+  if (scopeAnnotationsToDiff) {
+    changedLines = getChangedLinesForFile(file);
+    if (changedLines == null) {
+      console.warn(
+        yellow(
+          `Could not compute PR diff for ${file}; emitting annotations for all findings.`,
+        ),
+      );
+    }
+  }
+
+  // A finding without a resolved line number can't be verified as in-diff,
+  // so it's dropped from inline annotations under diff-scoping. Console
+  // output is unaffected.
+  const shouldAnnotate = (codeLine) => {
+    if (!emitAnnotations) {
+      return false;
+    }
+    if (!scopeAnnotationsToDiff || changedLines == null) {
+      return true;
+    }
+    return codeLine != null && changedLines.has(codeLine);
+  };
+
   for (const w of warnings) {
     const codeLine = findLineInSource(stripped, w.location, w.selector);
     const suffix = codeLine != null ? ` (line ${codeLine})` : "";
@@ -162,7 +231,7 @@ for (const file of files) {
         dim(`  selector: ${w.selector}\n`) +
         yellow(`  ${w.message}\n`),
     );
-    if (emitAnnotations) {
+    if (shouldAnnotate(codeLine)) {
       console.log(
         ghWorkflowCommand(
           "warning",
@@ -183,7 +252,7 @@ for (const file of files) {
         dim(`  selector: ${e.selector}\n`) +
         red(`  ${e.message}\n`),
     );
-    if (emitAnnotations) {
+    if (shouldAnnotate(codeLine)) {
       console.log(
         ghWorkflowCommand(
           "error",
