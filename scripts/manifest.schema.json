@@ -1,0 +1,65 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://raw.githubusercontent.com/bitwarden/map-the-web/main/scripts/manifest.schema.json",
+  "title": "Map the Web Release Manifest",
+  "description": "Describes the per-release build metadata document (manifest.json) shipped alongside Map artifacts. See README.md for full documentation.",
+  "type": "object",
+  "properties": {
+    "buildId": {
+      "type": "string",
+      "description": "Identifier for the build that produced this manifest. Typically the release tag (e.g. 'v20260324.1') or a local-build placeholder (e.g. 'local-1234567890')."
+    },
+    "timestamp": {
+      "type": "string",
+      "format": "date-time",
+      "description": "ISO 8601 timestamp when this manifest was produced."
+    },
+    "gitSha": {
+      "type": "string",
+      "description": "Git commit SHA the build was produced from. May carry a '-dirty' suffix when the working tree had uncommitted changes at build time."
+    },
+    "maps": {
+      "type": "object",
+      "description": "Map name to per-major-version artifact entries.",
+      "additionalProperties": {
+        "type": "object",
+        "description": "Major-version key (e.g. 'v0', 'v1') to artifact descriptor.",
+        "propertyNames": {
+          "pattern": "^v[0-9]+$"
+        },
+        "additionalProperties": {
+          "$ref": "#/$defs/mapVersionEntry"
+        }
+      }
+    }
+  },
+  "required": ["buildId", "timestamp", "gitSha", "maps"],
+  "additionalProperties": false,
+  "$defs": {
+    "mapVersionEntry": {
+      "type": "object",
+      "description": "Descriptor for a single major-version artifact within a release.",
+      "properties": {
+        "filename": {
+          "type": "string",
+          "description": "Name of the JSON data artifact for this major version (e.g. 'forms.v1.json')."
+        },
+        "cid": {
+          "type": "string",
+          "description": "Content identifier for the data artifact. Currently 'sha256:<hex>'.",
+          "pattern": "^sha256:[0-9a-f]{64}$"
+        },
+        "schema": {
+          "type": "string",
+          "description": "Name of the JSON Schema file for this major version (e.g. 'forms.v1.schema.json')."
+        },
+        "deprecated": {
+          "type": "boolean",
+          "description": "Optional. True when this major version is in its sunset period and may be removed from subsequent releases."
+        }
+      },
+      "required": ["filename", "cid", "schema"],
+      "additionalProperties": false
+    }
+  }
+}

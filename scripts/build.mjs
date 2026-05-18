@@ -320,20 +320,38 @@ for (const map of maps) {
   }
 }
 
+// Validate the assembled manifest against its schema before writing.
+const manifestSchemaSrc = "scripts/manifest.schema.json";
+const manifestSchema = JSON.parse(readFileSync(manifestSchemaSrc, "utf-8"));
+const validateManifest = ajv.compile(manifestSchema);
+if (!validateManifest(manifest)) {
+  console.error(
+    red(`Manifest failed validation against ${manifestSchemaSrc}:`),
+  );
+  for (const err of validateManifest.errors) {
+    console.error(`  ${err.instancePath || "/"}: ${err.message}`);
+  }
+  process.exit(1);
+}
+
 const manifestPath = join(DIST, "manifest.json");
 writeFileSync(manifestPath, JSON.stringify(manifest, null, 2) + "\n");
+
+// Copy the manifest schema alongside the manifest so consumers can validate.
+const manifestSchemaOut = join(DIST, "manifest.schema.json");
+cpSync(manifestSchemaSrc, manifestSchemaOut);
 
 const checksumsPath = join(DIST, "checksums.sha256");
 writeFileSync(checksumsPath, checksums.join("\n") + "\n");
 
-// Checksum the manifest itself
-const manifestHash = createHash("sha256")
-  .update(readFileSync(manifestPath))
-  .digest("hex");
-writeFileSync(
-  checksumsPath,
-  readFileSync(checksumsPath, "utf-8") + `${manifestHash}  manifest.json\n`,
-);
+// Checksum the manifest and its schema.
+for (const f of [manifestPath, manifestSchemaOut]) {
+  const hash = createHash("sha256").update(readFileSync(f)).digest("hex");
+  writeFileSync(
+    checksumsPath,
+    readFileSync(checksumsPath, "utf-8") + `${hash}  ${basename(f)}\n`,
+  );
+}
 
 console.log(`\nBuild complete: ${buildId}`);
 console.log(`  Manifest: ${manifestPath}`);
