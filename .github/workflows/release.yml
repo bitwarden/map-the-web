@@ -111,7 +111,7 @@ jobs:
             DEPRECATIONS_SECTION="
           ## Deprecations
 
-          The following schema versions have been superseded by a newer major and are marked deprecated in this release. Consumers using them should plan to upgrade:
+          The following schema versions are marked deprecated in this release and have entered their end-of-life support window. Expect them to be removed in a future release; consumers using them should plan to migrate:
 
           ${DEPRECATED_LIST}
           "

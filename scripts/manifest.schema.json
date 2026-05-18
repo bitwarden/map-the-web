@@ -55,7 +55,7 @@
         },
         "deprecated": {
           "type": "boolean",
-          "description": "Optional. True when this major version is in its sunset period and may be removed from subsequent releases."
+          "description": "Optional. True when this major version has entered its end-of-life support window and consumers should expect it to be removed in a future release. Does not indicate when, nor imply a successor major necessarily exists."
         }
       },
       "required": ["filename", "cid", "schema"],

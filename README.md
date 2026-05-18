@@ -152,24 +152,26 @@ releases. During this window, each release contains both
 corresponding schemas), so consumers can upgrade on their own timeline.
 
 After the six-month window, support for `v<N-1>` may be extended or dropped
-from subsequent releases without further warning. Consumers depending on `v<N-1>`
+from subsequent releases without warning. Consumers depending on `v<N-1>`
 should plan to upgrade within that window, or pin to a specific release tag
 that still includes the artifact.
 
-When a Map's source data is promoted to a new major version, older majors
-that still ship are marked as **superseded** with the standard
+A stable Map's schema may be marked **deprecated** at any time to signal
+that it has entered its end-of-life support window. Deprecation is authored
+by setting the standard
 [JSON Schema 2020-12 `"deprecated"`](https://json-schema.org/draft/2020-12/json-schema-validation#name-deprecated)
-keyword at the root of each affected schema, and the release manifest
-mirrors this with `"deprecated": true` on each matching version entry. The
-flag signals only that a newer major exists and consumers should plan to
-upgrade — it is independent of the support-window timing above. A
-deprecated major may still be within its six-month window or already past
-it. Consumers are encouraged to read the manifest and surface a warning to
-their maintainers prompting an
-upgrade; consumers that run a JSON Schema validator that surfaces annotations
-against the shipped schema will also see the deprecation.
+keyword at the root of the schema file; the release manifest mirrors this
+with `"deprecated": true` on the matching version entry. The flag does not
+indicate how long the support window will be, nor does it imply that a
+newer major necessarily exists; it tells consumers to expect the schema to
+be removed in a future release once the window closes. Consumers are
+encouraged to read the manifest and surface a warning to their maintainers
+prompting a migration; consumers that run a JSON Schema validator that
+surfaces annotations against the shipped schema will also see the
+deprecation.
 
-This commitment does not apply to [Prerelease Maps](#prerelease-maps).
+This commitment does not apply to [Prerelease Maps](#prerelease-maps),
+which are dropped in their entirety upon graduation to a stable major.
 
 ### Releases
 
@@ -222,3 +224,9 @@ schema changes.
 - **Prerelease Map**: A Map whose `schemaVersion` major component is `0`. Its
   shape, contents, and continued availability carry no compatibility or
   longevity guarantees. See [Prerelease Maps](#prerelease-maps).
+
+- **Deprecated schema**: A Map schema major version that has entered its
+  end-of-life support window. Indicated by `"deprecated": true` at the
+  schema root and on the matching entry in the release manifest. Consumers
+  should plan migration before the schema is removed in a future release.
+  See [Backwards Compatibility](#backwards-compatibility).
