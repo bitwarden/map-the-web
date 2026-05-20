@@ -23,6 +23,7 @@ semantics or fully-adopted standards.
       - [Prerelease Maps](#prerelease-maps)
       - [Backwards Compatibility](#backwards-compatibility)
     - [Releases](#releases)
+  - [Major Version Bumps](#major-version-bumps)
   - [Glossary](#glossary)
 
 ## Goals and Intent
@@ -205,6 +206,60 @@ version bumps may introduce new fields or values that would not pass validation
 against a stale schema copy. Consumers that do not validate should be prepared
 to gracefully handle unrecognized fields or values introduced by minor or patch
 schema changes.
+
+## Major Version Bumps
+
+When a Map's schema needs a breaking change (see [Schema Versions](#schema-versions)
+and the Map's own README for what qualifies as breaking for that Map), the
+maintainer ships the new major alongside the previous one by following these
+steps:
+
+1. **Create the new schema file.** Copy
+   `maps/<name>/<name>.v<N>.schema.json` to `<name>.v<N+1>.schema.json`. In
+   the new file:
+   - Update `$id` so its last path segment is the new filename.
+   - Update `properties.schemaVersion.const` to the new version (e.g. `"2.0.0"`).
+   - Update `title` and `description` if they embed version-specific language.
+2. **Apply the breaking changes** in the new schema only. The old schema
+   continues to ship unchanged so existing consumers aren't broken.
+3. **Update the source data file** (`maps/<name>/<name>.jsonc`) to set
+   `schemaVersion` to the new value and adjust the data shape to satisfy the
+   new schema.
+4. **Register a downward migration** in
+   [`scripts/build.mjs`](scripts/build.mjs). Add an entry under
+   `MIGRATIONS["<name>"]` keyed by the previous major (`N`); the function
+   projects new-source-shape data into old-schema-shape data.
+5. **Mark the previous schema deprecated** by adding `"deprecated": true` at
+   the root of `<name>.v<N>.schema.json`. The flag flows through to the
+   release manifest and the auto-generated release-notes "Deprecations"
+   section. See [Backwards Compatibility](#backwards-compatibility) for the
+   support semantics.
+6. **Update the Map's own README** if the schema introduces or changes
+   fields, key sets, categories, or other documented behavior.
+7. **Verify with `npm run check && npm run build`.** A green build emits
+   both `<name>.v<N>.json` and `<name>.v<N+1>.json` (with their schemas)
+   and records `"deprecated": true` against the older entry in
+   `dist/manifest.json`.
+
+The build enforces these author invariants:
+
+- The schema filename's major and `properties.schemaVersion.const` major must
+  agree.
+- The schema's `$id` must end with its filename.
+- The source's `schemaVersion` must match exactly one schema's `const`.
+- A migration must be registered for every target major below the source's.
+- A warning is emitted when a Map has more than one non-deprecated schema
+  (the typical healthy state is exactly one current schema; a draft schema
+  above source is the expected exception).
+
+Per-Map rules for what counts as a major change live in each Map's own
+README, since the criteria depend on the Map's shape and consumer
+expectations.
+
+> [!NOTE]
+> Prerelease Maps (`v0`) don't follow this workflow; they are dropped in
+> their entirety upon graduation to a stable `v1`. See
+> [Prerelease Maps](#prerelease-maps).
 
 ## Glossary
 
