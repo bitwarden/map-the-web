@@ -3,6 +3,15 @@
 Map the Web offers curated guidance for interacting with websites lacking rich
 semantics or fully-adopted standards.
 
+> [!IMPORTANT]
+> This project is in a non-stable, experimental state.
+>
+> Schemas, data shapes,
+> release cadence, and tag conventions may change without notice and without
+> backwards-compatibility guarantees. Individual Maps may be added, restructured,
+> or removed between releases. Consumers should be prepared for breaking changes.
+> See [Versioning](#versioning) for the current scheme.
+
 - [Let's Map the Web!](#lets-map-the-web)
   - [Goals and Intent](#goals-and-intent)
     - [Mapping Philosophies](#mapping-philosophies)
@@ -11,6 +20,8 @@ semantics or fully-adopted standards.
     - [Versioning](#versioning)
       - [Schema Versions](#schema-versions)
       - [Release Tags](#release-tags)
+      - [Prerelease Maps](#prerelease-maps)
+      - [Backwards Compatibility](#backwards-compatibility)
     - [Releases](#releases)
   - [Glossary](#glossary)
 
@@ -58,7 +69,7 @@ Map-specific limitations can be found in their respective README documents.
 
 Each Map lives in its own subdirectory under `maps/`, named after its core
 concern (e.g. `maps/forms/`). A Map directory contains the JSON data file
-(`forms.jsonc`), its versioned schema (e.g. `forms.v1.schema.json`), and a `README.md` documenting
+(`forms.jsonc`), its versioned schema (e.g. `forms.v0.schema.json`), and a `README.md` documenting
 the Map's structure and usage.
 
 ### Versioning
@@ -86,6 +97,10 @@ ship alongside the previous version (`forms.v1.json` and `forms.v2.json` in the
 same release), allowing legacy consumers to continue fetching the version they
 support.
 
+The major/minor/patch rules above apply once a Map has reached a stable major
+version (`1.0.0` or later). Maps still under initial development use a separate
+prerelease scheme; see [Prerelease Maps](#prerelease-maps).
+
 Map-specific versioning guidance can be found in their respective README
 documents.
 
@@ -96,6 +111,68 @@ The date indicates when the build was produced; the run number disambiguates
 multiple releases on the same day. Release tags reflect changes to Map _data_
 (new or updated host entries) and are independent of schema versions.
 
+#### Prerelease Maps
+
+A Map is considered **prerelease** when its `schemaVersion` major component is
+`0` (e.g. `0.1.0`, `0.7.2`). This follows the [semantic versioning](https://semver.org/#spec-item-4)
+convention that `0.y.z` versions are reserved for initial development, where
+"anything MAY change at any time" and "the public API SHOULD NOT be considered
+stable".
+
+Prerelease Maps carry no compatibility, stability, or longevity promises:
+
+- The schema, key sets, value semantics, and overall structure may change in
+  any way between releases. The major/minor/patch bump rules described in
+  [Schema Versions](#schema-versions) do not apply within `0.y.z`; version
+  bumps are at the Map author's discretion.
+- A prerelease Map may be removed from a release entirely without prior
+  deprecation, notice, or transition period.
+- The [Backwards Compatibility](#backwards-compatibility) commitment does not
+  apply to prerelease Maps.
+- Consumers should treat each release as effectively independent and re-verify
+  their integration when updating.
+
+Build filenames follow the same major-version convention as stable Maps. A Map
+at `schemaVersion: "0.3.0"` builds to `<map name>.v0.json` and ships alongside
+its schema as `<map name>.v0.schema.json`.
+
+When a prerelease Map reaches stability, its `schemaVersion` bumps to `1.0.0`
+and subsequent releases produce `<map name>.v1.json`. The corresponding
+`<map name>.v0.json` artifacts may continue to ship for a transition window or
+may be dropped from the very next release; consumers must not rely on `v0`
+artifacts remaining available once a `v1` exists.
+
+#### Backwards Compatibility
+
+For Maps at a stable major version (`1.0.0` or later), this project commits
+to supporting the schema **one major version back** from the current major
+version for a **minimum of six months** after the current major version first
+releases. During this window, each release contains both
+`<map name>.v<N>.json` and `<map name>.v<N-1>.json` artifacts (and their
+corresponding schemas), so consumers can upgrade on their own timeline.
+
+After the six-month window, support for `v<N-1>` may be extended or dropped
+from subsequent releases without warning. Consumers depending on `v<N-1>`
+should plan to upgrade within that window, or pin to a specific release tag
+that still includes the artifact.
+
+A stable Map's schema may be marked **deprecated** at any time to signal
+that it has entered its end-of-life support window. Deprecation is authored
+by setting the standard
+[JSON Schema 2020-12 `"deprecated"`](https://json-schema.org/draft/2020-12/json-schema-validation#name-deprecated)
+keyword at the root of the schema file; the release manifest mirrors this
+with `"deprecated": true` on the matching version entry. The flag does not
+indicate how long the support window will be, nor does it imply that a
+newer major necessarily exists; it tells consumers to expect the schema to
+be removed in a future release once the window closes. Consumers are
+encouraged to read the manifest and surface a warning to their maintainers
+prompting a migration; consumers that run a JSON Schema validator that
+surfaces annotations against the shipped schema will also see the
+deprecation.
+
+This commitment does not apply to [Prerelease Maps](#prerelease-maps),
+which are dropped in their entirety upon graduation to a stable major.
+
 ### Releases
 
 Map data is published as optimized builds via
@@ -105,20 +182,24 @@ SHA-256 checksums.
 
 ```text
 Latest build (always points to the newest release):
-https://<project URL>/releases/latest/download/<map name>.v1.json
+https://<project URL>/releases/latest/download/<map name>.v<N>.json
 
 Pinned build (locked to a specific release tag):
-https://<project URL>/releases/download/<tag>/<map name>.v1.json
+https://<project URL>/releases/download/<tag>/<map name>.v<N>.json
 ```
 
-Example: <https://github.com/bitwarden/map-the-web/releases/latest/download/forms.v1.json>
+`<N>` is the schema major version (e.g. `0` for prerelease Maps, `1` for the
+first stable major).
+
+Example: <https://github.com/bitwarden/map-the-web/releases/latest/download/forms.v0.json>
 
 Each release includes a `manifest.json` with build metadata (timestamp, git SHA,
 and per-map schema versions) that consumers can use to check staleness or verify
-compatibility.
+compatibility. A `manifest.schema.json` is shipped alongside so consumers can
+validate the manifest's shape against the same contract the build enforces.
 
 Each release also includes the corresponding schema file for each Map (e.g.
-`forms.v1.schema.json` alongside `forms.v1.json`). Consumers that validate Map
+`forms.v0.schema.json` alongside `forms.v0.json`). Consumers that validate Map
 data should validate against the schema included in the same release, as minor
 version bumps may introduce new fields or values that would not pass validation
 against a stale schema copy. Consumers that do not validate should be prepared
@@ -139,3 +220,13 @@ schema changes.
 
 - **Heuristic detection**: Automated inference of page element purposes based on
   attributes, labels, or surrounding markup.
+
+- **Prerelease Map**: A Map whose `schemaVersion` major component is `0`. Its
+  shape, contents, and continued availability carry no compatibility or
+  longevity guarantees. See [Prerelease Maps](#prerelease-maps).
+
+- **Deprecated schema**: A Map schema major version that has entered its
+  end-of-life support window. Indicated by `"deprecated": true` at the
+  schema root and on the matching entry in the release manifest. Consumers
+  should plan migration before the schema is removed in a future release.
+  See [Backwards Compatibility](#backwards-compatibility).
