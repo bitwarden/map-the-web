@@ -80,6 +80,35 @@ for await (const schemaFile of glob("maps/*/*.v*.schema.json")) {
     process.exit(1);
   }
 
+  // Filename's major must agree with the schema's declared const major,
+  // so a copy-pasted schema with an un-updated const can't silently ship.
+  const constMajor = parseInt(expectedVersion.split(".")[0], 10);
+  if (constMajor !== major) {
+    console.error(
+      red(
+        `${schemaFile} filename indicates v${major} but properties.schemaVersion.const "${expectedVersion}" has major ${constMajor}. ` +
+          `These must agree.`,
+      ),
+    );
+    process.exit(1);
+  }
+
+  // $id should end with the schema's filename so consumers fetching by $id
+  // get this file, not a sibling. Catches copy-paste errors when authoring
+  // a new major.
+  const expectedIdSuffix = `/${basename(schemaFile)}`;
+  if (
+    typeof schemaJson.$id !== "string" ||
+    !schemaJson.$id.endsWith(expectedIdSuffix)
+  ) {
+    console.error(
+      red(
+        `${schemaFile} has $id ${JSON.stringify(schemaJson.$id)}; expected it to end with "${expectedIdSuffix}".`,
+      ),
+    );
+    process.exit(1);
+  }
+
   if (!mapsByName.has(name)) {
     mapsByName.set(name, { name, dir, dataFile, schemas: [] });
   }
