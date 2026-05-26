@@ -37,9 +37,9 @@ may or may not utilize the HTML `form` tag. See the project
   - [Fields](#fields)
     - [Field Keys](#field-keys)
       - [Authentication](#authentication)
-      - [Name](#name)
-      - [Contact](#contact)
-      - [Address](#address)
+      - [Names](#names)
+      - [Phone Numbers](#phone-numbers)
+      - [Addresses](#addresses)
       - [Birthdate](#birthdate)
       - [Payment Card](#payment-card)
       - [Consent](#consent)
@@ -424,48 +424,87 @@ selectors (e.g. `container` selector).
 
 ### Field Keys
 
-Field keys are constrained to the following set. Keys are grouped here for
-readability; the groupings carry no semantic meaning in the schema.
-
-#### Authentication
+Field keys are constrained to the following set:
 
 | Key | Description |
 | --- | --- |
-| `username` | Username or login identifier |
+| `username` | User identifier or handle |
 | `password` | Current password |
 | `newPassword` | New or confirmation password |
-| `oneTimeCode` | One-time verification code (SMS, email, authenticator, etc.) |
-
-#### Name
-
-Where a form collects name data as a single field, use `fullName`. Where it
-collects name components separately, use the individual keys.
-
-| Key | Description |
-| --- | --- |
+| `oneTimeCode` | Single-use verification code (SMS, email, authenticator, etc.) |
 | `fullName` | Full name (single combined field) |
 | `honorificPrefix` | Title or honorific prefix (Mr., Dr., etc.) |
 | `firstName` | Given name |
 | `middleName` | Middle or additional name |
 | `lastName` | Family name |
 | `honorificSuffix` | Suffix (Jr., PhD., etc.) |
-
-#### Contact
-
-Where a form collects a phone number as a single field, use `phone`. Where it
-collects phone components separately, use the individual keys.
-
-| Key | Description |
-| --- | --- |
 | `email` | Email address |
 | `phone` | Full telephone number (single combined field) |
 | `phoneCountryCode` | Country code (e.g. "1", "44") |
 | `phoneAreaCode` | Area code |
 | `phoneLocal` | Local number (without country or area code) |
 | `phoneExtension` | Extension number |
-| `organization` | Company, organization, or institution |
+| `organization` | Company, organization, or institution name |
+| `streetAddress` | Full street address (multi-line block) |
+| `addressLine1` | First line of street address |
+| `addressLine2` | Second line of street address |
+| `addressLine3` | Third line of street address |
+| `addressLevel1` | Broadest administrative division (e.g. State, province, prefecture, canton, county, region) |
+| `addressLevel2` | Locality (e.g. City, town, village, municipality) |
+| `addressLevel3` | Sub-locality (e.g. District, suburb, ward, borough) |
+| `addressLevel4` | Finest-grained subdivision (e.g. Block, neighborhood section) |
+| `postalCode` | ZIP or postal code |
+| `country` | Country or territory |
+| `birthdate` | Full birth date (single combined field) |
+| `birthdateDay` | Day component |
+| `birthdateMonth` | Month component |
+| `birthdateYear` | Year component |
+| `cardholderName` | Name as printed on card |
+| `cardNumber` | Card number |
+| `cardExpirationDate` | Combined expiration (single field; e.g. MM/YY) |
+| `cardExpirationMonth` | Expiration month |
+| `cardExpirationYear` | Expiration year |
+| `cardCvv` | Security code (CVV / CVC / CSC) |
+| `cardType` | Card network or brand (Visa, Mastercard, etc.) |
+| `consentTerms` | Terms of service or terms and conditions acceptance |
+| `consentPrivacy` | Privacy policy acceptance |
+| `consentUser` | General user confirmation (e.g. "I agree", "I confirm") |
+| `searchTerm` | Free-text search query |
 
-#### Address
+The role of a given field is not implied by the field key name or definition.
+Rather, [form category](#category) informs the context of the field's role.
+
+For example, `email` and `phone` can be represented in a shipping form
+(`address`), account registration form (`account-creation`), or authentication
+form (`account-login`); the field keys in each situation describe the fields
+in the same way, and disambiguation of purpose is distinguished by the form
+`category`.
+
+The kind of field input is also not implied by the field key name or
+definition. For example, a `password` selector may describe an `input`
+element with a `text` or `password` value of the `type` attribute.
+
+#### Authentication
+
+In cases where an email is used for authentication, the `email` field key
+should be used, not `username`. Other values used in authentication should
+use the most specific appropriate key name (e.g. phone numbers used to log
+in should still be represented as `phone`).
+
+Note, a field described by the `username` key is not exclusive to
+authentication concerns, and may be represented in other form categories.
+
+#### Names
+
+Where a form collects name data as a single field, use `fullName`. Where it
+collects name components separately, use the appropriate individual keys.
+
+#### Phone Numbers
+
+Where a form collects a phone number as a single field, use `phone`. Where it
+collects phone components separately, use the individual keys.
+
+#### Addresses
 
 Street address data may appear as a single multi-line field (e.g. a `<textarea>`)
 or as separate address lines. Use `streetAddress` for the combined form and
@@ -473,20 +512,7 @@ or as separate address lines. Use `streetAddress` for the combined form and
 
 Administrative divisions use an abstract leveling system to accommodate
 international variation. Each level represents a progressively finer geographic
-subdivision:
-
-| Key | Description | Examples |
-| --- | --- | --- |
-| `streetAddress` | Full street address (multi-line block) | — |
-| `addressLine1` | First line of street address | — |
-| `addressLine2` | Second line of street address | — |
-| `addressLine3` | Third line of street address | — |
-| `addressLevel1` | Broadest administrative division | State, province, prefecture, canton, county, region |
-| `addressLevel2` | Locality | City, town, village, municipality |
-| `addressLevel3` | Sub-locality | District, suburb, ward, borough |
-| `addressLevel4` | Finest-grained subdivision | Block, neighborhood section |
-| `postalCode` | ZIP or postal code | — |
-| `country` | Country or territory | — |
+subdivision.
 
 > [!NOTE]
 > Not all countries use all four address levels. Most forms will only need
@@ -498,47 +524,25 @@ subdivision:
 Where a form collects a birthdate as a single field, use `birthdate`. Where it
 collects date components separately, use the individual keys.
 
-| Key | Description |
-| --- | --- |
-| `birthdate` | Full birth date (single combined field) |
-| `birthdateDay` | Day component |
-| `birthdateMonth` | Month component |
-| `birthdateYear` | Year component |
-
 #### Payment Card
 
 A combined expiration field (`cardExpirationDate`) is not the same as separate
 month and year fields (`cardExpirationMonth` / `cardExpirationYear`). Use the
 key that matches the actual input structure on the page.
 
-| Key | Description |
-| --- | --- |
-| `cardholderName` | Name as printed on card |
-| `cardNumber` | Card number |
-| `cardExpirationDate` | Combined expiration (single field; e.g. MM/YY) |
-| `cardExpirationMonth` | Expiration month |
-| `cardExpirationYear` | Expiration year |
-| `cardCvv` | Security code (CVV / CVC / CSC) |
-| `cardType` | Card network or brand (Visa, Mastercard, etc.) |
-
 #### Consent
 
-| Key | Description |
-| --- | --- |
-| `consentTerms` | Terms of service or terms and conditions acceptance |
-| `consentPrivacy` | Privacy policy acceptance |
-| `consentUser` | General user confirmation (e.g. "I agree", "I confirm") |
+Note, consent field keys `consentTerms`, `consentPrivacy`, and `consentUser`
+do not indicate how the user needs to interact with the input/field in order
+to convey their consent. They can equally describe a text field (e.g. "Type
+'I agree'"), opt-in (e.g. "check to agree to the terms"), or opt-out (e.g.
+"check to NOT agree").
 
 #### Search
 
-| Key | Description |
-| --- | --- |
-| `searchTerm` | Free-text search query |
-
-> [!TIP]
-> Use specific field keys for context-specific search forms; for example, a
-> search that only deals in emails should use the `email` key name to describe
-> the input and `search` to describe the form category.
+Use specific field keys for context-specific search forms; for example, a
+search that only deals in emails should use the `email` key name to describe
+the input and `search` to describe the form category.
 
 ### Selector Arrays
 
