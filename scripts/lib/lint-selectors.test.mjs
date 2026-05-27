@@ -125,34 +125,37 @@ describe("universal selector", () => {
 // ---------------------------------------------------------------------------
 
 describe("bare element selector", () => {
-  it("reports an error for a bare tag", () => {
-    const errors = errorsFor("input");
-    assert.equal(errors.length, 1);
-    assert.match(errors[0].message, /Bare element selector/);
+  it("warns for a bare tag", () => {
+    const warnings = warningsFor("input");
+    assert.equal(warnings.length, 1);
+    assert.match(warnings[0].message, /Bare element selector/);
   });
 
-  it("reports an error for a bare tag as the target of a descendant chain", () => {
-    const errors = errorsFor("form#login > input");
-    assert.equal(errors.length, 1);
-    assert.match(errors[0].message, /Bare element selector/);
+  it("warns for a bare tag as the target of a descendant chain", () => {
+    const warnings = warningsFor("form#login > input");
+    assert.equal(warnings.length, 1);
+    assert.match(warnings[0].message, /Bare element selector/);
   });
 
   it("does not flag an element with an ID", () => {
     assert.equal(errorsFor("input#email").length, 0);
+    assert.equal(warningsFor("input#email").length, 0);
   });
 
   it("does not flag an element with a class", () => {
     assert.equal(errorsFor("input.username").length, 0);
+    assert.equal(warningsFor("input.username").length, 0);
   });
 
   it("does not flag an element with an attribute", () => {
     assert.equal(errorsFor("input[name='user']").length, 0);
+    assert.equal(warningsFor("input[name='user']").length, 0);
   });
 
   it("does not flag an element with a pseudo-class", () => {
     // Pseudo-classes qualify the element (may trigger a positional warning
-    // separately, but not a bare-element error)
-    assert.equal(errorsFor("input:first-child").length, 0);
+    // separately, but not a bare-element warning)
+    assert.equal(warningsFor("input:first-child").filter(w => /Bare element/.test(w.message)).length, 0);
   });
 });
 
@@ -217,32 +220,33 @@ describe("boundary combinator (>>>) structure", () => {
   });
 
   it("lints each segment independently", () => {
-    // Left side is fine, right side is a bare element
-    const errors = errorsFor("iframe#frame >>> input");
-    assert.equal(errors.length, 1);
-    assert.match(errors[0].message, /Bare element selector/);
+    // Left side is fine, right side is a bare element (warning).
+    const { errors, warnings } = lintSelector("iframe#frame >>> input", loc());
+    assert.equal(errors.length, 0);
+    assert.equal(warnings.length, 1);
+    assert.match(warnings[0].message, /Bare element selector/);
   });
 
-  it("continues processing past a leading-boundary misuse to aggregate more errors", () => {
-    // ">>>" at start is reported, AND the bare-element target on the right
-    // is also flagged in the same pass.
-    const errors = errorsFor(">>> input");
+  it("continues processing past a leading-boundary misuse to aggregate more findings", () => {
+    // ">>>" at start is reported as an error, AND the bare-element target on
+    // the right is flagged as a warning in the same pass.
+    const { errors, warnings } = lintSelector(">>> input", loc());
     const startErr = errors.filter((e) => /starts with/.test(e.message));
-    const bareErr = errors.filter((e) =>
-      /Bare element selector/.test(e.message),
+    const bareWarn = warnings.filter((w) =>
+      /Bare element selector/.test(w.message),
     );
     assert.equal(startErr.length, 1);
-    assert.equal(bareErr.length, 1);
+    assert.equal(bareWarn.length, 1);
   });
 
-  it("continues processing past a trailing-boundary misuse to aggregate more errors", () => {
-    const errors = errorsFor("input >>>");
+  it("continues processing past a trailing-boundary misuse to aggregate more findings", () => {
+    const { errors, warnings } = lintSelector("input >>>", loc());
     const endErr = errors.filter((e) => /ends with/.test(e.message));
-    const bareErr = errors.filter((e) =>
-      /Bare element selector/.test(e.message),
+    const bareWarn = warnings.filter((w) =>
+      /Bare element selector/.test(w.message),
     );
     assert.equal(endErr.length, 1);
-    assert.equal(bareErr.length, 1);
+    assert.equal(bareWarn.length, 1);
   });
 
   it("reports both start and end boundary misuses when both are present", () => {
@@ -1112,10 +1116,11 @@ describe("lintMapData traversal", () => {
         },
       },
     };
-    const { errors } = lintMapData(data);
-    assert.equal(errors.length, 1);
-    assert.match(errors[0].message, /Bare element selector/);
-    assert.match(errors[0].location, /\/login/);
+    const { errors, warnings } = lintMapData(data);
+    assert.equal(errors.length, 0);
+    assert.equal(warnings.length, 1);
+    assert.match(warnings[0].message, /Bare element selector/);
+    assert.match(warnings[0].location, /\/login/);
   });
 
   it("skips null host entries", () => {
@@ -1178,10 +1183,11 @@ describe("lintMapData traversal", () => {
         },
       },
     };
-    const { errors } = lintMapData(data);
-    assert.equal(errors.length, 1);
-    assert.match(errors[0].message, /Bare element selector/);
-    assert.match(errors[0].location, /actions\.submit/);
+    const { errors, warnings } = lintMapData(data);
+    assert.equal(errors.length, 0);
+    assert.equal(warnings.length, 1);
+    assert.match(warnings[0].message, /Bare element selector/);
+    assert.match(warnings[0].location, /actions\.submit/);
   });
 
   it("lints selector sequences in composite arrays", () => {
@@ -1199,10 +1205,11 @@ describe("lintMapData traversal", () => {
         },
       },
     };
-    const { errors } = lintMapData(data);
-    assert.equal(errors.length, 1);
-    assert.match(errors[0].message, /Bare element selector/);
-    assert.match(errors[0].location, /sequence\[0\]/);
+    const { errors, warnings } = lintMapData(data);
+    assert.equal(errors.length, 0);
+    assert.equal(warnings.length, 1);
+    assert.match(warnings[0].message, /Bare element selector/);
+    assert.match(warnings[0].location, /sequence\[0\]/);
   });
 
   it("returns empty results when hosts is absent", () => {
