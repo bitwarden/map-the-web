@@ -395,6 +395,47 @@ describe("at-rule tokens", () => {
 });
 
 // ---------------------------------------------------------------------------
+// Errors: CSS nesting ampersand
+// ---------------------------------------------------------------------------
+
+describe("CSS nesting ampersand", () => {
+  it("reports an error for a leading & nesting selector", () => {
+    const errors = errorsFor("& input");
+    const nestingErrors = errors.filter((e) => /CSS nesting "&"/.test(e.message));
+    assert.equal(nestingErrors.length, 1);
+  });
+
+  it("reports an error for a trailing & nesting selector", () => {
+    const errors = errorsFor("input &");
+    const nestingErrors = errors.filter((e) => /CSS nesting "&"/.test(e.message));
+    assert.equal(nestingErrors.length, 1);
+  });
+
+  it("reports an error for & with a class qualifier", () => {
+    const errors = errorsFor("&.foo");
+    const nestingErrors = errors.filter((e) => /CSS nesting "&"/.test(e.message));
+    assert.equal(nestingErrors.length, 1);
+  });
+
+  it("reports per-segment across a >>> boundary", () => {
+    const errors = errorsFor("host-element >>> & input");
+    const nestingErrors = errors.filter((e) => /CSS nesting "&"/.test(e.message));
+    assert.equal(nestingErrors.length, 1);
+  });
+
+  it("does not flag an & inside an attribute value", () => {
+    const errors = errorsFor("a[href*='?a=1&b=2']");
+    assert.equal(errors.length, 0);
+  });
+
+  it("does not double-report the generic parse-error message", () => {
+    const errors = errorsFor("& input");
+    const parseErrors = errors.filter((e) => /Invalid CSS syntax/.test(e.message));
+    assert.equal(parseErrors.length, 0);
+  });
+});
+
+// ---------------------------------------------------------------------------
 // Errors: namespace separator
 // ---------------------------------------------------------------------------
 

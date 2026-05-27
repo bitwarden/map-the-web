@@ -418,6 +418,50 @@ function checkBoundaryCombinator(raw) {
 }
 
 /**
+ * Detect a CSS-nesting `&` at the selector level, ignoring `&` characters
+ * inside attribute brackets (`[href*="a&b"]`) and quoted strings.
+ *
+ * `css-what` throws on top-level `&` with messages like "Empty sub-selector"
+ * or "Unmatched selector: &", which don't point an author at the underlying
+ * mistake (copying from a SCSS/Tailwind/native-nesting stylesheet). Catching
+ * this before the parser lets us emit a targeted remediation instead.
+ */
+function containsNestingAmpersand(segment) {
+  let bracketDepth = 0;
+  let quote = null;
+  for (let i = 0; i < segment.length; i++) {
+    const ch = segment[i];
+    if (quote) {
+      if (ch === "\\") {
+        // Skip the escaped character so an escaped quote doesn't end the run.
+        i++;
+        continue;
+      }
+      if (ch === quote) {
+        quote = null;
+      }
+      continue;
+    }
+    if (ch === '"' || ch === "'") {
+      quote = ch;
+      continue;
+    }
+    if (ch === "[") {
+      bracketDepth++;
+      continue;
+    }
+    if (ch === "]") {
+      bracketDepth = Math.max(0, bracketDepth - 1);
+      continue;
+    }
+    if (ch === "&" && bracketDepth === 0) {
+      return true;
+    }
+  }
+  return false;
+}
+
+/**
  * Split a selector string on the >>> boundary combinator, returning the
  * individual CSS segments to parse independently.
  *
@@ -501,6 +545,20 @@ export function lintSelector(raw, location) {
         message:
           `Segment between ">>>" combinators is empty or contains only whitespace. ` +
           `Remove the extra ">>>" or provide a selector for the boundary crossing.`,
+      });
+      continue;
+    }
+
+    // Pre-empt the parser on CSS nesting syntax. Otherwise `css-what` throws
+    // with a generic "Empty sub-selector" / "Unmatched selector: &" message
+    // that doesn't tell the author the real problem.
+    if (containsNestingAmpersand(segment)) {
+      errors.push({
+        location: formattedLocation,
+        selector: raw,
+        message:
+          `CSS nesting "&" in segment "${segment}" is a stylesheet construct, not a DOM query. ` +
+          `Remove the "&" and write out the full selector path.`,
       });
       continue;
     }
