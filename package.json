@@ -6,7 +6,7 @@
     "url": "git+https://github.com/bitwarden/map-the-web.git"
   },
   "author": "Bitwarden Inc. <hello@bitwarden.com> (https://bitwarden.com)",
-  "license": "SEE LICENSE IN LICENSE.txt",
+  "license": "GPL-3.0-only",
   "bugs": {
     "url": "https://github.com/bitwarden/map-the-web/issues"
   },

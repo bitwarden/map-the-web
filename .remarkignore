@@ -1,7 +1,6 @@
 node_modules/
 dist/
 .github/
-bitwarden_license/
 CONTRIBUTING.md
 SECURITY.md
 LICENSE*.txt
