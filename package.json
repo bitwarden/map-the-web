@@ -19,7 +19,7 @@
     "lint:md": "remark . --frail --quiet",
     "lint:selectors": "node scripts/lint-selectors.mjs",
     "validate": "node scripts/validate-schemas.mjs",
-    "check": "npm run prettier && npm run lint:md && npm run validate && npm run lint:selectors",
+    "check": "npm run prettier && npm run lint:md && npm run validate && npm run lint:selectors && npm test",
     "test": "node --test scripts/**/*.test.mjs",
     "build": "node scripts/build.mjs",
     "build:clean": "rm -rf dist && node scripts/build.mjs"
