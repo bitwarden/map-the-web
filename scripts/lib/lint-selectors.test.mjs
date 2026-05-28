@@ -155,7 +155,12 @@ describe("bare element selector", () => {
   it("does not flag an element with a pseudo-class", () => {
     // Pseudo-classes qualify the element (may trigger a positional warning
     // separately, but not a bare-element warning)
-    assert.equal(warningsFor("input:first-child").filter(w => /Bare element/.test(w.message)).length, 0);
+    assert.equal(
+      warningsFor("input:first-child").filter((w) =>
+        /Bare element/.test(w.message),
+      ).length,
+      0,
+    );
   });
 });
 
@@ -401,25 +406,33 @@ describe("at-rule tokens", () => {
 describe("CSS nesting ampersand", () => {
   it("reports an error for a leading & nesting selector", () => {
     const errors = errorsFor("& input");
-    const nestingErrors = errors.filter((e) => /CSS nesting "&"/.test(e.message));
+    const nestingErrors = errors.filter((e) =>
+      /CSS nesting "&"/.test(e.message),
+    );
     assert.equal(nestingErrors.length, 1);
   });
 
   it("reports an error for a trailing & nesting selector", () => {
     const errors = errorsFor("input &");
-    const nestingErrors = errors.filter((e) => /CSS nesting "&"/.test(e.message));
+    const nestingErrors = errors.filter((e) =>
+      /CSS nesting "&"/.test(e.message),
+    );
     assert.equal(nestingErrors.length, 1);
   });
 
   it("reports an error for & with a class qualifier", () => {
     const errors = errorsFor("&.foo");
-    const nestingErrors = errors.filter((e) => /CSS nesting "&"/.test(e.message));
+    const nestingErrors = errors.filter((e) =>
+      /CSS nesting "&"/.test(e.message),
+    );
     assert.equal(nestingErrors.length, 1);
   });
 
   it("reports per-segment across a >>> boundary", () => {
     const errors = errorsFor("host-element >>> & input");
-    const nestingErrors = errors.filter((e) => /CSS nesting "&"/.test(e.message));
+    const nestingErrors = errors.filter((e) =>
+      /CSS nesting "&"/.test(e.message),
+    );
     assert.equal(nestingErrors.length, 1);
   });
 
@@ -430,7 +443,9 @@ describe("CSS nesting ampersand", () => {
 
   it("does not double-report the generic parse-error message", () => {
     const errors = errorsFor("& input");
-    const parseErrors = errors.filter((e) => /Invalid CSS syntax/.test(e.message));
+    const parseErrors = errors.filter((e) =>
+      /Invalid CSS syntax/.test(e.message),
+    );
     assert.equal(parseErrors.length, 0);
   });
 });
@@ -780,14 +795,19 @@ describe("ID-only target", () => {
     assert.equal(warnings.length, 0);
   });
 
-  it("does not warn when a class qualifies the ID", () => {
+  it("does not fire the ID-only warning when a class qualifies the ID", () => {
+    // The class qualifier disqualifies isIdOnly (length > 1), but the
+    // missing-tag warning still fires under the new rule — that's
+    // covered in its own suite.
     const warnings = warningsFor("#email.primary");
-    assert.equal(warnings.length, 0);
+    const idOnly = warnings.filter((w) => /ID-only selector/.test(w.message));
+    assert.equal(idOnly.length, 0);
   });
 
-  it("does not warn when an attribute qualifies the ID", () => {
+  it("does not fire the ID-only warning when an attribute qualifies the ID", () => {
     const warnings = warningsFor("#email[type='email']");
-    assert.equal(warnings.length, 0);
+    const idOnly = warnings.filter((w) => /ID-only selector/.test(w.message));
+    assert.equal(idOnly.length, 0);
   });
 });
 
@@ -988,6 +1008,209 @@ describe("container non-container target", () => {
 });
 
 // ---------------------------------------------------------------------------
+// Warnings: missing tag anchor (general "no element type" fallback)
+// ---------------------------------------------------------------------------
+
+describe("missing tag anchor", () => {
+  // Distinct from the ID-only message (which also contains "omits the
+  // element type"). Match on the remediation-specific phrase instead.
+  const missingTagMatcher = (w) => /Add a tag anchor/.test(w.message);
+
+  it("warns on attribute-only selector [name='username']", () => {
+    const warnings = warningsFor("[name='username']");
+    assert.equal(warnings.filter(missingTagMatcher).length, 1);
+  });
+
+  it("warns on attribute-only selector [type='submit']", () => {
+    const warnings = warningsFor("[type='submit']");
+    assert.equal(warnings.filter(missingTagMatcher).length, 1);
+  });
+
+  it("warns on attribute-only selector [role='form']", () => {
+    const warnings = warningsFor("[role='form']");
+    assert.equal(warnings.filter(missingTagMatcher).length, 1);
+  });
+
+  it("warns on attribute-only selector [data-testid='login']", () => {
+    const warnings = warningsFor("[data-testid='login']");
+    assert.equal(warnings.filter(missingTagMatcher).length, 1);
+  });
+
+  it("warns on class+attribute mix .foo[name='x']", () => {
+    const warnings = warningsFor(".foo[name='x']");
+    assert.equal(warnings.filter(missingTagMatcher).length, 1);
+  });
+
+  it("warns on id+attribute mix #x[name='y']", () => {
+    const warnings = warningsFor("#x[name='y']");
+    assert.equal(warnings.filter(missingTagMatcher).length, 1);
+  });
+
+  it("warns on class+id mix .foo#x", () => {
+    const warnings = warningsFor(".foo#x");
+    assert.equal(warnings.filter(missingTagMatcher).length, 1);
+  });
+
+  it("warns on multi-class+attribute .foo.bar[name='x']", () => {
+    const warnings = warningsFor(".foo.bar[name='x']");
+    assert.equal(warnings.filter(missingTagMatcher).length, 1);
+  });
+
+  it("only inspects the final compound in a descendant chain", () => {
+    // Left side has no tag, right side does — should not fire.
+    const warnings = warningsFor("#wrapper > input[name='x']");
+    assert.equal(warnings.filter(missingTagMatcher).length, 0);
+  });
+
+  it("warns when the final compound in a chain lacks a tag", () => {
+    const warnings = warningsFor("form#login > [name='username']");
+    assert.equal(warnings.filter(missingTagMatcher).length, 1);
+  });
+
+  it("checks each >>> segment independently", () => {
+    // The rule applies per-segment: a tag-less left side fires its own
+    // missing-tag warning, regardless of how qualified the right side is.
+    const { warnings } = lintSelector(
+      "[data-frame='outer'] >>> input[name='x']",
+      loc(),
+    );
+    assert.equal(warnings.filter(missingTagMatcher).length, 1);
+  });
+
+  it("does not fire on >>> chains where every segment has a tag", () => {
+    const { warnings } = lintSelector(
+      "iframe#outer >>> input[name='x']",
+      loc(),
+    );
+    assert.equal(warnings.filter(missingTagMatcher).length, 0);
+  });
+
+  it("does not fire on a tag-qualified selector", () => {
+    assert.equal(
+      warningsFor("input[name='x']").filter(missingTagMatcher).length,
+      0,
+    );
+    assert.equal(
+      warningsFor("button.submit").filter(missingTagMatcher).length,
+      0,
+    );
+    assert.equal(warningsFor("form#login").filter(missingTagMatcher).length, 0);
+  });
+
+  it("does not double-fire with id-only", () => {
+    // `[id='x']` triggers id-only; the general missing-tag warning should
+    // step aside so the more specific message wins.
+    const warnings = warningsFor("[id='x']");
+    assert.equal(warnings.filter(missingTagMatcher).length, 0);
+  });
+
+  it("does not fire on class-only (class-only error wins)", () => {
+    const { errors, warnings } = lintSelector(".submit", loc());
+    assert.equal(errors.filter((e) => /Class-only/.test(e.message)).length, 1);
+    assert.equal(warnings.filter(missingTagMatcher).length, 0);
+  });
+
+  it("does not fire on bare-element (it has a tag)", () => {
+    const warnings = warningsFor("input");
+    assert.equal(warnings.filter(missingTagMatcher).length, 0);
+  });
+
+  it("does not fire on pseudo-only selectors (handled by isPseudoOnly)", () => {
+    // Pseudo-only selectors get their own dedicated warning; the
+    // missing-tag rule should step aside so the more specific message wins.
+    assert.equal(warningsFor(":hover").filter(missingTagMatcher).length, 0);
+    assert.equal(
+      warningsFor(":not(input)").filter(missingTagMatcher).length,
+      0,
+    );
+  });
+});
+
+// ---------------------------------------------------------------------------
+// Warnings: pseudo-only selectors
+// ---------------------------------------------------------------------------
+
+describe("pseudo-only selector", () => {
+  const pseudoOnlyMatcher = (w) => /Pseudo-only selector/.test(w.message);
+
+  it("warns on a bare state pseudo (`:hover`)", () => {
+    const warnings = warningsFor(":hover");
+    assert.equal(warnings.filter(pseudoOnlyMatcher).length, 1);
+  });
+
+  it("warns on a bare functional pseudo (`:not(input)`)", () => {
+    const warnings = warningsFor(":not(input)");
+    assert.equal(warnings.filter(pseudoOnlyMatcher).length, 1);
+  });
+
+  it("warns on a bare positional pseudo (`:first-child`)", () => {
+    const warnings = warningsFor(":first-child");
+    assert.equal(warnings.filter(pseudoOnlyMatcher).length, 1);
+  });
+
+  it("warns on a bare relational pseudo (`:has(input)`)", () => {
+    const warnings = warningsFor(":has(input)");
+    assert.equal(warnings.filter(pseudoOnlyMatcher).length, 1);
+  });
+
+  it("warns on a bare logical-OR pseudo (`:is(form)`)", () => {
+    const warnings = warningsFor(":is(form)");
+    assert.equal(warnings.filter(pseudoOnlyMatcher).length, 1);
+  });
+
+  it("warns when multiple pseudos stack with no anchor", () => {
+    const warnings = warningsFor(":not([type='hidden']):hover");
+    assert.equal(warnings.filter(pseudoOnlyMatcher).length, 1);
+  });
+
+  it("does not fire when a tag anchors the compound", () => {
+    assert.equal(
+      warningsFor("input:hover").filter(pseudoOnlyMatcher).length,
+      0,
+    );
+    assert.equal(
+      warningsFor("input:not([type='hidden'])").filter(pseudoOnlyMatcher)
+        .length,
+      0,
+    );
+  });
+
+  it("does not fire when an attribute anchors the compound", () => {
+    // `[name='x']:hover` triggers the missing-tag-anchor warning instead.
+    const warnings = warningsFor("[name='x']:hover");
+    assert.equal(warnings.filter(pseudoOnlyMatcher).length, 0);
+  });
+
+  it("does not fire when an id anchors the compound", () => {
+    const warnings = warningsFor("#email:hover");
+    assert.equal(warnings.filter(pseudoOnlyMatcher).length, 0);
+  });
+
+  it("does not fire when a class anchors the compound", () => {
+    const warnings = warningsFor(".submit:hover");
+    assert.equal(warnings.filter(pseudoOnlyMatcher).length, 0);
+  });
+
+  it("only inspects the final compound in a descendant chain", () => {
+    // The final compound has a tag — no pseudo-only warning, even though
+    // the chain starts with a pseudo-only compound.
+    const warnings = warningsFor(":hover > input[name='x']");
+    assert.equal(warnings.filter(pseudoOnlyMatcher).length, 0);
+  });
+
+  it("warns when the final compound in a chain is pseudo-only", () => {
+    const warnings = warningsFor("form#login > :hover");
+    assert.equal(warnings.filter(pseudoOnlyMatcher).length, 1);
+  });
+
+  it("checks each >>> segment independently", () => {
+    // Right segment is pseudo-only; left side has a tag.
+    const warnings = warningsFor("iframe#frame >>> :hover");
+    assert.equal(warnings.filter(pseudoOnlyMatcher).length, 1);
+  });
+});
+
+// ---------------------------------------------------------------------------
 // Warnings: container selector lacks a form anchor
 // ---------------------------------------------------------------------------
 
@@ -1002,7 +1225,8 @@ describe("container form anchor", () => {
     };
   }
 
-  const anchorMatcher = (w) => /does not anchor on a form element/.test(w.message);
+  const anchorMatcher = (w) =>
+    /does not anchor on a form element/.test(w.message);
 
   it("warns when a container targets a generic <div>", () => {
     const { warnings } = lintSelector("div#login-wrapper", containerLoc());

@@ -210,6 +210,51 @@ function isIdOnly(tokens) {
 }
 
 /**
+ * Check whether the target compound establishes identity via id/class/
+ * attribute matchers but has no tag anchor. This is the general "missing
+ * element type" case: catches attribute-only (`[name='x']`), class+attribute
+ * (`.foo[name='x']`), id+attribute (`#x[name='y']`), class+id (`.foo#x`),
+ * and other mixes that omit the tag.
+ *
+ * Intentionally requires at least one identity-establishing non-tag token
+ * (id/class/attribute) before firing. Pure pseudo-class selectors are
+ * caught separately by `isPseudoOnly`.
+ */
+function lacksTagAnchor(tokens) {
+  const compound = getLastCompound(tokens);
+  if (compound.some((t) => t.type === "tag")) {
+    return false;
+  }
+  return compound.some((t) => t.type === "attribute");
+}
+
+/**
+ * Check whether the target compound consists only of pseudo-class
+ * constraints (`:hover`, `:not(input)`, `:has(form)`, etc.) with no
+ * identifying token at all.
+ *
+ * Pseudo-classes qualify a target — they describe state, negation, or
+ * structural relationships — but they do not identify one. A compound
+ * without a tag/id/class/attribute anchor isn't claiming what the target
+ * IS, only what it ISN'T (or what state it's in).
+ */
+function isPseudoOnly(tokens) {
+  const compound = getLastCompound(tokens);
+  if (compound.length === 0) {
+    return false;
+  }
+  if (
+    compound.some(
+      (t) =>
+        t.type === "tag" || t.type === "attribute" || t.type === "universal",
+    )
+  ) {
+    return false;
+  }
+  return compound.some((t) => t.type === "pseudo");
+}
+
+/**
  * Return the last compound selector (tokens after the final combinator).
  */
 function getLastCompound(tokens) {
@@ -231,8 +276,8 @@ function combinatorDepth(tokens) {
 
 /**
  * Walk a token list, yielding every token including those nested inside
- * functional pseudo-classes (e.g., :not(...), :is(...), :has(...)).
- * Pseudos with string .data (e.g., :lang("en")) are not descended into.
+ * functional pseudo-classes (e.g. :not(...), :is(...), :has(...)).
+ * Pseudos with string .data (e.g. :lang("en")) are not descended into.
  */
 function* walkTokens(tokens) {
   for (const t of tokens) {
@@ -308,7 +353,7 @@ function findAtRuleTags(tokens) {
 
 /**
  * Find namespace-qualified tokens and return readable renderings of each
- * (e.g., "svg|rect", "*|foo", "[html|lang]").
+ * (e.g. "svg|rect", "*|foo", "[html|lang]").
  */
 function findNamespacedTokens(tokens) {
   return tokens
@@ -341,7 +386,7 @@ function findNonContainerTarget(tokens) {
  *
  * Looks at the top-level final compound only; does not descend into
  * functional pseudos (`:is(form)`, `:where(...)`). Those patterns won't
- * satisfy the check, which is a deliberate simplification — the common
+ * satisfy the check, which is a deliberate simplification; the common
  * authoring patterns we want to accept are a `form` tag or an explicit role.
  */
 function hasFormAnchor(tokens) {
@@ -494,7 +539,7 @@ function containsNestingAmpersand(segment) {
  * individual CSS segments to parse independently.
  *
  * Known limitation: this is a naive string split and will misinterpret ">>>"
- * if it appears literally inside an attribute value (e.g., `[data-x=">>>"]`).
+ * if it appears literally inside an attribute value (e.g. `[data-x=">>>"]`).
  * This has not come up in practice for form selectors; if it does, this
  * should be replaced with a tokenizing split that respects bracket/quote
  * regions.
@@ -541,7 +586,7 @@ export function lintSelector(raw, location) {
 
   // Boundary combinator structural check. Collect any edge-misuse errors
   // and continue processing against the sanitized remainder so the author
-  // gets all applicable errors (e.g., boundary misuse *and* a bare-element
+  // gets all applicable errors (e.g. boundary misuse *and* a bare-element
   // target) in one pass rather than having to fix them serially.
   const { messages: boundaryMessages, sanitized } =
     checkBoundaryCombinator(raw);
@@ -603,7 +648,7 @@ export function lintSelector(raw, location) {
       continue;
     }
 
-    // Selector list (comma) check — fires once per segment
+    // Selector list (comma) check; fires once per segment
     if (parsedSelectors.length > 1) {
       errors.push({
         location: formattedLocation,
@@ -618,7 +663,7 @@ export function lintSelector(raw, location) {
     // Each group is an array of tokens.
     for (const tokens of parsedSelectors) {
       // Token-level checks that should also apply inside functional pseudos
-      // (e.g., :not(:nth-child(2)) still carries positional fragility).
+      // (e.g. :not(:nth-child(2)) still carries positional fragility).
       const allTokens = collectAllTokens(tokens);
 
       const atRuleTags = findAtRuleTags(allTokens);
@@ -639,7 +684,7 @@ export function lintSelector(raw, location) {
           selector: raw,
           message:
             `Pseudo-element ${pseudoElements.join(", ")} does not represent a real DOM element. ` +
-            `Target the underlying element directly (e.g., the \`input\` whose placeholder is styled, not \`::placeholder\`).`,
+            `Target the underlying element directly (e.g. the \`input\` whose placeholder is styled, not \`::placeholder\`).`,
         });
       }
 
@@ -665,8 +710,10 @@ export function lintSelector(raw, location) {
         });
       }
 
-      // Target-identity checks apply to the top-level compound only;
-      // :not(input) means "not an input", which is not the same as "target an input".
+      // Target-identity checks. These inspect the final compound only and
+      // are mutually exclusive: at most one fires per compound, with more
+      // specific rules taking precedence over the general missing-tag-anchor
+      // and pseudo-only fallbacks.
       if (hasUniversal(tokens)) {
         errors.push({
           location: formattedLocation,
@@ -681,7 +728,7 @@ export function lintSelector(raw, location) {
           selector: raw,
           message:
             `Bare element selector "${segment}" has no qualifying ID, attribute, or class. ` +
-            `Add a qualifier (e.g., \`input#id\`, \`input[name='x']\`, \`input.class\`) to avoid mis-targeting.`,
+            `Add a qualifier (e.g. \`input#id\`, \`input[name='x']\`) to avoid mis-targeting.`,
         });
       } else if (isClassOnly(tokens)) {
         errors.push({
@@ -689,11 +736,31 @@ export function lintSelector(raw, location) {
           selector: raw,
           message:
             `Class-only selector "${segment}" is not specific enough. ` +
-            `Add an element type or attribute qualifier (e.g., \`button.submit\`, \`.submit[type='submit']\`).`,
+            `Add an element tag and ID or attribute qualifier (e.g. \`button#submit\`, \`button.submit[type='submit']\`).`,
+        });
+      } else if (!isIdOnly(tokens) && lacksTagAnchor(tokens)) {
+        // Subsumes attribute-only, class+attribute, id+attribute, class+id,
+        // and other mixes that omit the element type. ID-only and class-only
+        // have their own specialized messages and fire above; this is the
+        // general fallback for everything else missing a tag anchor.
+        warnings.push({
+          location: formattedLocation,
+          selector: raw,
+          message:
+            `Selector "${segment}" omits the element type. ` +
+            `Add a tag anchor (e.g. \`input[name='username']\`, \`button.submit\`) so the selector breaks if the target's element type changes; those changes warrant re-verification.`,
+        });
+      } else if (isPseudoOnly(tokens)) {
+        warnings.push({
+          location: formattedLocation,
+          selector: raw,
+          message:
+            `Pseudo-only selector "${segment}" has no target anchor. ` +
+            `Pseudo-classes qualify a target rather than identify one. Add a tag/id/class/attribute anchor (e.g. \`input:not([type='hidden'])\`).`,
         });
       }
 
-      // Deep nesting warning — top-level structural concern only.
+      // Deep nesting warning; top-level structural concern only.
       const depth = combinatorDepth(tokens);
       if (depth > MAX_COMBINATOR_DEPTH) {
         warnings.push({
@@ -763,12 +830,12 @@ export function lintSelector(raw, location) {
           selector: raw,
           message:
             `ID-only selector "${segment}" omits the element type. ` +
-            `Prefer including the element type (e.g., \`input#email\`) for added specificity and in cases where ids are (inappropriately) duplicated.`,
+            `Prefer including the element type (e.g. \`input#email\`) for added specificity and in cases where ids are (inappropriately) duplicated.`,
         });
       }
 
       // Empty-value attribute matcher errors (top-level only; nested
-      // inside :not() may be intentional — e.g., "has no class attr").
+      // inside :not() may be intentional; e.g. "has no class attr").
       const existenceEq = findExistenceEquivalentEmpty(tokens);
       if (existenceEq.length > 0) {
         const firstAttr = existenceEq[0].match(/\[(\w+)/)?.[1] ?? "attr";
@@ -964,7 +1031,7 @@ function lintCompositeSelectorArray(selectors, context, errors, warnings) {
 
 /**
  * Check for duplicate selector strings within a top-level alternatives array
- * (`selectorArray` or `compositeSelectorArray`). Non-string items (e.g., nested
+ * (`selectorArray` or `compositeSelectorArray`). Non-string items (e.g. nested
  * selector sequences) are skipped; duplicates inside a sequence are allowed
  * and handled by the caller.
  */
