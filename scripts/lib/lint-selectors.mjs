@@ -335,6 +335,34 @@ function findNonContainerTarget(tokens) {
 }
 
 /**
+ * Determine whether the target compound anchors on a form: either a `form`
+ * tag or an attribute matcher on `role` whose value mentions "form" (e.g.
+ * `[role='form']`, `[role*='form']`, `[role~='form']`).
+ *
+ * Looks at the top-level final compound only; does not descend into
+ * functional pseudos (`:is(form)`, `:where(...)`). Those patterns won't
+ * satisfy the check, which is a deliberate simplification — the common
+ * authoring patterns we want to accept are a `form` tag or an explicit role.
+ */
+function hasFormAnchor(tokens) {
+  const compound = getLastCompound(tokens);
+  for (const t of compound) {
+    if (t.type === "tag" && t.name === "form") {
+      return true;
+    }
+    if (
+      t.type === "attribute" &&
+      t.name === "role" &&
+      typeof t.value === "string" &&
+      /form/i.test(t.value)
+    ) {
+      return true;
+    }
+  }
+  return false;
+}
+
+/**
  * Find attribute matchers that use an operator equivalent to existence check
  * when the value is empty (*=, ^=, $= with empty value).
  */
@@ -766,17 +794,29 @@ export function lintSelector(raw, location) {
         });
       }
 
-      // Container-misuse warning: only when linting a `container` entry,
+      // Container-specific checks: only when linting a `container` entry,
       // and only on the final segment (the actual target after any >>>).
+      // When `container` is omitted entirely, this branch is never reached.
       if (location.kind === "container" && isFinalSegment) {
         const badTag = findNonContainerTarget(tokens);
         if (badTag) {
+          // Pointing at a leaf control is the actionable signal here; a
+          // missing form anchor would be redundant noise on top of it.
           warnings.push({
             location: formattedLocation,
             selector: raw,
             message:
               `Container selector targets <${badTag}>, which is not typically a wrapping element. ` +
               `If this selector identifies a form field, move it under \`fields\`; if it identifies an action, move it under \`actions\`.`,
+          });
+        } else if (!hasFormAnchor(tokens)) {
+          warnings.push({
+            location: formattedLocation,
+            selector: raw,
+            message:
+              `Container selector "${segment}" does not anchor on a form element ` +
+              `(\`form\` tag or \`[role='form']\`). ` +
+              `If no \`<form>\` or \`[role='form']\` exists, this warning may be ignored.`,
           });
         }
       }

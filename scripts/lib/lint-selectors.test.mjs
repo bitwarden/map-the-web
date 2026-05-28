@@ -988,6 +988,110 @@ describe("container non-container target", () => {
 });
 
 // ---------------------------------------------------------------------------
+// Warnings: container selector lacks a form anchor
+// ---------------------------------------------------------------------------
+
+describe("container form anchor", () => {
+  function containerLoc() {
+    return {
+      host: "example.com",
+      category: "account-login",
+      kind: "container",
+      key: "container",
+      selectorIndex: 0,
+    };
+  }
+
+  const anchorMatcher = (w) => /does not anchor on a form element/.test(w.message);
+
+  it("warns when a container targets a generic <div>", () => {
+    const { warnings } = lintSelector("div#login-wrapper", containerLoc());
+    assert.equal(warnings.filter(anchorMatcher).length, 1);
+  });
+
+  it("warns when a container targets <section>", () => {
+    const { warnings } = lintSelector("section#auth", containerLoc());
+    assert.equal(warnings.filter(anchorMatcher).length, 1);
+  });
+
+  it("does not warn for a `form` tag with an ID", () => {
+    const { warnings } = lintSelector("form#login", containerLoc());
+    assert.equal(warnings.filter(anchorMatcher).length, 0);
+  });
+
+  it("does not warn for a `form` tag with an attribute qualifier", () => {
+    const { warnings } = lintSelector("form[name='login']", containerLoc());
+    assert.equal(warnings.filter(anchorMatcher).length, 0);
+  });
+
+  it("does not warn for [role='form']", () => {
+    const { warnings } = lintSelector("[role='form']", containerLoc());
+    assert.equal(warnings.filter(anchorMatcher).length, 0);
+  });
+
+  it("does not warn for div[role='form']", () => {
+    const { warnings } = lintSelector("div[role='form']", containerLoc());
+    assert.equal(warnings.filter(anchorMatcher).length, 0);
+  });
+
+  it("accepts [role*='form'] (substring match)", () => {
+    const { warnings } = lintSelector("div[role*='form']", containerLoc());
+    assert.equal(warnings.filter(anchorMatcher).length, 0);
+  });
+
+  it("accepts [role~='form'] (word match in role list)", () => {
+    const { warnings } = lintSelector("div[role~='form']", containerLoc());
+    assert.equal(warnings.filter(anchorMatcher).length, 0);
+  });
+
+  it("only inspects the final >>> segment", () => {
+    // Left side is a div (no anchor), but the final segment is a form.
+    const { warnings } = lintSelector(
+      "div#outer >>> form#login",
+      containerLoc(),
+    );
+    assert.equal(warnings.filter(anchorMatcher).length, 0);
+  });
+
+  it("warns when the final >>> segment lacks a form anchor", () => {
+    const { warnings } = lintSelector(
+      "iframe#frame >>> div#wrapper",
+      containerLoc(),
+    );
+    assert.equal(warnings.filter(anchorMatcher).length, 1);
+  });
+
+  it("does not stack onto the non-container-target warning", () => {
+    // `input` triggers the non-container-target warning; the form-anchor
+    // warning would be redundant noise on top of it.
+    const { warnings } = lintSelector("input#email", containerLoc());
+    assert.equal(warnings.filter(anchorMatcher).length, 0);
+  });
+
+  it("does not fire when container is omitted entirely", () => {
+    const data = {
+      hosts: {
+        "example.com": {
+          forms: [
+            {
+              category: "account-login",
+              fields: { username: ["input#user"] },
+            },
+          ],
+        },
+      },
+    };
+    const { warnings } = lintMapData(data);
+    assert.equal(warnings.filter(anchorMatcher).length, 0);
+  });
+
+  it("does not fire on selectors under fields.*", () => {
+    const { warnings } = lintSelector("div#wrapper", loc());
+    assert.equal(warnings.filter(anchorMatcher).length, 0);
+  });
+});
+
+// ---------------------------------------------------------------------------
 // Warnings: selector length
 // ---------------------------------------------------------------------------
 
