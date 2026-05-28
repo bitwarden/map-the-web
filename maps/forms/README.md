@@ -33,6 +33,7 @@ may or may not utilize the HTML `form` tag. See the project
   - [Forms](#forms)
     - [Multiple Forms](#multiple-forms)
     - [Category](#category)
+  - [Selector Philosophy](#selector-philosophy)
   - [Container](#container)
   - [Fields](#fields)
     - [Field Keys](#field-keys)
@@ -355,15 +356,15 @@ A page may have more than one logical form. Each gets its own entry in the
     {
       "category": "account-login",
       "fields": {
-        "username": ["#login-email"],
-        "password": ["#login-pass"]
+        "username": ["input#login-email"],
+        "password": ["input#login-pass"]
       }
     },
     {
       "category": "account-creation",
       "fields": {
-        "username": ["#register-email"],
-        "newPassword": ["#register-pass"]
+        "username": ["input#register-email"],
+        "newPassword": ["input#register-pass"]
       }
     }
   ]
@@ -387,6 +388,31 @@ relevant to their concerns).
 | `payment-card`     | Credit/debit card payment                          |
 | `search`           | Search form                                        |
 | `signup`           | Newsletter, sweepstakes, unsubscribe, or general contact signup (not account creation) |
+
+## Selector Philosophy
+
+Forms Map selectors are not stylesheet selectors. A stylesheet selector aims
+for _resilience_; it should keep matching the same conceptual element as the
+page evolves, so the styling survives. A map selector aims for the opposite:
+it is a curated record of what a known target (that is, the full node
+hierarchy described by the selector, not just the leaf) looks like today. Tag
+drift, attribute renaming, or structural change of the target is the kind of
+signal that should trigger a review rather than be silently absorbed.
+
+This inverts the conventional "make selectors resilient" advice: Forms Map
+selectors should be brittle by design. If a page's login `<div role="form">`
+becomes an actual `<form>`, or an `<input>` is replaced by a custom element,
+the selector _should_ break; both as a prompt to a Map Author to re-verify
+that the new target is still the right one and as a guard against a consuming
+application interacting with something the Map was never authored to describe.
+
+In practice, this means every selector segment should include a tag anchor.
+Add the tag (e.g. `input[name='username']`, `button.submit#go`,
+`input#user[type='email']`) so the selector breaks if the element type ever
+changes. The same rule applies independently to each segment of a
+boundary-crossing selector, so `iframe#login-frame >>> input[name='username']`
+satisfies it on both sides; `#login-frame >>> input[name='username']` does
+not.
 
 ## Container
 
@@ -646,7 +672,7 @@ host into its shadow root's content
 
 ```json
 {
-  "username": ["#host-element >>> form > input[name='username']"]
+  "username": ["div#host-element >>> form > input[name='username']"]
 }
 ```
 
@@ -654,7 +680,7 @@ For nested shadow roots:
 
 ```json
 {
-  "username": ["#outer-host >>> #inner-host >>> input[name='user']"]
+  "username": ["div#outer-host >>> div#inner-host >>> input[name='user']"]
 }
 ```
 
@@ -746,9 +772,10 @@ The distinction between "irrelevant" and "no information" is important. An
    Consumers are responsible for their own timing strategy (e.g. polling,
    MutationObserver) when elements are not immediately present.
 
-3. **Be specific.** Prefer ID-based or attribute-based selectors over positional
-   ones (`:nth-child`, tag-only). Specific selectors are more resilient to page
-   layout changes.
+3. **Be specific.** Prefer tag selectors with an accompanying ID or attribute
+   over positional pseudos (e.g. `:nth-child`) or bare tag (e.g. `div`). Classes
+   should be non-preferred in selector descriptions as they typically represent
+   broad concerns.
 
 4. **Use `>>>` only when necessary.** Only use boundary-crossing selectors when
    the target element is actually inside a shadow root or iframe.
