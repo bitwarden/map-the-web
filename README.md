@@ -47,7 +47,7 @@ With the aforementioned goals and intent in mind, Maps should:
 - only describe websites where a given concern is not otherwise accessible
 - only capture shared web concerns; local network configurations are out of
   scope
-- be as specific as possible while avoiding "brittle" descriptions
+- be as specific as possible while avoiding unrelated concerns
 - be removed from a given Map if a site becomes navigable by other standard
   means for those concerns
 - avoid staleness and be kept up-to-date
