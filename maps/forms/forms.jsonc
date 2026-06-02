@@ -27,6 +27,24 @@
         }
       }
     },
+    "tiktok.com": {
+      "forms": [
+        {
+          "category": "account-login",
+          // This container is present when you should start looking for inputs. There's a form
+          // within it that is swapped out, so it's not possible to anchor more specifically.
+          "container": ["div#loginContainer"],
+          "fields": {
+            "username": ["input[name='username']"],
+            "password": ["input[type='password']"]
+          },
+          "actions": {
+            // The button does not have an id; `data-e2e` may have broke containment
+            "submit": ["button[data-e2e='login-button']", "button[type='submit']"]
+          }
+        }
+      ]
+    },
     "webtests.dev": {
       "pathnames": {
         "/forms/login/simple": {
