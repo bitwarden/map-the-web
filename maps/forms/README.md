@@ -10,15 +10,6 @@ describes the user-facing concept of users supplying data to a website, which
 may or may not utilize the HTML `form` tag. See the project
 [README](../../README.md) for broader mapping philosophies.
 
-> [!IMPORTANT]
-> The Forms Map is currently a **prerelease** Map (`schemaVersion` `0.y.z`).
-> Its schema, field/action key sets, value semantics, and host entries may
-> change in any way between releases, and the Map itself may be dropped from
-> a release without notice. The "Schema Version Bumps" rubric below describes
-> the rules that will apply once the Map graduates to `1.0.0`.
-> See the project README's [Prerelease Maps](../../README.md#prerelease-maps)
-> section for full prerelease semantics.
-
 - [Forms Map](#forms-map)
   - [Limitations](#limitations)
   - [Schema Version Bumps](#schema-version-bumps)
@@ -92,7 +83,7 @@ bump for the Forms Map schema:
 
 ```jsonc
 {
-  "schemaVersion": "0.1.0",
+  "schemaVersion": "1.0.0",
   "hosts": {
     "<host>": {
       "forms": [ ... ],           // optional — site-wide fallback
@@ -112,7 +103,7 @@ A complex entry may look like:
 
 ```json
 {
-  "schemaVersion": "0.1.0",
+  "schemaVersion": "1.0.0",
   "hosts": {
     "example.com": {
       "forms": [
@@ -232,7 +223,7 @@ must start with `/`.
 
 ```json
 {
-  "schemaVersion": "0.1.0",
+  "schemaVersion": "1.0.0",
   "hosts": {
     "example.com": {
       "forms": [
