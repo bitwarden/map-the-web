@@ -1,16 +1,73 @@
 {
-  "schemaVersion": "1.0.0",
+  "schemaVersion": "0.1.0",
   "hosts": {
     "bankofamerica.com": {
       "forms": [
         {
           "category": "account-login",
+          "container": ["div#signin-form"],
           "fields": {
             "username": ["input#oid"],
             "password": ["input#pass"]
+          },
+          "actions": {
+            "submit": ["button#secure-signin-submit"]
           }
         }
       ]
+    },
+    "datacamp.com": {
+      "pathnames": {
+        "/": {
+          "forms": [
+            {
+              "category": "account-creation",
+              "container": ["form[action='/users'][data-testid='form-signup']"],
+              "fields": {
+                "username": ["input#intro-user_email"],
+                "newPassword": ["input#intro-user_password"]
+              },
+              "actions": {
+                "submit": [
+                  "button[data-trackid='form-signup-cta'][type='submit']"
+                ]
+              }
+            }
+          ]
+        },
+        "/users/sign_up": {
+          "forms": [
+            {
+              "category": "account-creation",
+              "container": ["form#user_register_form"],
+              "fields": {
+                "username": ["input#user_email"],
+                "newPassword": ["input#user_password"]
+              },
+              "actions": {
+                "submit": ["input#user_submit"]
+              }
+            }
+          ]
+        },
+        "/tracks/career": {
+          "forms": [
+            {
+              "category": "account-creation",
+              "container": ["form[action='/users'][data-testid='form-signup']"],
+              "fields": {
+                "username": ["input#-user_email"],
+                "newPassword": ["input#-user_password"]
+              },
+              "actions": {
+                "submit": [
+                  "button[data-trackid='form-signup-cta'][type='submit']"
+                ]
+              }
+            }
+          ]
+        }
+      }
     },
     "factorio.com": {
       "pathnames": {
@@ -18,9 +75,52 @@
           "forms": [
             {
               "category": "account-login",
+              "container": ["div.panel.small-center form[action='/login']"],
               "fields": {
-                "username": ["input#oid"],
-                "password": ["input#pass"]
+                "username": ["input#username_or_email"],
+                "password": ["input#password"]
+              },
+              "actions": {
+                "submit": [
+                  "div.panel.small-center form[action='/login'] button[type='submit']"
+                ]
+              }
+            }
+          ]
+        }
+      }
+    },
+    "rowleycompany.com": {
+      "pathnames": {
+        "/checkout/cart": {
+          "forms": [
+            {
+              "category": "account-login",
+              "container": ["aside.loginpopup form.form-login"],
+              "fields": {
+                "username": ["input#login-email"],
+                "password": ["aside.loginpopup input[name='login[password]']"]
+              },
+              "actions": {
+                "submit": [
+                  "aside.loginpopup form.form-login button[type='submit']"
+                ]
+              }
+            },
+            {
+              "category": "account-creation",
+              "container": ["form#create-form"],
+              "fields": {
+                "firstName": ["input[name='firstname']"],
+                "lastName": ["input[name='lastname']"],
+                "username": ["form#create-form input[name='email']"],
+                "newPassword": [
+                  "input#create-password",
+                  "input#create-password-confirmation"
+                ]
+              },
+              "actions": {
+                "submit": ["#create-form button[type='submit']"]
               }
             }
           ]
@@ -59,7 +159,7 @@
                 "username": ["input#username"]
               },
               "actions": {
-                "submit": ["button[type='submit']"]
+                "submit": ["form[action='/login'] button[type='submit']"]
               }
             }
           ]
@@ -75,7 +175,31 @@
                 "username": ["input[name='u']"]
               },
               "actions": {
-                "submit": ["button#ambiguous-inputs-go"]
+                "submit": [
+                  "div.ambiguous-inputs-container button#ambiguous-inputs-go"
+                ]
+              }
+            }
+          ]
+        },
+        "/forms/login/shadow-root-inputs-closed": {
+          "forms": [
+            {
+              "category": "account-login",
+              "container": ["div#form-container >>> form[action='/login']"],
+              "fields": {
+                // FIXME: brittle selectors needed here since `>>>` requires an unambiguous #shadow-root host
+                "username": [
+                  "div#form-container >>> form[action='/login'] > div:nth-of-type(1) > div >>> input[name='username']"
+                ],
+                "password": [
+                  "div#form-container >>> form[action='/login'] > div:nth-of-type(2) > div >>> input[name='password']"
+                ]
+              },
+              "actions": {
+                "submit": [
+                  "div#form-container >>> form[action='/login'] button[type='submit']"
+                ]
               }
             }
           ]
@@ -98,7 +222,7 @@
                 ]
               },
               "actions": {
-                "submit": ["button[type='submit']"]
+                "submit": ["form[action='/login'] button[type='submit']"]
               }
             }
           ]

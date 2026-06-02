@@ -10,6 +10,15 @@ describes the user-facing concept of users supplying data to a website, which
 may or may not utilize the HTML `form` tag. See the project
 [README](../../README.md) for broader mapping philosophies.
 
+> [!IMPORTANT]
+> The Forms Map is currently a **prerelease** Map (`schemaVersion` `0.y.z`).
+> Its schema, field/action key sets, value semantics, and host entries may
+> change in any way between releases, and the Map itself may be dropped from
+> a release without notice. The "Schema Version Bumps" rubric below describes
+> the rules that will apply once the Map graduates to `1.0.0`.
+> See the project README's [Prerelease Maps](../../README.md#prerelease-maps)
+> section for full prerelease semantics.
+
 - [Forms Map](#forms-map)
   - [Limitations](#limitations)
   - [Schema Version Bumps](#schema-version-bumps)
@@ -24,13 +33,14 @@ may or may not utilize the HTML `form` tag. See the project
   - [Forms](#forms)
     - [Multiple Forms](#multiple-forms)
     - [Category](#category)
+  - [Selector Philosophy](#selector-philosophy)
   - [Container](#container)
   - [Fields](#fields)
     - [Field Keys](#field-keys)
       - [Authentication](#authentication)
-      - [Name](#name)
-      - [Contact](#contact)
-      - [Address](#address)
+      - [Names](#names)
+      - [Phone Numbers](#phone-numbers)
+      - [Addresses](#addresses)
       - [Birthdate](#birthdate)
       - [Payment Card](#payment-card)
       - [Consent](#consent)
@@ -82,7 +92,7 @@ bump for the Forms Map schema:
 
 ```jsonc
 {
-  "schemaVersion": "1.0.0",
+  "schemaVersion": "0.1.0",
   "hosts": {
     "<host>": {
       "forms": [ ... ],           // optional — site-wide fallback
@@ -102,7 +112,7 @@ A complex entry may look like:
 
 ```json
 {
-  "schemaVersion": "1.0.0",
+  "schemaVersion": "0.1.0",
   "hosts": {
     "example.com": {
       "forms": [
@@ -222,7 +232,7 @@ must start with `/`.
 
 ```json
 {
-  "schemaVersion": "1.0.0",
+  "schemaVersion": "0.1.0",
   "hosts": {
     "example.com": {
       "forms": [
@@ -346,15 +356,15 @@ A page may have more than one logical form. Each gets its own entry in the
     {
       "category": "account-login",
       "fields": {
-        "username": ["#login-email"],
-        "password": ["#login-pass"]
+        "username": ["input#login-email"],
+        "password": ["input#login-pass"]
       }
     },
     {
       "category": "account-creation",
       "fields": {
-        "username": ["#register-email"],
-        "password": ["#register-pass"]
+        "username": ["input#register-email"],
+        "newPassword": ["input#register-pass"]
       }
     }
   ]
@@ -379,11 +389,37 @@ relevant to their concerns).
 | `search`           | Search form                                        |
 | `signup`           | Newsletter, sweepstakes, unsubscribe, or general contact signup (not account creation) |
 
+## Selector Philosophy
+
+Forms Map selectors are not stylesheet selectors. A stylesheet selector aims
+for _resilience_; it should keep matching the same conceptual element as the
+page evolves, so the styling survives. A map selector aims for the opposite:
+it is a curated record of what a known target (that is, the full node
+hierarchy described by the selector, not just the leaf) looks like today. Tag
+drift, attribute renaming, or structural change of the target is the kind of
+signal that should trigger a review rather than be silently absorbed.
+
+This inverts the conventional "make selectors resilient" advice: Forms Map
+selectors should be brittle by design. If a page's login `<div role="form">`
+becomes an actual `<form>`, or an `<input>` is replaced by a custom element,
+the selector _should_ break; both as a prompt to a Map Author to re-verify
+that the new target is still the right one and as a guard against a consuming
+application interacting with something the Map was never authored to describe.
+
+In practice, this means every selector segment should include a tag anchor.
+Add the tag (e.g. `input[name='username']`, `button.submit#go`,
+`input#user[type='email']`) so the selector breaks if the element type ever
+changes. The same rule applies independently to each segment of a
+boundary-crossing selector, so `iframe#login-frame >>> input[name='username']`
+satisfies it on both sides; `#login-frame >>> input[name='username']` does
+not.
+
 ## Container
 
 The optional `container` property is a selector array identifying the form's
 container element on the page. This is used to scope the form's fields and
-actions within the page, and does not require referencing a literal HTML `<form>` element.
+actions within the page, and is often represented by a literal HTML `<form>`
+tag or closest relevant/enclosing container if no relevant `<form>` is present.
 
 ```json
 {
@@ -400,7 +436,8 @@ actions within the page, and does not require referencing a literal HTML `<form>
 The `fields` object maps keys to arrays of CSS selectors. Each key identifies
 the **user data concept** that a form field captures. A consumer should be
 able to determine what value belongs in the field from the key name and form
-[category](#category) alone.
+[category](#category) alone. Selector specificity should not rely on other
+selectors (e.g. `container` selector).
 
 ```json
 {
@@ -413,48 +450,87 @@ able to determine what value belongs in the field from the key name and form
 
 ### Field Keys
 
-Field keys are constrained to the following set. Keys are grouped here for
-readability; the groupings carry no semantic meaning in the schema.
-
-#### Authentication
+Field keys are constrained to the following set:
 
 | Key | Description |
 | --- | --- |
-| `username` | Username or login identifier |
+| `username` | User identifier or handle |
 | `password` | Current password |
 | `newPassword` | New or confirmation password |
-| `oneTimeCode` | One-time verification code (SMS, email, authenticator, etc.) |
-
-#### Name
-
-Where a form collects name data as a single field, use `fullName`. Where it
-collects name components separately, use the individual keys.
-
-| Key | Description |
-| --- | --- |
+| `oneTimeCode` | Single-use verification code (SMS, email, authenticator, etc.) |
 | `fullName` | Full name (single combined field) |
 | `honorificPrefix` | Title or honorific prefix (Mr., Dr., etc.) |
 | `firstName` | Given name |
 | `middleName` | Middle or additional name |
 | `lastName` | Family name |
 | `honorificSuffix` | Suffix (Jr., PhD., etc.) |
-
-#### Contact
-
-Where a form collects a phone number as a single field, use `phone`. Where it
-collects phone components separately, use the individual keys.
-
-| Key | Description |
-| --- | --- |
 | `email` | Email address |
 | `phone` | Full telephone number (single combined field) |
 | `phoneCountryCode` | Country code (e.g. "1", "44") |
 | `phoneAreaCode` | Area code |
 | `phoneLocal` | Local number (without country or area code) |
 | `phoneExtension` | Extension number |
-| `organization` | Company, organization, or institution |
+| `organization` | Company, organization, or institution name |
+| `streetAddress` | Full street address (multi-line block) |
+| `addressLine1` | First line of street address |
+| `addressLine2` | Second line of street address |
+| `addressLine3` | Third line of street address |
+| `addressLevel1` | Broadest administrative division (e.g. State, province, prefecture, canton, county, region) |
+| `addressLevel2` | Locality (e.g. City, town, village, municipality) |
+| `addressLevel3` | Sub-locality (e.g. District, suburb, ward, borough) |
+| `addressLevel4` | Finest-grained subdivision (e.g. Block, neighborhood section) |
+| `postalCode` | ZIP or postal code |
+| `country` | Country or territory |
+| `birthdate` | Full birth date (single combined field) |
+| `birthdateDay` | Day component |
+| `birthdateMonth` | Month component |
+| `birthdateYear` | Year component |
+| `cardholderName` | Name as printed on card |
+| `cardNumber` | Card number |
+| `cardExpirationDate` | Combined expiration (single field; e.g. MM/YY) |
+| `cardExpirationMonth` | Expiration month |
+| `cardExpirationYear` | Expiration year |
+| `cardCvv` | Security code (CVV / CVC / CSC) |
+| `cardType` | Card network or brand (Visa, Mastercard, etc.) |
+| `consentTerms` | Terms of service or terms and conditions acceptance |
+| `consentPrivacy` | Privacy policy acceptance |
+| `consentUser` | General user confirmation (e.g. "I agree", "I confirm") |
+| `searchTerm` | Free-text search query |
 
-#### Address
+The role of a given field is not implied by the field key name or definition.
+Rather, [form category](#category) informs the context of the field's role.
+
+For example, `email` and `phone` can be represented in a shipping form
+(`address`), account registration form (`account-creation`), or authentication
+form (`account-login`); the field keys in each situation describe the fields
+in the same way, and disambiguation of purpose is distinguished by the form
+`category`.
+
+The kind of field input is also not implied by the field key name or
+definition. For example, a `password` selector may describe an `input`
+element with a `text` or `password` value of the `type` attribute.
+
+#### Authentication
+
+In cases where an email is used for authentication, the `email` field key
+should be used, not `username`. Other values used in authentication should
+use the most specific appropriate key name (e.g. phone numbers used to log
+in should still be represented as `phone`).
+
+Note, a field described by the `username` key is not exclusive to
+authentication concerns, and may be represented in other form categories.
+
+#### Names
+
+Where a form collects name data as a single field, use `fullName`. Where it
+collects name components separately, use the appropriate individual keys.
+
+#### Phone Numbers
+
+Where a form collects a phone number as a single field, use `phone`. Where it
+collects phone components separately, use the individual keys.
+
+#### Addresses
 
 Street address data may appear as a single multi-line field (e.g. a `<textarea>`)
 or as separate address lines. Use `streetAddress` for the combined form and
@@ -462,20 +538,7 @@ or as separate address lines. Use `streetAddress` for the combined form and
 
 Administrative divisions use an abstract leveling system to accommodate
 international variation. Each level represents a progressively finer geographic
-subdivision:
-
-| Key | Description | Examples |
-| --- | --- | --- |
-| `streetAddress` | Full street address (multi-line block) | — |
-| `addressLine1` | First line of street address | — |
-| `addressLine2` | Second line of street address | — |
-| `addressLine3` | Third line of street address | — |
-| `addressLevel1` | Broadest administrative division | State, province, prefecture, canton, county, region |
-| `addressLevel2` | Locality | City, town, village, municipality |
-| `addressLevel3` | Sub-locality | District, suburb, ward, borough |
-| `addressLevel4` | Finest-grained subdivision | Block, neighborhood section |
-| `postalCode` | ZIP or postal code | — |
-| `country` | Country or territory | — |
+subdivision.
 
 > [!NOTE]
 > Not all countries use all four address levels. Most forms will only need
@@ -487,47 +550,25 @@ subdivision:
 Where a form collects a birthdate as a single field, use `birthdate`. Where it
 collects date components separately, use the individual keys.
 
-| Key | Description |
-| --- | --- |
-| `birthdate` | Full birth date (single combined field) |
-| `birthdateDay` | Day component |
-| `birthdateMonth` | Month component |
-| `birthdateYear` | Year component |
-
 #### Payment Card
 
 A combined expiration field (`cardExpirationDate`) is not the same as separate
 month and year fields (`cardExpirationMonth` / `cardExpirationYear`). Use the
 key that matches the actual input structure on the page.
 
-| Key | Description |
-| --- | --- |
-| `cardholderName` | Name as printed on card |
-| `cardNumber` | Card number |
-| `cardExpirationDate` | Combined expiration (single field; e.g. MM/YY) |
-| `cardExpirationMonth` | Expiration month |
-| `cardExpirationYear` | Expiration year |
-| `cardCvv` | Security code (CVV / CVC / CSC) |
-| `cardType` | Card network or brand (Visa, Mastercard, etc.) |
-
 #### Consent
 
-| Key | Description |
-| --- | --- |
-| `consentTerms` | Terms of service or terms and conditions acceptance |
-| `consentPrivacy` | Privacy policy acceptance |
-| `consentUser` | General user confirmation (e.g. "I agree", "I confirm") |
+Note, consent field keys `consentTerms`, `consentPrivacy`, and `consentUser`
+do not indicate how the user needs to interact with the input/field in order
+to convey their consent. They can equally describe a text field (e.g. "Type
+'I agree'"), opt-in (e.g. "check to agree to the terms"), or opt-out (e.g.
+"check to NOT agree").
 
 #### Search
 
-| Key | Description |
-| --- | --- |
-| `searchTerm` | Free-text search query |
-
-> [!TIP]
-> Use specific field keys for context-specific search forms; for example, a
-> search that only deals in emails should use the `email` key name to describe
-> the input and `search` to describe the form category.
+Use specific field keys for context-specific search forms; for example, a
+search that only deals in emails should use the `email` key name to describe
+the input and `search` to describe the form category.
 
 ### Selector Arrays
 
@@ -631,7 +672,7 @@ host into its shadow root's content
 
 ```json
 {
-  "username": ["#host-element >>> form > input[name='username']"]
+  "username": ["div#host-element >>> form > input[name='username']"]
 }
 ```
 
@@ -639,7 +680,7 @@ For nested shadow roots:
 
 ```json
 {
-  "username": ["#outer-host >>> #inner-host >>> input[name='user']"]
+  "username": ["div#outer-host >>> div#inner-host >>> input[name='user']"]
 }
 ```
 
@@ -731,9 +772,10 @@ The distinction between "irrelevant" and "no information" is important. An
    Consumers are responsible for their own timing strategy (e.g. polling,
    MutationObserver) when elements are not immediately present.
 
-3. **Be specific.** Prefer ID-based or attribute-based selectors over positional
-   ones (`:nth-child`, tag-only). Specific selectors are more resilient to page
-   layout changes.
+3. **Be specific.** Prefer tag selectors with an accompanying ID or attribute
+   over positional pseudos (e.g. `:nth-child`) or bare tag (e.g. `div`). Classes
+   should be non-preferred in selector descriptions as they typically represent
+   broad concerns.
 
 4. **Use `>>>` only when necessary.** Only use boundary-crossing selectors when
    the target element is actually inside a shadow root or iframe.
