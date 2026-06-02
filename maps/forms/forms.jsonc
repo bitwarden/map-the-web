@@ -90,6 +90,51 @@
         }
       }
     },
+    "patreon.com": {
+      "pathnames": {
+        "/login": {
+          "forms": [
+            {
+              "category": "account-login",
+              "container": ["main#main-content form"],
+              "fields": {
+                "username": [
+                  "main#main-content form span[class^='EmailPasswordScreen'] ~ div input[autocomplete='email'][name='email']"
+                ],
+                "password": [
+                  "main#main-content form input[autocomplete='current-password'][name='current-password']"
+                ]
+              },
+              "actions": {
+                "submit": ["main#main-content form button[type='submit']"]
+              }
+            }
+          ]
+        },
+        "/settings/account": {
+          "forms": [
+            {
+              "category": "account-update",
+              "container": ["div[class^='ChangePassword'] form"],
+              "fields": {
+                "password": [
+                  "div[class^='ChangePassword'] form input[type='password'][name='oldPassword']"
+                ],
+                "newPassword": [
+                  "div[class^='ChangePassword'] form input[type='password'][name='newPassword']",
+                  "div[class^='ChangePassword'] form input[type='password'][name='confirmPassword']"
+                ]
+              },
+              "actions": {
+                "submit": [
+                  "div[class^='ChangePassword'] form div[class$='submitButtonWrapper'] button[type='submit']"
+                ]
+              }
+            }
+          ]
+        }
+      }
+    },
     "rowleycompany.com": {
       "pathnames": {
         "/checkout/cart": {
