@@ -40,7 +40,10 @@
           },
           "actions": {
             // The button does not have an id; `data-e2e` may have broke containment
-            "submit": ["button[data-e2e='login-button']", "button[type='submit']"]
+            "submit": [
+              "button[data-e2e='login-button']",
+              "button[type='submit']"
+            ]
           }
         }
       ]
