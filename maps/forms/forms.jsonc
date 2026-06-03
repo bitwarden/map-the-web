@@ -147,7 +147,7 @@
           }
         },
         {
-          "category":"account-creation",
+          "category": "account-creation",
           // the form is a bare element; it has no attributes
           "container": ["div#loginContainer form"],
           "fields": {
@@ -155,7 +155,9 @@
             "phone": ["div#loginContainer form input[name='mobile']"],
             "email": ["div#loginContainer form input[name='email']"],
             // field only distinguishable from `account-login` because the email field is present instead of `username`
-            "newPassword": ["div#loginContainer form:has(input[name='email']) input[type='password']"]
+            "newPassword": [
+              "div#loginContainer form:has(input[name='email']) input[type='password']"
+            ]
           },
           "actions": {
             // The button does not have an id; `data-e2e` may have broke containment
