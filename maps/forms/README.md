@@ -120,8 +120,8 @@ A complex entry may look like:
           "category": "account-login",
           "container": ["form#login-form"],
           "fields": {
-            "username": ["input#email"],
-            "password": ["input#pass"]
+            "username": ["form#login-form input#email"],
+            "password": ["form#login-form input#pass"]
           },
           "actions": {
             "submit": ["button[type='submit']"]
@@ -327,8 +327,8 @@ and does not require a literal HTML `<form>` element.
       "category": "account-login",
       "container": ["form#login-form"],
       "fields": {
-        "username": ["input#email"],
-        "password": ["input#password"]
+        "username": ["form#login-form input#email"],
+        "password": ["form#login-form input#password"]
       }
     }
   ]
@@ -425,8 +425,8 @@ tag or closest relevant/enclosing container if no relevant `<form>` is present.
 {
   "container": ["form#login-form"],
   "fields": {
-    "username": ["input#email"],
-    "password": ["input#password"]
+    "username": ["form#login-form input#email"],
+    "password": ["form#login-form input#password"]
   }
 }
 ```
