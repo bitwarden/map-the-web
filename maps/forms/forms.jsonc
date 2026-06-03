@@ -131,18 +131,37 @@
       "forms": [
         {
           "category": "account-login",
-          // This container is present when you should start looking for inputs. There's a form
-          // within it that is swapped out, so it's not possible to anchor more specifically.
-          "container": ["div#loginContainer"],
+          // the form is a bare element; it has no attributes
+          "container": ["div#loginContainer form"],
           "fields": {
-            "username": ["div#loginContainer input[name='username']"],
-            "password": ["div#loginContainer input[type='password']"]
+            "phone": ["div#loginContainer form input[name='mobile']"],
+            "username": ["div#loginContainer form input[name='username']"],
+            "password": ["div#loginContainer form input[type='password']"]
           },
           "actions": {
             // The button does not have an id; `data-e2e` may have broke containment
             "submit": [
-              "div#loginContainer button[data-e2e='login-button']",
-              "div#loginContainer button[type='submit']"
+              "div#loginContainer form button[data-e2e='login-button']",
+              "div#loginContainer form button[type='submit']"
+            ]
+          }
+        },
+        {
+          "category":"account-creation",
+          // the form is a bare element; it has no attributes
+          "container": ["div#loginContainer form"],
+          "fields": {
+            // country code represented as a div; doesn't appear to have a backing field
+            "phone": ["div#loginContainer form input[name='mobile']"],
+            "email": ["div#loginContainer form input[name='email']"],
+            // field only distinguishable from `account-login` because the email field is present instead of `username`
+            "newPassword": ["div#loginContainer form:has(input[name='email']) input[type='password']"]
+          },
+          "actions": {
+            // The button does not have an id; `data-e2e` may have broke containment
+            "submit": [
+              "div#loginContainer form button[data-e2e='login-button']",
+              "div#loginContainer form button[type='submit']"
             ]
           }
         }
