@@ -153,9 +153,7 @@
             "password": ["div#loginContainer form input[type='password']"]
           },
           "actions": {
-            "submit": [
-              "div#loginContainer form button[type='submit']"
-            ]
+            "submit": ["div#loginContainer form button[type='submit']"]
           }
         },
         {
@@ -168,9 +166,7 @@
             "phone": ["div#loginContainer form input[name='mobile']"]
           },
           "actions": {
-            "next": [
-              "div#loginContainer form button[type='submit']"
-            ]
+            "next": ["div#loginContainer form button[type='submit']"]
           }
         },
         {
@@ -187,9 +183,7 @@
           },
           "actions": {
             // The button does not have an id; `data-e2e` may have broke containment
-            "next": [
-              "div#loginContainer form button[type='submit']"
-            ]
+            "next": ["div#loginContainer form button[type='submit']"]
           }
         }
       ]
