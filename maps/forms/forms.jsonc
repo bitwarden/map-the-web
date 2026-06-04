@@ -172,6 +172,66 @@
         }
       }
     },
+    "tiktok.com": {
+      "forms": [
+        {
+          "category": "account-login",
+          // the form is a bare element; it has no attributes
+          "container": ["div#loginContainer form"],
+          "fields": {
+            "phone": ["div#loginContainer form input[name='mobile']"]
+          },
+          "actions": {
+            // The button does not have an id; `data-e2e` may have broke containment
+            "submit": ["div#loginContainer form button[type='submit']"]
+          }
+        },
+        {
+          "category": "account-login",
+          // the form is a bare element; it has no attributes
+          "container": ["div#loginContainer form"],
+          "fields": {
+            "email": ["div#loginContainer form input[name='username']"],
+            "password": ["div#loginContainer form input[type='password']"],
+            "username": ["div#loginContainer form input[name='username']"]
+          },
+          "actions": {
+            "submit": ["div#loginContainer form button[type='submit']"]
+          }
+        },
+        {
+          "category": "account-creation",
+          // the form is a bare element; it has no attributes
+          "container": ["div#loginContainer form"],
+          "fields": {
+            // birthday fields are represented as a div; doesn't appear to have a backing field
+            // country code represented as a div; doesn't appear to have a backing field
+            "phone": ["div#loginContainer form input[name='mobile']"]
+          },
+          "actions": {
+            "next": ["div#loginContainer form button[type='submit']"]
+          }
+        },
+        {
+          "category": "account-creation",
+          // birthday fields are represented as a div; doesn't appear to have a backing field
+          // the form is a bare element; it has no attributes
+          "container": ["div#loginContainer form"],
+          "fields": {
+            "email": ["div#loginContainer form input[name='email']"],
+            // field only distinguishable from `account-login` because the email field is present instead of `username`
+            "newPassword": [
+              "div#loginContainer form:has(input[name='email']) input[type='password']"
+            ],
+            "username": ["div#loginContainer form input[name='username']"]
+          },
+          "actions": {
+            // The button does not have an id; `data-e2e` may have broke containment
+            "next": ["div#loginContainer form button[type='submit']"]
+          }
+        }
+      ]
+    },
     "webtests.dev": {
       "pathnames": {
         "/forms/login/simple": {
