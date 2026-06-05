@@ -234,20 +234,6 @@
     },
     "webtests.dev": {
       "pathnames": {
-        "/forms/login/simple": {
-          "forms": [
-            {
-              "category": "account-login",
-              "container": ["form[action='/login']"],
-              "fields": {
-                "username": ["input#username"]
-              },
-              "actions": {
-                "submit": ["form[action='/login'] button[type='submit']"]
-              }
-            }
-          ]
-        },
         "/forms/login/ambiguous-inputs": {
           "forms": [
             {
