@@ -252,6 +252,50 @@
             }
           ]
         },
+        "/forms/login/iframe-login": {
+          "forms": [
+            {
+              "category": "account-login",
+              "container": ["iframe#test-iframe >>> form[action='/login']"],
+              "fields": {
+                "username": [
+                  "iframe#test-iframe >>> form[action='/login'] input#username"
+                ],
+                "password": [
+                  "iframe#test-iframe >>> form[action='/login'] input#password"
+                ]
+              },
+              "actions": {
+                "submit": [
+                  "iframe#test-iframe >>> form[action='/login'] button[type='submit']"
+                ]
+              }
+            }
+          ]
+        },
+        "/forms/login/iframe-sandboxed-login": {
+          "forms": [
+            {
+              "category": "account-login",
+              "container": [
+                "iframe#test-iframe[sandbox] >>> form[action='/login']"
+              ],
+              "fields": {
+                "username": [
+                  "iframe#test-iframe[sandbox] >>> form[action='/login'] input#username"
+                ],
+                "password": [
+                  "iframe#test-iframe[sandbox] >>> form[action='/login'] input#password"
+                ]
+              },
+              "actions": {
+                "submit": [
+                  "iframe#test-iframe[sandbox] >>> form[action='/login'] button[type='submit']"
+                ]
+              }
+            }
+          ]
+        },
         "/forms/login/shadow-root-inputs-closed": {
           "forms": [
             {
