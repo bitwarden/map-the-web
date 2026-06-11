@@ -296,6 +296,8 @@
             }
           ]
         },
+        // Page is marked as irrelevant as a diagnostic case. The page purpose is to exemplify strong form semantics.
+        "/forms/login/simple-spec": null,
         "/forms/login/shadow-root-inputs-closed": {
           "forms": [
             {
