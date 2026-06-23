@@ -4,10 +4,11 @@ import {
   lintSelector,
   lintMapData,
   formatLocation,
-} from "./lint-selectors.mjs";
+} from "./lint-selectors.mts";
+import type { Location, Finding, CompositeSelectorArray } from "./types.mts";
 
 // Shorthand: build a minimal location object for lintSelector calls
-function loc(overrides = {}) {
+function loc(overrides: Partial<Location> = {}): Location {
   return {
     host: "example.com",
     category: "account-login",
@@ -19,10 +20,10 @@ function loc(overrides = {}) {
 }
 
 // Helpers to pull just error/warning counts from a lintSelector result
-function errorsFor(selector, location) {
+function errorsFor(selector: string, location?: Partial<Location>) {
   return lintSelector(selector, loc(location)).errors;
 }
-function warningsFor(selector, location) {
+function warningsFor(selector: string, location?: Partial<Location>) {
   return lintSelector(selector, loc(location)).warnings;
 }
 
@@ -1014,7 +1015,7 @@ describe("container non-container target", () => {
 describe("missing tag anchor", () => {
   // Distinct from the ID-only message (which also contains "omits the
   // element type"). Match on the remediation-specific phrase instead.
-  const missingTagMatcher = (w) => /Add a tag anchor/.test(w.message);
+  const missingTagMatcher = (w: Finding) => /Add a tag anchor/.test(w.message);
 
   it("warns on attribute-only selector [name='username']", () => {
     const warnings = warningsFor("[name='username']");
@@ -1131,7 +1132,8 @@ describe("missing tag anchor", () => {
 // ---------------------------------------------------------------------------
 
 describe("pseudo-only selector", () => {
-  const pseudoOnlyMatcher = (w) => /Pseudo-only selector/.test(w.message);
+  const pseudoOnlyMatcher = (w: Finding) =>
+    /Pseudo-only selector/.test(w.message);
 
   it("warns on a bare state pseudo (`:hover`)", () => {
     const warnings = warningsFor(":hover");
@@ -1225,7 +1227,7 @@ describe("container form anchor", () => {
     };
   }
 
-  const anchorMatcher = (w) =>
+  const anchorMatcher = (w: Finding) =>
     /does not anchor on a form element/.test(w.message);
 
   it("warns when a container targets a generic <div>", () => {
@@ -1673,7 +1675,10 @@ describe("clean selectors produce no issues", () => {
 // ---------------------------------------------------------------------------
 
 describe("password field semantics", () => {
-  function lintExampleForm(fields, category) {
+  function lintExampleForm(
+    fields: Record<string, CompositeSelectorArray>,
+    category: string,
+  ) {
     return lintMapData({
       hosts: {
         "example.com": {
@@ -1683,7 +1688,11 @@ describe("password field semantics", () => {
     });
   }
 
-  function semanticErrors(fields, category, pattern) {
+  function semanticErrors(
+    fields: Record<string, CompositeSelectorArray>,
+    category: string,
+    pattern: RegExp,
+  ) {
     return lintExampleForm(fields, category).errors.filter((e) =>
       pattern.test(e.message),
     );

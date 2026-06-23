@@ -1,10 +1,15 @@
-import Ajv2020 from "ajv/dist/2020.js";
-import addFormats from "ajv-formats";
+import Ajv2020Import from "ajv/dist/2020.js";
+import addFormatsImport from "ajv-formats";
 import stripJsonComments from "strip-json-comments";
 import { readFileSync, existsSync } from "fs";
 import { basename, dirname, join } from "path";
 import { glob } from "node:fs/promises";
-import { red, yellow, green } from "./utils.mjs";
+import { red, yellow, green } from "./utils.mts";
+
+// ajv and ajv-formats are CommonJS; under NodeNext their ESM default import is
+// the module namespace, so the constructor/function lives on `.default`.
+const Ajv2020 = Ajv2020Import.default;
+const addFormats = addFormatsImport.default;
 
 const ajv = new Ajv2020({ allErrors: true });
 addFormats(ajv);
@@ -30,7 +35,10 @@ for (const file of files) {
   const name = basename(file, ".jsonc");
 
   // Parse data first to read schemaVersion for schema file lookup
-  const data = JSON.parse(stripJsonComments(readFileSync(file, "utf-8")));
+  const data = JSON.parse(stripJsonComments(readFileSync(file, "utf-8"))) as {
+    schemaVersion?: string;
+    hosts?: Record<string, unknown>;
+  };
 
   if (!data.schemaVersion) {
     console.error(red(`No schemaVersion found in ${file}`));
@@ -52,7 +60,7 @@ for (const file of files) {
   const validate = ajv.compile(schema);
   if (!validate(data)) {
     console.error(red(`Validation failed: ${file}`));
-    for (const err of validate.errors) {
+    for (const err of validate.errors ?? []) {
       console.error(red(`  ${err.instancePath || "/"}: ${err.message}`));
     }
     hasErrors = true;

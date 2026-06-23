@@ -235,7 +235,7 @@ steps:
    `schemaVersion` to the new value and adjust the data shape to satisfy the
    new schema.
 4. **Register a downward migration** in
-   [`scripts/build.mjs`](scripts/build.mjs). Add an entry under
+   [`scripts/build.mts`](scripts/build.mts). Add an entry under
    `MIGRATIONS["<name>"]` keyed by the previous major (`N`); the function
    projects new-source-shape data into old-schema-shape data.
 5. **Mark the previous schema deprecated** by adding `"deprecated": true` at

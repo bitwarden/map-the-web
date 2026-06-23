@@ -17,12 +17,13 @@
     "prettier:fix": "prettier --write .",
     "prettier": "prettier --check .",
     "lint:md": "remark . --frail --quiet",
-    "lint:selectors": "node scripts/lint-selectors.mjs",
-    "validate": "node scripts/validate-schemas.mjs",
-    "check": "npm run prettier && npm run lint:md && npm run validate && npm run lint:selectors && npm test",
-    "test": "node --test scripts/**/*.test.mjs",
-    "build": "node scripts/build.mjs",
-    "build:clean": "rm -rf dist && node scripts/build.mjs"
+    "lint:selectors": "node scripts/lint-selectors.mts",
+    "typecheck": "tsc --noEmit",
+    "validate": "node scripts/validate-schemas.mts",
+    "check": "npm run prettier && npm run typecheck && npm run lint:md && npm run validate && npm run lint:selectors && npm test",
+    "test": "node --test scripts/**/*.test.mts",
+    "build": "node scripts/build.mts",
+    "build:clean": "rm -rf dist && node scripts/build.mts"
   },
   "engines": {
     "node": ">=22",
@@ -33,16 +34,17 @@
       "prettier --check"
     ],
     "maps/**/*.jsonc": [
-      "node scripts/validate-schemas.mjs"
+      "node scripts/validate-schemas.mts"
     ],
     "maps/forms/*.jsonc": [
-      "node scripts/lint-selectors.mjs"
+      "node scripts/lint-selectors.mts"
     ],
     "*.md": [
       "remark --frail --quiet"
     ]
   },
   "devDependencies": {
+    "@types/node": "^22.20.0",
     "ajv": "8.18.0",
     "ajv-formats": "3.0.1",
     "css-what": "8.0.0",
@@ -55,6 +57,7 @@
     "remark-lint-no-trailing-spaces": "4.0.3",
     "remark-preset-lint-consistent": "6.0.1",
     "remark-preset-lint-recommended": "7.0.1",
-    "strip-json-comments": "5.0.3"
+    "strip-json-comments": "5.0.3",
+    "typescript": "^6.0.3"
   }
 }
