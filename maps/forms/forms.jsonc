@@ -103,7 +103,9 @@
           "container": ["form[id^='flt-semantic-node-']:has(input#email)"],
           "fields": {
             "username": ["form[id^='flt-semantic-node-'] input#email"],
-            "password": ["form[id^='flt-semantic-node-'] input#current-password"]
+            "password": [
+              "form[id^='flt-semantic-node-'] input#current-password"
+            ]
           },
           "actions": {
             "submit": [
