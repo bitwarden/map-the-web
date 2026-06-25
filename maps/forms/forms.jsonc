@@ -27,8 +27,8 @@
             "password": ["div#two-factor form input#current-password"]
           },
           "actions": {
-            "next": ["button[name='email-submit-button']"],
-            "submit": ["button[name='password-submit-button']"]
+            "next": ["div#two-factor form button[name='email-submit-button']"],
+            "submit": ["div#two-factor form button[name='password-submit-button']"]
           }
         }
       ]
