@@ -255,6 +255,72 @@
         }
       ]
     },
+    "trip.com": {
+      "forms": [
+        // This site uses the same form for account creation and login, with differing flow options based on pre-qualifying the email.
+        {
+          "category": "account-creation",
+          // Note, the static class value segment matched elsewhere is not present in every state
+          "container": ["div#ibu_login_online form[class]"],
+          "fields": {
+            "newPassword": [
+              "div#ibu_login_online form[class^='pc-module__form-wrapper__'] input[autocomplete='new-password']"
+            ],
+            // Note, the form at this stage lacks any static class value
+            "username": [
+              "div#ibu_login_online form[class] input[placeholder='Please enter an email address']"
+            ]
+          },
+          "actions": {
+            // "Register and Sign in"
+            "submit": [
+              "div#ibu_login_online form[class^='pc-module__form-wrapper__'] button[type='submit']:has(div.tripui-online-btn-content > span.tripui-online-btn-content-children:not(:empty))"
+            ],
+            // This action is not enclosed by the form container
+            "previous": ["div#ibu_login_online div#ibu_login_back"],
+            // This action is not enclosed by the form container
+            "cancel": ["div#ibu_login_online div#ibu_login_close"],
+            "reset": [
+              // Field reset; form class to match against each form state
+              "div#ibu_login_online form[class] div#ibu_login_input_clear"
+            ]
+          }
+        },
+        {
+          "category": "account-login",
+          // Note, the static class value segment matched elsewhere is not present in every state
+          "container": ["div#ibu_login_online form[class]"],
+          "fields": {
+            // signposted as a new password field, but is used for existing password
+            "password": [
+              "div#ibu_login_online form[class^='pc-module__form-wrapper__'] input[autocomplete='new-password']"
+            ],
+            // MFA
+            "oneTimeCode": [
+              "div#ibu_login_online form[class] input[autocomplete='one-time-code']"
+            ],
+            // Note, the form at this stage lacks any static class value
+            "username": [
+              "div#ibu_login_online form[class] input[placeholder='Please enter an email address']"
+            ]
+          },
+          "actions": {
+            // "Sign in"
+            "submit": [
+              "div#ibu_login_online form[class^='pc-module__form-wrapper__'] button[type='submit']:has(div.tripui-online-btn-content > span.tripui-online-btn-content-children:not(:empty))"
+            ],
+            // This action is not enclosed by the form container
+            "previous": ["div#ibu_login_online div#ibu_login_back"],
+            // This action is not enclosed by the form container
+            "cancel": ["div#ibu_login_online div#ibu_login_close"],
+            "reset": [
+              // Field reset; form class to match against each form state
+              "div#ibu_login_online form[class] div#ibu_login_input_clear"
+            ]
+          }
+        }
+      ]
+    },
     "webtests.dev": {
       "pathnames": {
         "/forms/login/ambiguous-inputs": {
@@ -327,7 +393,6 @@
               "category": "account-login",
               "container": ["div#form-container >>> form[action='/login']"],
               "fields": {
-                // FIXME: brittle selectors needed here since `>>>` requires an unambiguous #shadow-root host
                 "username": [
                   "div#form-container >>> form[action='/login'] > div:nth-of-type(1) > div >>> input[name='username']"
                 ],
