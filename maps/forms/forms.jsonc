@@ -28,7 +28,9 @@
           },
           "actions": {
             "next": ["div#two-factor form button[name='email-submit-button']"],
-            "submit": ["div#two-factor form button[name='password-submit-button']"]
+            "submit": [
+              "div#two-factor form button[name='password-submit-button']"
+            ]
           }
         }
       ]
