@@ -16,7 +16,7 @@
         }
       ]
     },
-    "login.coinbase.com" :{
+    "login.coinbase.com": {
       "forms": [
         {
           "category": "account-login",
