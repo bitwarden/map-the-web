@@ -304,7 +304,6 @@
               "category": "account-login",
               "container": ["div#form-container >>> form[action='/login']"],
               "fields": {
-                // FIXME: brittle selectors needed here since `>>>` requires an unambiguous #shadow-root host
                 "username": [
                   "div#form-container >>> form[action='/login'] > div:nth-of-type(1) > div >>> input[name='username']"
                 ],
