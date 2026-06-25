@@ -23,8 +23,7 @@
           "container": ["div#two-factor > div > form"],
           "fields": {
             "email": ["input[name='email-input']"],
-            "password": ["input#current-password"],
-            "username": ["input[name='email-input']"]
+            "password": ["input#current-password"]
           },
           "actions": {
             "next": ["button[name='email-submit-button']"],
