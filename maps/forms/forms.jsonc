@@ -100,14 +100,14 @@
           // - The password input's `id` is only `current-password` after the field has focus;
           //   before focus, there's a decoy input with `autocomplete="off"`. The
           //   form anchor uses only the persistent email input for that reason.
-          "container": ["form:has(input#email)"],
+          "container": ["form[id^='flt-semantic-node-']:has(input#email)"],
           "fields": {
-            "username": ["input#email"],
-            "password": ["input#current-password"]
+            "username": ["form[id^='flt-semantic-node-'] input#email"],
+            "password": ["form[id^='flt-semantic-node-'] input#current-password"]
           },
           "actions": {
             "submit": [
-              "form:has(input#email) flt-semantics[role='button'][flt-semantics-identifier='null_Button_Default_Title']"
+              "form[id^='flt-semantic-node-']:has(input#email) flt-semantics[role='button'][flt-semantics-identifier='null_Button_Default_Title']"
             ]
           }
         }
