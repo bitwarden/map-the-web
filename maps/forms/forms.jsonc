@@ -90,6 +90,31 @@
         }
       }
     },
+    "ecams.geico.com": {
+      "forms": [
+        {
+          "category": "account-login",
+          // Rendered by Flutter Web. Notes:
+          // - The submit action is a `<flt-semantics role="button">`, not a native button.
+          // - The numeric `flt-semantic-node-N` ids are render-order-based and unstable.
+          // - The password input's `id` is only `current-password` after the field has focus;
+          //   before focus, there's a decoy input with `autocomplete="off"`. The
+          //   form anchor uses only the persistent email input for that reason.
+          "container": ["form[id^='flt-semantic-node-']:has(input#email)"],
+          "fields": {
+            "username": ["form[id^='flt-semantic-node-'] input#email"],
+            "password": [
+              "form[id^='flt-semantic-node-'] input#current-password"
+            ]
+          },
+          "actions": {
+            "submit": [
+              "form[id^='flt-semantic-node-']:has(input#email) flt-semantics[role='button'][flt-semantics-identifier='null_Button_Default_Title']"
+            ]
+          }
+        }
+      ]
+    },
     "patreon.com": {
       "pathnames": {
         "/login": {
