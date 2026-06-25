@@ -16,6 +16,23 @@
         }
       ]
     },
+    "login.coinbase.com" :{
+      "forms": [
+        {
+          "category": "account-login",
+          "container": ["div#two-factor > div > form"],
+          "fields": {
+            "email": ["input[name='email-input']"],
+            "password": ["input#current-password"],
+            "username": ["input[name='email-input']"]
+          },
+          "actions": {
+            "next": ["button[name='email-submit-button']"],
+            "submit": ["button[name='password-submit-button']"]
+          }
+        }
+      ]
+    },
     "datacamp.com": {
       "pathnames": {
         "/": {
