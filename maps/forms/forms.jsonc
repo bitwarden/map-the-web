@@ -16,6 +16,25 @@
         }
       ]
     },
+    "login.coinbase.com": {
+      "forms": [
+        {
+          "category": "account-login",
+          // Note; the `form` tag has no targetable attributes
+          "container": ["div#two-factor form"],
+          "fields": {
+            "email": ["div#two-factor form input[name='email-input']"],
+            "password": ["div#two-factor form input#current-password"]
+          },
+          "actions": {
+            "next": ["div#two-factor form button[name='email-submit-button']"],
+            "submit": [
+              "div#two-factor form button[name='password-submit-button']"
+            ]
+          }
+        }
+      ]
+    },
     "datacamp.com": {
       "pathnames": {
         "/": {
