@@ -1,6 +1,42 @@
 {
   "schemaVersion": "1.0.0",
   "hosts": {
+    "account.rogers.com": {
+      "forms": [
+        // The login form is rendered into two sequential Angular component hosts
+        // at the same URL:
+        // - state 1 (username) is wrapped by <ng-component>; the inner
+        //   <form> has no id. The Continue button advances to state 2.
+        // - state 2 (password) is wrapped by <password-form>; the inner
+        //   <form> gains id="LoginForm".
+        {
+          "category": "account-login",
+          "container": [
+            "ng-component form[method='POST']:has(input[autocomplete='username'])",
+            // Form gains an id and contextually-relevant container after passing username pre-validation
+            "password-form form[method='POST']#LoginForm"
+          ],
+          "fields": {
+            "email": [
+              "ng-component form[method='POST'] input[type='email'][autocomplete='username'][title='Enter your registered username here']"
+            ],
+            "password": [
+              "password-form form[method='POST']#LoginForm input[type='password'][autocomplete='current-password'][aria-label='Password']"
+            ]
+          },
+          "actions": {
+            // "Continue" from username check step to password entry
+            "next": [
+              "ng-component form[method='POST']:has(input[autocomplete='username']) button[role='button'][type='submit']"
+            ],
+            // "Sign in" submit with password entry
+            "submit": [
+              "password-form form[method='POST']#LoginForm button[role='button'][type='submit']"
+            ]
+          }
+        }
+      ]
+    },
     "bankofamerica.com": {
       "forms": [
         {
