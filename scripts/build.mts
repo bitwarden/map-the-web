@@ -3,12 +3,73 @@ import { readFileSync, writeFileSync, mkdirSync, rmSync, cpSync } from "fs";
 import { createHash } from "crypto";
 import { basename, dirname, join, relative } from "path";
 import { glob } from "node:fs/promises";
-import Ajv2020 from "ajv/dist/2020.js";
-import addFormats from "ajv-formats";
+import Ajv2020Import from "ajv/dist/2020.js";
+import addFormatsImport from "ajv-formats";
 import stripJsonComments from "strip-json-comments";
-import { red, yellow, green, cyan } from "./utils.mjs";
+import { red, yellow, green, cyan } from "./utils.mts";
+
+// ajv and ajv-formats are CommonJS; under NodeNext their ESM default import is
+// the module namespace, so the constructor/function lives on `.default`.
+const Ajv2020 = Ajv2020Import.default;
+const addFormats = addFormatsImport.default;
 
 const DIST = "dist";
+
+// ---------------------------------------------------------------------------
+// Types
+// ---------------------------------------------------------------------------
+
+/** Parsed source data for a Map (`<name>.jsonc`). Treated generically here. */
+interface MapSourceData {
+  schemaVersion?: string;
+  hosts?: Record<string, unknown>;
+  [key: string]: unknown;
+}
+
+/** A migration projecting the latest source shape onto an older major. */
+type MigrationFn = (data: MapSourceData) => MapSourceData;
+
+/** The subset of a JSON Schema document the build reads. */
+interface SchemaJson {
+  $id?: string;
+  deprecated?: boolean;
+  properties?: { schemaVersion?: { const?: string } };
+  [key: string]: unknown;
+}
+
+interface SchemaEntry {
+  file: string;
+  schema: SchemaJson;
+  major: number;
+  expectedVersion: string;
+}
+
+interface BuildEntry {
+  target: SchemaEntry;
+  payload: MapSourceData;
+}
+
+interface MapEntry {
+  name: string;
+  dir: string;
+  dataFile: string;
+  schemas: SchemaEntry[];
+  builds: BuildEntry[];
+}
+
+interface ManifestMapVersion {
+  filename: string;
+  cid: string;
+  schema: string;
+  deprecated?: boolean;
+}
+
+interface Manifest {
+  buildId: string;
+  timestamp: string;
+  gitSha: string;
+  maps: Record<string, Record<string, ManifestMapVersion>>;
+}
 
 // ---------------------------------------------------------------------------
 // Per-Map backwards-compatibility migrations
@@ -38,7 +99,7 @@ const DIST = "dist";
 // To drop support for an older schema major, either remove its migration
 // entry below or delete the corresponding `<name>.v<N>.schema.json` file.
 // ---------------------------------------------------------------------------
-const MIGRATIONS = {
+const MIGRATIONS: Record<string, Record<number, MigrationFn>> = {
   forms: {
     // 0: (data) => data, // example: latest source projecting to v0
     // 1: (data) => data, // example: latest source projecting to v1
@@ -51,7 +112,7 @@ rmSync(DIST, { recursive: true, force: true });
 
 // Step 1: Discover Maps and their schemas
 
-const mapsByName = new Map();
+const mapsByName = new Map<string, MapEntry>();
 
 // Each Map lives one level deep under maps/ (e.g. maps/forms/).
 // Schema files are versioned: <name>.v<major>.schema.json.
@@ -68,7 +129,9 @@ for await (const schemaFile of glob("maps/*/*.v*.schema.json")) {
 
   const major = parseInt(majorMatch[1], 10);
 
-  const schemaJson = JSON.parse(readFileSync(schemaFile, "utf-8"));
+  const schemaJson = JSON.parse(
+    readFileSync(schemaFile, "utf-8"),
+  ) as SchemaJson;
   const expectedVersion = schemaJson?.properties?.schemaVersion?.const;
 
   if (typeof expectedVersion !== "string") {
@@ -110,10 +173,10 @@ for await (const schemaFile of glob("maps/*/*.v*.schema.json")) {
   }
 
   if (!mapsByName.has(name)) {
-    mapsByName.set(name, { name, dir, dataFile, schemas: [] });
+    mapsByName.set(name, { name, dir, dataFile, schemas: [], builds: [] });
   }
 
-  mapsByName.get(name).schemas.push({
+  mapsByName.get(name)!.schemas.push({
     file: schemaFile,
     schema: schemaJson,
     major,
@@ -175,7 +238,7 @@ for (const map of maps) {
 
   const sourceData = JSON.parse(
     stripJsonComments(readFileSync(map.dataFile, "utf-8")),
-  );
+  ) as MapSourceData;
 
   // Normalize unicode host keys to punycode (once) and warn on www. prefixes.
   if (sourceData.hosts) {
@@ -232,7 +295,7 @@ for (const map of maps) {
   map.builds = [];
 
   for (const target of targets) {
-    let projectedData;
+    let projectedData: MapSourceData;
     if (target.major === sourceSchema.major) {
       projectedData = sourceData;
     } else {
@@ -241,7 +304,7 @@ for (const map of maps) {
         console.error(
           red(
             `${map.name}: no migration registered for source v${sourceSchema.major} → v${target.major}. ` +
-              `Register MIGRATIONS["${map.name}"][${target.major}] in scripts/build.mjs, ` +
+              `Register MIGRATIONS["${map.name}"][${target.major}] in scripts/build.mts, ` +
               `or delete ${map.dir}/${map.name}.v${target.major}.schema.json to drop support for v${target.major}.`,
           ),
         );
@@ -260,7 +323,7 @@ for (const map of maps) {
     if (!validate(payload)) {
       console.error(red(`Validation failed: ${map.dataFile} → ${target.file}`));
 
-      for (const err of validate.errors) {
+      for (const err of validate.errors ?? []) {
         console.error(`  ${err.instancePath || "/"}: ${err.message}`);
       }
 
@@ -307,14 +370,14 @@ const gitSha =
     }
   })();
 
-const manifest = {
+const manifest: Manifest = {
   buildId,
   timestamp: new Date().toISOString(),
   gitSha,
   maps: {},
 };
 
-const checksums = [];
+const checksums: string[] = [];
 
 mkdirSync(DIST, { recursive: true });
 
@@ -351,13 +414,15 @@ for (const map of maps) {
 
 // Validate the assembled manifest against its schema before writing.
 const manifestSchemaSrc = "scripts/manifest.schema.json";
-const manifestSchema = JSON.parse(readFileSync(manifestSchemaSrc, "utf-8"));
+const manifestSchema = JSON.parse(
+  readFileSync(manifestSchemaSrc, "utf-8"),
+) as SchemaJson;
 const validateManifest = ajv.compile(manifestSchema);
 if (!validateManifest(manifest)) {
   console.error(
     red(`Manifest failed validation against ${manifestSchemaSrc}:`),
   );
-  for (const err of validateManifest.errors) {
+  for (const err of validateManifest.errors ?? []) {
     console.error(`  ${err.instancePath || "/"}: ${err.message}`);
   }
   process.exit(1);

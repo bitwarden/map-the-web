@@ -1,9 +1,10 @@
-import { lintMapData } from "./lib/lint-selectors.mjs";
+import { lintMapData } from "./lib/lint-selectors.mts";
 import stripJsonComments from "strip-json-comments";
 import { readFileSync } from "fs";
 import { glob } from "node:fs/promises";
-import { red, yellow, green, dim } from "./utils.mjs";
+import { red, yellow, green, dim } from "./utils.mts";
 import { execFileSync } from "node:child_process";
+import type { FormMapData } from "./lib/types.mts";
 
 // ---------------------------------------------------------------------------
 // Environment configuration
@@ -31,8 +32,8 @@ const scopeAnnotationsToDiff = emitAnnotations && isPullRequest && !!baseRef;
  * computed (e.g., base ref not fetched), signaling callers to fall back to
  * emitting every annotation.
  */
-function getChangedLinesForFile(file) {
-  let output;
+function getChangedLinesForFile(file: string): Set<number> | null {
+  let output: string;
   try {
     output = execFileSync(
       "git",
@@ -43,7 +44,7 @@ function getChangedLinesForFile(file) {
     return null;
   }
 
-  const changed = new Set();
+  const changed = new Set<number>();
   for (const line of output.split("\n")) {
     // Hunk header: "@@ -<old-start>[,<old-count>] +<new-start>[,<new-count>] @@"
     const match = /^@@ -\d+(?:,\d+)? \+(\d+)(?:,(\d+))? @@/.exec(line);
@@ -67,7 +68,11 @@ function getChangedLinesForFile(file) {
  * within that scope. Returns null when any anchor or the selector can't be
  * located; callers should fall back to the logical location in that case.
  */
-function findLineInSource(source, formattedLocation, selector) {
+function findLineInSource(
+  source: string,
+  formattedLocation: string,
+  selector: string | null,
+): number | null {
   if (!selector) {
     return null;
   }
@@ -119,14 +124,20 @@ function findLineInSource(source, formattedLocation, selector) {
  * Escape a message for a GitHub Actions workflow command.
  * https://docs.github.com/en/actions/reference/workflow-commands-for-github-actions#about-workflow-commands
  */
-function ghEscape(value) {
+function ghEscape(value: string): string {
   return String(value)
     .replace(/%/g, "%25")
     .replace(/\r/g, "%0D")
     .replace(/\n/g, "%0A");
 }
 
-function ghWorkflowCommand(severity, file, codeLine, title, message) {
+function ghWorkflowCommand(
+  severity: string,
+  file: string,
+  codeLine: number | null,
+  title: string,
+  message: string,
+): string {
   const parts = [`file=${ghEscape(file)}`];
   if (codeLine != null) {
     parts.push(`line=${codeLine}`);
@@ -159,11 +170,12 @@ let totalErrors = 0;
 let totalWarnings = 0;
 
 for (const file of files) {
-  let source;
+  let source: string;
   try {
     source = readFileSync(file, "utf-8");
   } catch (e) {
-    console.error(red(`Failed to read ${file}: ${e.message}`));
+    const message = e instanceof Error ? e.message : String(e);
+    console.error(red(`Failed to read ${file}: ${message}`));
     totalErrors++;
     continue;
   }
@@ -174,11 +186,12 @@ for (const file of files) {
   // produce false matches.
   const stripped = stripJsonComments(source);
 
-  let data;
+  let data: FormMapData;
   try {
-    data = JSON.parse(stripped);
+    data = JSON.parse(stripped) as FormMapData;
   } catch (e) {
-    console.error(red(`Failed to parse ${file}: ${e.message}`));
+    const message = e instanceof Error ? e.message : String(e);
+    console.error(red(`Failed to parse ${file}: ${message}`));
     totalErrors++;
     continue;
   }
@@ -190,7 +203,7 @@ for (const file of files) {
     continue;
   }
 
-  let changedLines;
+  let changedLines: Set<number> | null | undefined;
   if (scopeAnnotationsToDiff) {
     changedLines = getChangedLinesForFile(file);
     if (changedLines == null) {
@@ -205,7 +218,7 @@ for (const file of files) {
   // A finding without a resolved line number can't be verified as in-diff,
   // so it's dropped from inline annotations under diff-scoping. Console
   // output is unaffected.
-  const shouldAnnotate = (codeLine) => {
+  const shouldAnnotate = (codeLine: number | null): boolean => {
     if (!emitAnnotations) {
       return false;
     }

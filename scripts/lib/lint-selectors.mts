@@ -1,4 +1,23 @@
 import { parse as parseCss } from "css-what";
+import type {
+  Selector,
+  PseudoSelector,
+  PseudoElement,
+  AttributeSelector,
+  TagSelector,
+  UniversalSelector,
+} from "css-what";
+import type {
+  Location,
+  Finding,
+  LintResult,
+  CompositeSelectorArray,
+  Form,
+  FormMapData,
+} from "./types.mts";
+
+/** Tokens that carry an optional `namespace` (the only ones we render). */
+type NamespacedSelector = AttributeSelector | TagSelector | UniversalSelector;
 
 // ---------------------------------------------------------------------------
 // Constants
@@ -137,7 +156,7 @@ const ALWAYS_FALSE_EMPTY_ACTIONS = new Map([["element", "~="]]);
 /**
  * Format a location object into a readable path string.
  */
-export function formatLocation(location) {
+export function formatLocation(location: Location): string {
   const parts = [location.host];
 
   if (location.pathname) {
@@ -168,7 +187,7 @@ export function formatLocation(location) {
  * Check whether a parsed selector segment is "bare"; only an element tag
  * with no qualifying ID, class, attribute, or pseudo-class.
  */
-function isBareElement(tokens) {
+function isBareElement(tokens: Selector[]): boolean {
   const compound = getLastCompound(tokens);
   return compound.length === 1 && compound[0].type === "tag";
 }
@@ -177,7 +196,7 @@ function isBareElement(tokens) {
  * Check whether a parsed selector segment is class-only; one or more class
  * selectors with no element, ID, attribute, or pseudo-class qualifier.
  */
-function isClassOnly(tokens) {
+function isClassOnly(tokens: Selector[]): boolean {
   const compound = getLastCompound(tokens);
   return (
     compound.length > 0 &&
@@ -191,7 +210,7 @@ function isClassOnly(tokens) {
 /**
  * Check whether a parsed selector segment contains a universal selector.
  */
-function hasUniversal(tokens) {
+function hasUniversal(tokens: Selector[]): boolean {
   return tokens.some((t) => t.type === "universal");
 }
 
@@ -199,13 +218,14 @@ function hasUniversal(tokens) {
  * Check whether a parsed selector segment is ID-only; a single ID selector
  * with no element type or other qualifier on the target compound.
  */
-function isIdOnly(tokens) {
+function isIdOnly(tokens: Selector[]): boolean {
   const compound = getLastCompound(tokens);
+  const [first] = compound;
   return (
     compound.length === 1 &&
-    compound[0].type === "attribute" &&
-    compound[0].name === "id" &&
-    compound[0].action === "equals"
+    first.type === "attribute" &&
+    first.name === "id" &&
+    first.action === "equals"
   );
 }
 
@@ -220,7 +240,7 @@ function isIdOnly(tokens) {
  * (id/class/attribute) before firing. Pure pseudo-class selectors are
  * caught separately by `isPseudoOnly`.
  */
-function lacksTagAnchor(tokens) {
+function lacksTagAnchor(tokens: Selector[]): boolean {
   const compound = getLastCompound(tokens);
   if (compound.some((t) => t.type === "tag")) {
     return false;
@@ -238,7 +258,7 @@ function lacksTagAnchor(tokens) {
  * without a tag/id/class/attribute anchor isn't claiming what the target
  * IS, only what it ISN'T (or what state it's in).
  */
-function isPseudoOnly(tokens) {
+function isPseudoOnly(tokens: Selector[]): boolean {
   const compound = getLastCompound(tokens);
   if (compound.length === 0) {
     return false;
@@ -257,7 +277,7 @@ function isPseudoOnly(tokens) {
 /**
  * Return the last compound selector (tokens after the final combinator).
  */
-function getLastCompound(tokens) {
+function getLastCompound(tokens: Selector[]): Selector[] {
   let start = 0;
   for (let i = 0; i < tokens.length; i++) {
     if (COMBINATOR_TYPES.has(tokens[i].type)) {
@@ -270,7 +290,7 @@ function getLastCompound(tokens) {
 /**
  * Count the number of combinators (nesting depth) in a token list.
  */
-function combinatorDepth(tokens) {
+function combinatorDepth(tokens: Selector[]): number {
   return tokens.filter((t) => COMBINATOR_TYPES.has(t.type)).length;
 }
 
@@ -279,7 +299,7 @@ function combinatorDepth(tokens) {
  * functional pseudo-classes (e.g. :not(...), :is(...), :has(...)).
  * Pseudos with string .data (e.g. :lang("en")) are not descended into.
  */
-function* walkTokens(tokens) {
+function* walkTokens(tokens: Selector[]): Generator<Selector> {
   for (const t of tokens) {
     yield t;
     if (t.type === "pseudo" && Array.isArray(t.data)) {
@@ -293,61 +313,73 @@ function* walkTokens(tokens) {
 /**
  * Return a flat array of every token, descending into functional pseudos.
  */
-function collectAllTokens(tokens) {
+function collectAllTokens(tokens: Selector[]): Selector[] {
   return [...walkTokens(tokens)];
 }
 
 /**
  * Find positional pseudo-classes in a token list.
  */
-function findPositionalPseudos(tokens) {
+function findPositionalPseudos(tokens: Selector[]): string[] {
   return tokens
-    .filter((t) => t.type === "pseudo" && POSITIONAL_PSEUDOS.has(t.name))
+    .filter(
+      (t): t is PseudoSelector =>
+        t.type === "pseudo" && POSITIONAL_PSEUDOS.has(t.name),
+    )
     .map((t) => `:${t.name}`);
 }
 
 /**
  * Find state-dependent pseudo-classes in a token list.
  */
-function findStatePseudos(tokens) {
+function findStatePseudos(tokens: Selector[]): string[] {
   return tokens
-    .filter((t) => t.type === "pseudo" && STATE_PSEUDOS.has(t.name))
+    .filter(
+      (t): t is PseudoSelector =>
+        t.type === "pseudo" && STATE_PSEUDOS.has(t.name),
+    )
     .map((t) => `:${t.name}`);
 }
 
 /**
  * Find root / shadow-root pseudo-classes in a token list.
  */
-function findRootPseudos(tokens) {
+function findRootPseudos(tokens: Selector[]): string[] {
   return tokens
-    .filter((t) => t.type === "pseudo" && ROOT_PSEUDOS.has(t.name))
+    .filter(
+      (t): t is PseudoSelector =>
+        t.type === "pseudo" && ROOT_PSEUDOS.has(t.name),
+    )
     .map((t) => `:${t.name}`);
 }
 
 /**
  * Find context-dependent pseudo-classes in a token list.
  */
-function findContextDependentPseudos(tokens) {
+function findContextDependentPseudos(tokens: Selector[]): string[] {
   return tokens
-    .filter((t) => t.type === "pseudo" && CONTEXT_DEPENDENT_PSEUDOS.has(t.name))
+    .filter(
+      (t): t is PseudoSelector =>
+        t.type === "pseudo" && CONTEXT_DEPENDENT_PSEUDOS.has(t.name),
+    )
     .map((t) => `:${t.name}`);
 }
 
 /**
  * Find pseudo-elements in a token list.
  */
-function findPseudoElements(tokens) {
+function findPseudoElements(tokens: Selector[]): string[] {
   return tokens
-    .filter((t) => t.type === "pseudo-element")
+    .filter((t): t is PseudoElement => t.type === "pseudo-element")
     .map((t) => `::${t.name}`);
 }
 
 /**
  * Find tag tokens whose name starts with "@" (at-rules mis-parsed as tags).
  */
-function findAtRuleTags(tokens) {
+function findAtRuleTags(tokens: Selector[]): string[] {
   return tokens
-    .filter((t) => t.type === "tag" && t.name.startsWith("@"))
+    .filter((t): t is TagSelector => t.type === "tag" && t.name.startsWith("@"))
     .map((t) => t.name);
 }
 
@@ -355,11 +387,17 @@ function findAtRuleTags(tokens) {
  * Find namespace-qualified tokens and return readable renderings of each
  * (e.g. "svg|rect", "*|foo", "[html|lang]").
  */
-function findNamespacedTokens(tokens) {
+function findNamespacedTokens(tokens: Selector[]): string[] {
   return tokens
-    .filter((t) => t.namespace != null)
+    .filter(
+      (t): t is NamespacedSelector =>
+        (t.type === "attribute" ||
+          t.type === "tag" ||
+          t.type === "universal") &&
+        t.namespace != null,
+    )
     .map((t) => {
-      const name = t.name ?? "*";
+      const name = "name" in t ? t.name : "*";
       const prefix = t.namespace;
       const rendering = `${prefix}|${name}`;
       return t.type === "attribute" ? `[${rendering}]` : rendering;
@@ -370,9 +408,9 @@ function findNamespacedTokens(tokens) {
  * If the target compound's tag is in NON_CONTAINER_TAGS, return that tag
  * name; otherwise return null. Used only when linting `container` entries.
  */
-function findNonContainerTarget(tokens) {
+function findNonContainerTarget(tokens: Selector[]): string | null {
   const compound = getLastCompound(tokens);
-  const tag = compound.find((t) => t.type === "tag");
+  const tag = compound.find((t): t is TagSelector => t.type === "tag");
   if (tag && NON_CONTAINER_TAGS.has(tag.name)) {
     return tag.name;
   }
@@ -389,7 +427,7 @@ function findNonContainerTarget(tokens) {
  * satisfy the check, which is a deliberate simplification; the common
  * authoring patterns we want to accept are a `form` tag or an explicit role.
  */
-function hasFormAnchor(tokens) {
+function hasFormAnchor(tokens: Selector[]): boolean {
   const compound = getLastCompound(tokens);
   for (const t of compound) {
     if (t.type === "tag" && t.name === "form") {
@@ -411,10 +449,10 @@ function hasFormAnchor(tokens) {
  * Find attribute matchers that use an operator equivalent to existence check
  * when the value is empty (*=, ^=, $= with empty value).
  */
-function findExistenceEquivalentEmpty(tokens) {
+function findExistenceEquivalentEmpty(tokens: Selector[]): string[] {
   return tokens
     .filter(
-      (t) =>
+      (t): t is AttributeSelector =>
         t.type === "attribute" &&
         EXISTENCE_EQUIVALENT_ACTIONS.has(t.action) &&
         t.value === "",
@@ -426,10 +464,10 @@ function findExistenceEquivalentEmpty(tokens) {
  * Find attribute matchers that match no elements when the value is empty
  * (~= with empty value).
  */
-function findAlwaysFalseEmpty(tokens) {
+function findAlwaysFalseEmpty(tokens: Selector[]): string[] {
   return tokens
     .filter(
-      (t) =>
+      (t): t is AttributeSelector =>
         t.type === "attribute" &&
         ALWAYS_FALSE_EMPTY_ACTIONS.has(t.action) &&
         t.value === "",
@@ -440,8 +478,8 @@ function findAlwaysFalseEmpty(tokens) {
 /**
  * Return which sibling combinators (if any) appear in a token list.
  */
-function findSiblingCombinators(tokens) {
-  const found = [];
+function findSiblingCombinators(tokens: Selector[]): string[] {
+  const found: string[] = [];
   for (const t of tokens) {
     if (t.type === "adjacent") {
       found.push("+");
@@ -466,9 +504,12 @@ function findSiblingCombinators(tokens) {
  *     the caller can keep aggregating other errors against the remainder
  *     rather than bailing at the first boundary violation.
  */
-function checkBoundaryCombinator(raw) {
+function checkBoundaryCombinator(raw: string): {
+  messages: string[];
+  sanitized: string;
+} {
   let sanitized = raw.trim();
-  const messages = [];
+  const messages: string[] = [];
 
   if (!sanitized.includes(BOUNDARY_COMBINATOR)) {
     return { messages, sanitized };
@@ -499,9 +540,9 @@ function checkBoundaryCombinator(raw) {
  * mistake (copying from a SCSS/Tailwind/native-nesting stylesheet). Catching
  * this before the parser lets us emit a targeted remediation instead.
  */
-function containsNestingAmpersand(segment) {
+function containsNestingAmpersand(segment: string): boolean {
   let bracketDepth = 0;
-  let quote = null;
+  let quote: string | null = null;
   for (let i = 0; i < segment.length; i++) {
     const ch = segment[i];
     if (quote) {
@@ -544,7 +585,7 @@ function containsNestingAmpersand(segment) {
  * should be replaced with a tokenizing split that respects bracket/quote
  * regions.
  */
-function splitBoundarySegments(raw) {
+function splitBoundarySegments(raw: string): string[] {
   return raw.split(BOUNDARY_COMBINATOR).map((s) => s.trim());
 }
 
@@ -555,9 +596,9 @@ function splitBoundarySegments(raw) {
 /**
  * Lint a single selector string. Returns { errors: [], warnings: [] }.
  */
-export function lintSelector(raw, location) {
-  const errors = [];
-  const warnings = [];
+export function lintSelector(raw: string, location: Location): LintResult {
+  const errors: Finding[] = [];
+  const warnings: Finding[] = [];
   const formattedLocation = formatLocation(location);
 
   // Empty-or-whitespace-only selector: schema's minLength:1 allows these
@@ -636,14 +677,15 @@ export function lintSelector(raw, location) {
       continue;
     }
 
-    let parsedSelectors;
+    let parsedSelectors: Selector[][];
     try {
       parsedSelectors = parseCss(segment);
     } catch (e) {
+      const message = e instanceof Error ? e.message : String(e);
       errors.push({
         location: formattedLocation,
         selector: raw,
-        message: `Invalid CSS syntax in segment "${segment}" - ${e.message}`,
+        message: `Invalid CSS syntax in segment "${segment}" - ${message}`,
       });
       continue;
     }
@@ -896,9 +938,9 @@ export function lintSelector(raw, location) {
 /**
  * Extract and lint all selectors from a parsed map data object.
  */
-export function lintMapData(data) {
-  const allErrors = [];
-  const allWarnings = [];
+export function lintMapData(data: FormMapData): LintResult {
+  const allErrors: Finding[] = [];
+  const allWarnings: Finding[] = [];
 
   if (!data.hosts) {
     return { errors: allErrors, warnings: allWarnings };
@@ -938,7 +980,12 @@ export function lintMapData(data) {
 /**
  * Lint all selectors within a forms array.
  */
-function lintForms(forms, context, errors, warnings) {
+function lintForms(
+  forms: Form[],
+  context: Location,
+  errors: Finding[],
+  warnings: Finding[],
+): void {
   for (const form of forms) {
     const category = form.category || "unknown";
     lintPasswordFieldSemantics(form, category, context, errors);
@@ -982,7 +1029,12 @@ function lintForms(forms, context, errors, warnings) {
 /**
  * Lint a selectorArray (array of selector strings).
  */
-function lintSelectorArray(selectors, context, errors, warnings) {
+function lintSelectorArray(
+  selectors: string[],
+  context: Location,
+  errors: Finding[],
+  warnings: Finding[],
+): void {
   checkDuplicates(selectors, context, errors);
 
   for (let i = 0; i < selectors.length; i++) {
@@ -995,7 +1047,12 @@ function lintSelectorArray(selectors, context, errors, warnings) {
 /**
  * Lint a compositeSelectorArray (items can be strings or arrays of strings).
  */
-function lintCompositeSelectorArray(selectors, context, errors, warnings) {
+function lintCompositeSelectorArray(
+  selectors: CompositeSelectorArray,
+  context: Location,
+  errors: Finding[],
+  warnings: Finding[],
+): void {
   // Duplicate check on top-level string entries. Pass the original array so
   // the reported selectorIndex reflects the author's file position; nested
   // sequence arrays are skipped by `checkDuplicates`'s non-string guard.
@@ -1035,10 +1092,15 @@ function lintCompositeSelectorArray(selectors, context, errors, warnings) {
  * selector sequences) are skipped; duplicates inside a sequence are allowed
  * and handled by the caller.
  */
-function checkDuplicates(selectors, context, errors) {
-  const seen = new Set();
+function checkDuplicates(
+  selectors: CompositeSelectorArray,
+  context: Location,
+  errors: Finding[],
+): void {
+  const seen = new Set<string>();
   for (let i = 0; i < selectors.length; i++) {
-    const s = typeof selectors[i] === "string" ? selectors[i] : null;
+    const item = selectors[i];
+    const s = typeof item === "string" ? item : null;
 
     if (s == null) {
       continue;
@@ -1056,13 +1118,18 @@ function checkDuplicates(selectors, context, errors) {
 }
 
 /** Reject password key mismatches for login vs creation forms. */
-function lintPasswordFieldSemantics(form, category, context, errors) {
+function lintPasswordFieldSemantics(
+  form: Form,
+  category: string,
+  context: Location,
+  errors: Finding[],
+): void {
   const fields = form.fields;
   if (!fields) {
     return;
   }
 
-  const headSelector = (selectors) =>
+  const headSelector = (selectors: CompositeSelectorArray): string | null =>
     Array.isArray(selectors) && typeof selectors[0] === "string"
       ? selectors[0]
       : null;
