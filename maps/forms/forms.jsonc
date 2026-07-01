@@ -37,6 +37,51 @@
         }
       ]
     },
+    "auth.hbomax.com": {
+      "pathnames": {
+        "/login": {
+          "forms": [
+            {
+              "category": "account-login",
+              "container": [
+                "gi-login.hydrated >>> gi-sign-in-combo.hydrated >>> gi-form.hydrated form.form"
+              ],
+              "fields": {
+                // Shared input; email mode (mutually exclusive with `phone`).
+                "email": [
+                  "gi-login.hydrated >>> gi-sign-in-combo.hydrated >>> gi-form.hydrated form.form input#sign-in-phoneEmail-input[type='email'][autocomplete='email'][name='phoneEmail']"
+                ],
+                "phoneCountryCode": [
+                  "gi-login.hydrated >>> gi-sign-in-combo.hydrated >>> gi-form.hydrated form.form gi-phone-country-select select[autocomplete='tel-country-code']"
+                ],
+                // Same DOM element as `email` in the other mode; the type and
+                // autocomplete attributes swap when phone content is detected.
+                "phone": [
+                  "gi-login.hydrated >>> gi-sign-in-combo.hydrated >>> gi-form.hydrated form.form input#sign-in-phoneEmail-input[type='tel'][autocomplete='tel-national'][name='phoneEmail']"
+                ],
+                "password": [
+                  "gi-login.hydrated >>> gi-sign-in-combo.hydrated >>> gi-form.hydrated form.form input#sign-in-password-input[type='password'][autocomplete='current-password'][name='password']"
+                ]
+              },
+              "actions": {
+                // "Continue" advances step-1 -> step-2; same DOM element as `submit`.
+                "next": [
+                  "gi-login.hydrated >>> gi-sign-in-combo.hydrated >>> gi-form.hydrated form.form button[type='submit'][data-testid='gisdk.gi-sign-in.continue_button']"
+                ],
+                // "Sign In" submits credentials on step-2; same DOM element as `next`.
+                "submit": [
+                  "gi-login.hydrated >>> gi-sign-in-combo.hydrated >>> gi-form.hydrated form.form button[type='submit'][data-testid='gisdk.gi-sign-in.continue_button']"
+                ],
+                // Field-level clear button; only present when the email/phone input has a value.
+                "reset": [
+                  "gi-login.hydrated >>> gi-sign-in-combo.hydrated >>> gi-form.hydrated form.form button#clear-sign-in-phoneEmail-input[type='button'][data-testid='form-input-clear-button']"
+                ]
+              }
+            }
+          ]
+        }
+      }
+    },
     "bankofamerica.com": {
       "forms": [
         {
