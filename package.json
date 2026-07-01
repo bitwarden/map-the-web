@@ -22,9 +22,9 @@
     "validate": "node scripts/validate-schemas.mts",
     "check": "npm run prettier && npm run typecheck && npm run lint:md && npm run validate && npm run lint:selectors && npm test",
     "test": "node --test scripts/**/*.test.mts",
-    "build": "rm -rf dist && node scripts/build.mjs",
-    "serve": "node scripts/serve.mjs",
-    "serve:watch": "node scripts/serve-watch.mjs"
+    "build": "rm -rf dist && node scripts/build.mts",
+    "serve": "node scripts/serve.mts",
+    "serve:watch": "node scripts/serve-watch.mts"
   },
   "engines": {
     "node": ">=22",

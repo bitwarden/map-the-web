@@ -1,43 +1,46 @@
-import { spawn } from "node:child_process";
-import { watch } from "node:fs";
+import { spawn, type ChildProcess } from "node:child_process";
+import { watch, type FSWatcher } from "node:fs";
 import { stat } from "node:fs/promises";
 import { resolve } from "node:path";
-import { cyan, dim, green, red, yellow } from "./utils.mjs";
+import { cyan, dim, green, red, yellow } from "./utils.mts";
 
 const PROJECT_ROOT = process.cwd();
 const WATCH_PATHS = ["maps", "scripts/manifest.schema.json"];
 const DEBOUNCE_MILLISECONDS = 150;
 
-let serverProcess = null;
-let buildProcess = null;
+let serverProcess: ChildProcess | null = null;
+let buildProcess: ChildProcess | null = null;
 let rebuildQueued = false;
-let debounceTimer = null;
+let debounceTimer: NodeJS.Timeout | null = null;
 let shuttingDown = false;
 
-function startServer() {
-  serverProcess = spawn(process.execPath, ["scripts/serve.mjs"], {
+function startServer(): void {
+  serverProcess = spawn(process.execPath, ["scripts/serve.mts"], {
     cwd: PROJECT_ROOT,
     stdio: "inherit",
     env: process.env,
   });
 
-  serverProcess.on("exit", (code, signal) => {
-    serverProcess = null;
+  serverProcess.on(
+    "exit",
+    (code: number | null, signal: NodeJS.Signals | null) => {
+      serverProcess = null;
 
-    if (shuttingDown) {
-      return;
-    }
+      if (shuttingDown) {
+        return;
+      }
 
-    console.error(
-      red(
-        `Static server exited unexpectedly (code=${code ?? "null"}, signal=${signal ?? "null"}).`,
-      ),
-    );
-    shutdown(1);
-  });
+      console.error(
+        red(
+          `Static server exited unexpectedly (code=${code ?? "null"}, signal=${signal ?? "null"}).`,
+        ),
+      );
+      shutdown(1);
+    },
+  );
 }
 
-function runBuild() {
+function runBuild(): void {
   if (buildProcess !== null) {
     rebuildQueued = true;
 
@@ -46,13 +49,13 @@ function runBuild() {
 
   console.log(cyan("[watch] rebuilding…"));
 
-  buildProcess = spawn(process.execPath, ["scripts/build.mjs"], {
+  buildProcess = spawn(process.execPath, ["scripts/build.mts"], {
     cwd: PROJECT_ROOT,
     stdio: "inherit",
     env: process.env,
   });
 
-  buildProcess.on("exit", (code) => {
+  buildProcess.on("exit", (code: number | null) => {
     buildProcess = null;
 
     if (code === 0) {
@@ -68,7 +71,7 @@ function runBuild() {
   });
 }
 
-function scheduleBuild() {
+function scheduleBuild(): void {
   if (debounceTimer !== null) {
     clearTimeout(debounceTimer);
   }
@@ -79,16 +82,18 @@ function scheduleBuild() {
   }, DEBOUNCE_MILLISECONDS);
 }
 
-async function startWatchers() {
-  const watchers = [];
+async function startWatchers(): Promise<FSWatcher[]> {
+  const watchers: FSWatcher[] = [];
 
   for (const relativePath of WATCH_PATHS) {
     const absolutePath = resolve(PROJECT_ROOT, relativePath);
 
-    let stats;
+    let isDirectory: boolean;
 
     try {
-      stats = await stat(absolutePath);
+      const stats = await stat(absolutePath);
+
+      isDirectory = stats.isDirectory();
     } catch {
       console.warn(yellow(`[watch] skipping missing path: ${relativePath}`));
       continue;
@@ -96,8 +101,8 @@ async function startWatchers() {
 
     const watcher = watch(
       absolutePath,
-      { recursive: stats.isDirectory() },
-      (eventType, filename) => {
+      { recursive: isDirectory },
+      (eventType: string, filename: string | null) => {
         const label = filename ? `${relativePath}/${filename}` : relativePath;
 
         console.log(dim(`[watch] ${eventType}: ${label}`));
@@ -105,8 +110,10 @@ async function startWatchers() {
       },
     );
 
-    watcher.on("error", (error) => {
-      console.error(red(`[watch] watcher error on ${relativePath}: ${error.message}`));
+    watcher.on("error", (error: Error) => {
+      console.error(
+        red(`[watch] watcher error on ${relativePath}: ${error.message}`),
+      );
     });
 
     watchers.push(watcher);
@@ -116,7 +123,7 @@ async function startWatchers() {
   return watchers;
 }
 
-function shutdown(exitCode) {
+function shutdown(exitCode: number): void {
   if (shuttingDown) {
     return;
   }
@@ -139,7 +146,7 @@ function shutdown(exitCode) {
   process.exit(exitCode);
 }
 
-for (const signal of ["SIGINT", "SIGTERM"]) {
+for (const signal of ["SIGINT", "SIGTERM"] as const) {
   process.on(signal, () => shutdown(0));
 }
 
