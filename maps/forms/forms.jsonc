@@ -37,6 +37,57 @@
         }
       ]
     },
+    "auth.hbomax.com": {
+      "pathnames": {
+        "/login": {
+          "forms": [
+            {
+              "category": "account-login",
+              "container": [
+                "gi-login.hydrated >>> gi-sign-in-combo.hydrated >>> gi-form.hydrated form.form"
+              ],
+              "fields": {
+                // Shared input; email mode (mutually exclusive with `phone`).
+                "email": [
+                  "gi-login.hydrated >>> gi-sign-in-combo.hydrated >>> gi-form.hydrated form.form input#sign-in-phoneEmail-input[type='email'][autocomplete='email'][name='phoneEmail']"
+                ],
+                "phoneCountryCode": [
+                  // Only appears after qualified input value entry (see: "phone")
+                  "gi-login.hydrated >>> gi-sign-in-combo.hydrated >>> gi-form.hydrated form.form gi-phone-country-select select[autocomplete='tel-country-code']"
+                ],
+                "phone": [
+                  "gi-login.hydrated >>> gi-sign-in-combo.hydrated >>> gi-form.hydrated form.form input#sign-in-phoneEmail-input[type='email'][autocomplete='email'][name='phoneEmail']",
+                  // Same DOM element as `email`; the type and autocomplete attributes
+                  // swap when phone content is detected; the first selectors here
+                  // represents the unpopulated state
+                  "gi-login.hydrated >>> gi-sign-in-combo.hydrated >>> gi-form.hydrated form.form input#sign-in-phoneEmail-input[type='tel'][autocomplete='tel-national'][name='phoneEmail']"
+                ],
+                // The `hide-input-group` class is included on an intermediate `div`
+                // parent of a non-interactable password field on the first step of
+                // the form.
+                "password": [
+                  "gi-login.hydrated >>> gi-sign-in-password.hydrated >>> gi-form.hydrated form.sign-in-password:not(:has(div.hide-input-group)) input#sign-in-password-password-input[type='password'][autocomplete='new-password'][name='password']"
+                ]
+              },
+              "actions": {
+                // "Continue" advances step-1 -> step-2; same DOM element as `submit`.
+                "next": [
+                  "gi-login.hydrated >>> gi-sign-in-combo.hydrated >>> gi-form.hydrated form.form button[type='submit'][data-testid='gisdk.gi-sign-in.continue_button']"
+                ],
+                // "Sign In" submits credentials on step-2; same DOM element as `next`.
+                "submit": [
+                  "gi-login.hydrated >>> gi-sign-in-combo.hydrated >>> gi-form.hydrated form.form button[type='submit'][data-testid='gisdk.gi-sign-in.continue_button']"
+                ],
+                // Field-level clear button; only present when the email/phone input has a value.
+                "reset": [
+                  "gi-login.hydrated >>> gi-sign-in-combo.hydrated >>> gi-form.hydrated form.form button#clear-sign-in-phoneEmail-input[type='button'][data-testid='form-input-clear-button']"
+                ]
+              }
+            }
+          ]
+        }
+      }
+    },
     "bankofamerica.com": {
       "forms": [
         {
