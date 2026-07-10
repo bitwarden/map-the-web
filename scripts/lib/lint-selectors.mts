@@ -25,7 +25,6 @@ type NamespacedSelector = AttributeSelector | TagSelector | UniversalSelector;
 
 const BOUNDARY_COMBINATOR = ">>>";
 const MAX_COMBINATOR_DEPTH = 4;
-const MAX_SELECTOR_LENGTH = 200;
 
 const COMBINATOR_TYPES = new Set([
   "child",
@@ -612,17 +611,6 @@ export function lintSelector(raw: string, location: Location): LintResult {
         `Remove the entry or provide a valid selector.`,
     });
     return { errors, warnings };
-  }
-
-  // Length warning
-  if (raw.length > MAX_SELECTOR_LENGTH) {
-    warnings.push({
-      location: formattedLocation,
-      selector: raw,
-      message:
-        `Selector is ${raw.length} characters long (>${MAX_SELECTOR_LENGTH}). ` +
-        `Consider scoping with a "container" or simplifying the selector chain.`,
-    });
   }
 
   // Boundary combinator structural check. Collect any edge-misuse errors

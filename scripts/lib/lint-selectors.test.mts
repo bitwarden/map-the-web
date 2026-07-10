@@ -1318,28 +1318,6 @@ describe("container form anchor", () => {
 });
 
 // ---------------------------------------------------------------------------
-// Warnings: selector length
-// ---------------------------------------------------------------------------
-
-describe("selector length", () => {
-  it("warns when selector exceeds 200 characters", () => {
-    const long = "div#" + "a".repeat(197);
-    assert.ok(long.length > 200);
-    const warnings = warningsFor(long);
-    const length = warnings.filter((w) => /characters long/.test(w.message));
-    assert.equal(length.length, 1);
-  });
-
-  it("does not warn at exactly 200 characters", () => {
-    const exact = "div#" + "a".repeat(196);
-    assert.equal(exact.length, 200);
-    const warnings = warningsFor(exact);
-    const length = warnings.filter((w) => /characters long/.test(w.message));
-    assert.equal(length.length, 0);
-  });
-});
-
-// ---------------------------------------------------------------------------
 // Errors: duplicates
 // ---------------------------------------------------------------------------
 
