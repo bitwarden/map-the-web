@@ -103,6 +103,33 @@
         }
       ]
     },
+    "identity.enterprise.spendclarity.visa.com": {
+      "pathnames": {
+        "/login": {
+          "forms": [
+            {
+              "category": "account-login",
+              "container": ["form[name='login'][data-testid='login-form']"],
+              "fields": {
+                "password": [
+                  // `id` value is reused in child input on the page
+                  "dse-input#password >>> input#password[type='password']"
+                ],
+                "username": [
+                  // `id` value is reused in child input on the page
+                  "dse-input#username >>> input#username[type='text']"
+                ]
+              },
+              "actions": {
+                "submit": [
+                  "dse-button#submit-button >>> button[data-testid='submit-button']"
+                ]
+              }
+            }
+          ]
+        }
+      }
+    },
     "login.coinbase.com": {
       "forms": [
         {
