@@ -196,6 +196,29 @@
         }
       }
     },
+    "firstfedcu.com": {
+      "forms": [
+        {
+          "category": "account-login",
+          "container": [
+            "div.online-banking-form iframe#tethered_frame >>> form#tethered-login"
+          ],
+          "fields": {
+            "username": [
+              "div.online-banking-form iframe#tethered_frame >>> form#tethered-login input#username"
+            ],
+            "password": [
+              "div.online-banking-form iframe#tethered_frame >>> form#tethered-login input#credential"
+            ]
+          },
+          "actions": {
+            "submit": [
+              "div.online-banking-form iframe#tethered_frame >>> form#tethered-login button#submit[type='submit']"
+            ]
+          }
+        }
+      ]
+    },
     "ecams.geico.com": {
       "forms": [
         {
