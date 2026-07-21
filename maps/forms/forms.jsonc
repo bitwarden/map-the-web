@@ -303,6 +303,54 @@
         }
       }
     },
+    "store.steampowered.com": {
+      "forms": [
+        {
+          "category": "search",
+          "container": ["div[role='navigation'] form[role='search']"],
+          "fields": {
+            // This field has `autocomplete="off"`
+            "searchTerm": [
+              "div[role='navigation'] form[role='search'] input[name='term']"
+            ]
+          },
+          "actions": {
+            "submit": [
+              "div[role='navigation'] form[role='search'] button[type='submit']"
+            ]
+          }
+        }
+      ],
+      "pathnames": {
+        "/login": {
+          "forms": [
+            {
+              "category": "account-login",
+              "container": [
+                "div[data-featuretarget='login'] form[class]:has(input[type='password'])"
+              ],
+              "fields": {
+                "username": [
+                  "div[data-featuretarget='login'] form[class]:has(input[type='password']) input[type='text']"
+                ],
+                "password": [
+                  "div[data-featuretarget='login'] form[class] input[type='password']"
+                ],
+                // "Remember me" checkbox
+                "consentUser": [
+                  "div[data-featuretarget='login'] form[class] div[role='checkbox']"
+                ]
+              },
+              "actions": {
+                "submit": [
+                  "div[data-featuretarget='login'] form[class]:has(input[type='password']) button[type='submit']"
+                ]
+              }
+            }
+          ]
+        }
+      }
+    },
     "tiktok.com": {
       "forms": [
         {
