@@ -316,6 +316,38 @@
         }
       }
     },
+    "gamespot.com": {
+      "pathnames": {
+        "/login-signup": {
+          "forms": [
+            {
+              "category": "account-creation",
+              "container": ["#registerform-virtual"],
+              "fields": {
+                "birthdateDay": ["#gamespot-bday-day"],
+                "birthdateMonth": ["#gamespot-bday-month"],
+                "birthdateYear": ["#gamespot-bday-year"],
+                "username": ["#user_email_register", "#user_reg_register"]
+              },
+              "actions": {
+                "submit": ["#wp-submit-register"]
+              }
+            },
+            {
+              "category": "account-login",
+              "container": ["#loginform-virtual"],
+              "fields": {
+                "password": ["#user_pass"],
+                "username": ["#user_login"]
+              },
+              "actions": {
+                "submit": ["#wp-submit"]
+              }
+            }
+          ]
+        }
+      }
+    },
     "rowleycompany.com": {
       "pathnames": {
         "/checkout/cart": {
