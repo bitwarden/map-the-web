@@ -485,6 +485,7 @@ Field keys are constrained to the following set:
 | `cardType` | Card network or brand (Visa, Mastercard, etc.) |
 | `consentTerms` | Terms of service or terms and conditions acceptance |
 | `consentPrivacy` | Privacy policy acceptance |
+| `consentRememberUser` | Authentication memory preference (e.g. "remember me") |
 | `consentUser` | General user confirmation (e.g. "I agree", "I confirm") |
 | `searchTerm` | Free-text search query |
 
@@ -549,11 +550,11 @@ key that matches the actual input structure on the page.
 
 #### Consent
 
-Note, consent field keys `consentTerms`, `consentPrivacy`, and `consentUser`
-do not indicate how the user needs to interact with the input/field in order
-to convey their consent. They can equally describe a text field (e.g. "Type
-'I agree'"), opt-in (e.g. "check to agree to the terms"), or opt-out (e.g.
-"check to NOT agree").
+Note, consent field keys `consentTerms`, `consentPrivacy`,
+`consentRememberUser`, and `consentUser` do not indicate how the user needs to
+interact with the input/field in order to convey their consent. They can
+equally describe a text field (e.g. "Type 'I agree'"), opt-in (e.g. "check to
+agree to the terms"), or opt-out (e.g. "check to NOT agree").
 
 #### Search
 
