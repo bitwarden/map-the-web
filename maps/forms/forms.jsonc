@@ -103,6 +103,34 @@
         }
       ]
     },
+    "eversource.com": {
+      "pathnames": {
+        "/security/account/login": {
+          "forms": [
+            {
+              "category": "account-login",
+              "container": ["form[name='loginForm']"],
+              "fields": {
+                "email": [
+                  "form[name='loginForm'] input#Email\\/Username[name='email']"
+                ],
+                "password": [
+                  "form[name='loginForm'] input#password[name='password']"
+                ],
+                "username": [
+                  "form[name='loginForm'] input#Email\\/Username[name='email']"
+                ]
+              },
+              "actions": {
+                "submit": [
+                  "form[name='loginForm'] button#signIn[type='submit']"
+                ]
+              }
+            }
+          ]
+        }
+      }
+    },
     "identity.enterprise.spendclarity.visa.com": {
       "pathnames": {
         "/login": {
