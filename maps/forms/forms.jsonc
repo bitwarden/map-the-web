@@ -389,9 +389,7 @@
               "category": "account-login",
               "container": ["form[name='main'][action='login.php']"],
               "fields": {
-                "username": [
-                  "input#inputEmail1[name='iEmail'][type='email']"
-                ],
+                "username": ["input#inputEmail1[name='iEmail'][type='email']"],
                 "password": [
                   "input#inputPassword1[name='iPassword'][type='password']"
                 ]
