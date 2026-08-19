@@ -381,6 +381,29 @@
         }
       }
     },
+    "shiftadmin.com": {
+      "pathnames": {
+        "/login.php": {
+          "forms": [
+            {
+              "category": "account-login",
+              "container": ["form[name='main'][action='login.php']"],
+              "fields": {
+                "email": ["input#inputEmail1[name='iEmail'][type='email']"],
+                "password": [
+                  "input#inputPassword1[name='iPassword'][type='password']"
+                ]
+              },
+              "actions": {
+                "submit": [
+                  "form[name='main'][action='login.php'] button[type='submit']"
+                ]
+              }
+            }
+          ]
+        }
+      }
+    },
     "store.steampowered.com": {
       "forms": [
         {
