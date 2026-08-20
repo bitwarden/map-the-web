@@ -37,6 +37,53 @@
         }
       ]
     },
+    "app.composer.trade": {
+      "pathnames": {
+        "/login": {
+          "forms": [
+            {
+              "category": "account-login",
+              "container": ["form#login-form"],
+              "fields": {
+                "email": ["form#login-form input[name='email'][type='email']"],
+                "password": [
+                  "form#login-form input[name='password'][type='password']"
+                ]
+              },
+              "actions": {
+                "submit": [
+                  "form#login-form button#log-in-button[type='submit']"
+                ]
+              }
+            }
+          ]
+        },
+        "/register": {
+          "forms": [
+            {
+              "category": "account-creation",
+              "container": ["form#signup-form"],
+              "fields": {
+                "email": ["form#signup-form input[name='email'][type='email']"],
+                "newPassword": [
+                  "form#signup-form input[name='password'][type='password'][autocomplete='new-password']"
+                ],
+                "phone": [
+                  "form#signup-form input[type='tel'][autocomplete='tel']"
+                ],
+                // SMS status update consent.
+                "consentUser": [
+                  "form#signup-form div.group:has(p.leading-tight) button[role='checkbox'][type='button']"
+                ]
+              },
+              "actions": {
+                "submit": ["form#signup-form button[type='submit']"]
+              }
+            }
+          ]
+        }
+      }
+    },
     "auth.hbomax.com": {
       "pathnames": {
         "/login": {
