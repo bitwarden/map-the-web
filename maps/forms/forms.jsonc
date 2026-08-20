@@ -48,10 +48,6 @@
                 "email": ["form#login-form input[name='email'][type='email']"],
                 "password": [
                   "form#login-form input[name='password'][type='password']"
-                ],
-                // "Remember me" checkbox. Only checkbox on this form
-                "consentUser": [
-                  "form#login-form button[role='checkbox'][type='button']"
                 ]
               },
               "actions": {
@@ -74,6 +70,10 @@
                 ],
                 "phone": [
                   "form#signup-form input[type='tel'][autocomplete='tel']"
+                ],
+                // SMS status update consent. 
+                "consentUser": [
+                  "form#signup-form .group:has(p.leading-tight) button[role='checkbox'][type='button']"
                 ]
               },
               "actions": {
