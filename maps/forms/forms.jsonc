@@ -49,7 +49,10 @@
                 "password": [
                   "form#login-form input[name='password'][type='password']"
                 ],
-                "consentUser": ["form#login-form button[role='checkbox']"]
+                // "Remember me" checkbox. Only checkbox on this form
+                "consentUser": [
+                  "form#login-form button[role='checkbox'][type='button']"
+                ]
               },
               "actions": {
                 "submit": [
