@@ -45,15 +45,11 @@
               "category": "account-login",
               "container": ["form#login-form"],
               "fields": {
-                "email": [
-                  "form#login-form input[name='email'][type='email']"
-                ],
+                "email": ["form#login-form input[name='email'][type='email']"],
                 "password": [
                   "form#login-form input[name='password'][type='password']"
                 ],
-                "consentUser": [
-                  "form#login-form button[role='checkbox']"
-                ]
+                "consentUser": ["form#login-form button[role='checkbox']"]
               },
               "actions": {
                 "submit": [
@@ -69,9 +65,7 @@
               "category": "account-creation",
               "container": ["form#signup-form"],
               "fields": {
-                "email": [
-                  "form#signup-form input[name='email'][type='email']"
-                ],
+                "email": ["form#signup-form input[name='email'][type='email']"],
                 "newPassword": [
                   "form#signup-form input[name='password'][type='password'][autocomplete='new-password']"
                 ],
