@@ -73,7 +73,7 @@
                 ],
                 // SMS status update consent.
                 "consentUser": [
-                  "form#signup-form .group:has(p.leading-tight) button[role='checkbox'][type='button']"
+                  "form#signup-form div.group:has(p.leading-tight) button[role='checkbox'][type='button']"
                 ]
               },
               "actions": {
