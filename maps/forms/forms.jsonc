@@ -71,7 +71,7 @@
                 "phone": [
                   "form#signup-form input[type='tel'][autocomplete='tel']"
                 ],
-                // SMS status update consent. 
+                // SMS status update consent.
                 "consentUser": [
                   "form#signup-form .group:has(p.leading-tight) button[role='checkbox'][type='button']"
                 ]
