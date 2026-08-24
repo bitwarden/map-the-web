@@ -37,6 +37,54 @@
         }
       ]
     },
+    "accountview.lpl.com": {
+      "pathnames": {
+        "/web/login": {
+          "forms": [
+            {
+              "category": "account-login",
+              "container": [
+                "app-signin app-username form",
+                "app-signin app-password form"
+              ],
+              "fields": {
+                "username": [
+                  "app-signin app-username form input#username[name='username'][type='search']"
+                ],
+                "password": [
+                  "app-signin app-password form input#password[name='password'][type='password']"
+                ]
+              },
+              "actions": {
+                "next": [
+                  "app-signin app-username form button.btn-sign-in"
+                ],
+                "submit": [
+                  "app-signin app-password form button.btn-sign-in[type='submit']"
+                ]
+              }
+            },
+            {
+              "category": "account-creation",
+              "container": ["app-signup form[method='post']"],
+              "fields": {
+                "email": [
+                  "app-signup form[method='post'] input#inputEmail[name='inputUserName'][type='email']"
+                ],
+                "phone": [
+                  "app-signup form[method='post'] input#tel[name='inputPhone']"
+                ]
+              },
+              "actions": {
+                "submit": [
+                  "app-signup form[method='post'] div.findMeButton button[type='submit']"
+                ]
+              }
+            }
+          ]
+        }
+      }
+    },
     "app.composer.trade": {
       "pathnames": {
         "/login": {
