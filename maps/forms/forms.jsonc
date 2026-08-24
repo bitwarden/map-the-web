@@ -56,9 +56,7 @@
                 ]
               },
               "actions": {
-                "next": [
-                  "app-signin app-username form button.btn-sign-in"
-                ],
+                "next": ["app-signin app-username form button.btn-sign-in"],
                 "submit": [
                   "app-signin app-password form button.btn-sign-in[type='submit']"
                 ]
