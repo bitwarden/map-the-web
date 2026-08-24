@@ -31,7 +31,7 @@
     "npm": ">=11"
   },
   "lint-staged": {
-    "*.json": [
+    "*.{json,jsonc}": [
       "prettier --check"
     ],
     "maps/**/*.jsonc": [
