@@ -188,7 +188,7 @@
               }
             },
             {
-              "category": "identity",
+              "category": "account-creation",
               "container": ["form#login_form div.CBD-Form-Login-alternate"],
               "fields": {
                 "email": [
