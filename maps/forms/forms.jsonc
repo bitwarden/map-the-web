@@ -165,6 +165,20 @@
               "form#search-form button#search[name='search'][type='submit']"
             ]
           }
+        },
+        {
+          "category": "signup",
+          "container": ["form#footer-email-signup-form"],
+          "fields": {
+            "email": [
+              "form#footer-email-signup-form input[name='nav-email-address'][type='email']"
+            ]
+          },
+          "actions": {
+            "submit": [
+              "form#footer-email-signup-form input[name='signup'][type='submit']"
+            ]
+          }
         }
       ],
       "pathnames": {
@@ -198,34 +212,6 @@
               "actions": {
                 "submit": [
                   "form#login_form div.CBD-Form-Login-alternate button#create_account[name='login_continue.x'][type='submit']"
-                ]
-              }
-            },
-            {
-              "category": "signup",
-              "container": ["form#footer-email-signup-form"],
-              "fields": {
-                "email": [
-                  "form#footer-email-signup-form input[name='nav-email-address'][type='email']"
-                ]
-              },
-              "actions": {
-                "submit": [
-                  "form#footer-email-signup-form input[name='signup'][type='submit']"
-                ]
-              }
-            },
-            {
-              "category": "search",
-              "container": ["form#search-form"],
-              "fields": {
-                "searchTerm": [
-                  "form#search-form input#Ntt[name='Ntt'][type='text']"
-                ]
-              },
-              "actions": {
-                "submit": [
-                  "form#search-form button#search[name='search'][type='submit']"
                 ]
               }
             }
@@ -284,20 +270,6 @@
                   "form#account-setup select#billing_state-canada",
                   "form#account-setup select#billing_state-all",
                   "form#account-setup input#billing_state-intl"
-                ]
-              }
-            },
-            {
-              "category": "search",
-              "container": ["form#search-form"],
-              "fields": {
-                "searchTerm": [
-                  "form#search-form input#Ntt[name='Ntt'][type='text']"
-                ]
-              },
-              "actions": {
-                "submit": [
-                  "form#search-form button#search[name='search'][type='submit']"
                 ]
               }
             }
