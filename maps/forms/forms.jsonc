@@ -346,6 +346,28 @@
         }
       ]
     },
+    "myprime.com": {
+      "forms": [
+        {
+          "category": "account-login",
+          // login modal on the home page
+          "container": ["div#sign-in-form form[role='form']"],
+          "fields": {
+            "username": [
+              "div#sign-in-form form[role='form'] input#username[name='sign-in-form-username'][type='text']"
+            ],
+            "password": [
+              "div#sign-in-form form[role='form'] input#password[name='sign-in-form-password'][type='password']"
+            ]
+          },
+          "actions": {
+            "submit": [
+              "div#sign-in-form form[role='form'] button#sign-in-button-submit[type='button']"
+            ]
+          }
+        }
+      ]
+    },
     "ml.com": {
       "pathnames": {
         "/": {
