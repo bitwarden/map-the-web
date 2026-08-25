@@ -216,34 +216,6 @@
               }
             },
             {
-              "category": "signup",
-              "container": ["form#mob-email-signup-form"],
-              "fields": {
-                "email": [
-                  "form#mob-email-signup-form input[name='nav-email-address'][type='email']"
-                ]
-              },
-              "actions": {
-                "submit": [
-                  "form#mob-email-signup-form input[name='signup'][type='submit']"
-                ]
-              }
-            },
-            {
-              "category": "signup",
-              "container": ["form#top-nav-email-signup-form"],
-              "fields": {
-                "email": [
-                  "form#top-nav-email-signup-form input#nav-email-address[name='nav-email-address'][type='text']"
-                ]
-              },
-              "actions": {
-                "submit": [
-                  "form#top-nav-email-signup-form input#signup[name='signup'][type='submit']"
-                ]
-              }
-            },
-            {
               "category": "search",
               "container": ["form#search-form"],
               "fields": {
