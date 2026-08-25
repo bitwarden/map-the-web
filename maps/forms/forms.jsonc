@@ -431,6 +431,52 @@
         }
       ]
     },
+    "myprime.com": {
+      "forms": [
+        {
+          "category": "account-login",
+          // login modal on the home page
+          "container": ["div#sign-in-form form[role='form']"],
+          "fields": {
+            "username": [
+              "div#sign-in-form form[role='form'] input#username[name='sign-in-form-username'][type='text']"
+            ],
+            "password": [
+              "div#sign-in-form form[role='form'] input#password[name='sign-in-form-password'][type='password']"
+            ]
+          },
+          "actions": {
+            "submit": [
+              "div#sign-in-form form[role='form'] button#sign-in-button-submit[type='button']"
+            ]
+          }
+        }
+      ]
+    },
+    "ml.com": {
+      "pathnames": {
+        "/": {
+          "forms": [
+            {
+              "category": "account-login",
+              "container": ["div#signin-form"],
+              "fields": {
+                "username": ["div#signin-form input#oid[name='oid']"],
+                "password": [
+                  "div#signin-form input[name='pass'][type='password']"
+                ],
+                "consentUser": [
+                  "div#signin-form input#saveOnlineID[name='saveOnlineID']"
+                ]
+              },
+              "actions": {
+                "submit": ["div#signin-form button#secure-signin-submit"]
+              }
+            }
+          ]
+        }
+      }
+    },
     "patreon.com": {
       "pathnames": {
         "/login": {
