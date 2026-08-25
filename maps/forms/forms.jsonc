@@ -217,6 +217,41 @@
             }
           ]
         },
+        "/apps/account": {
+          "forms": [
+            {
+              "category": "account-login",
+              "container": ["form#login_form div.CBD-Form-Login-main"],
+              "fields": {
+                "email": [
+                  "form#login_form div.CBD-Form-Login-main input#email[name='email'][type='email']"
+                ],
+                "password": [
+                  "form#login_form div.CBD-Form-Login-main input#password[name='password'][type='password']"
+                ]
+              },
+              "actions": {
+                "submit": [
+                  "form#login_form div.CBD-Form-Login-main button[name='login_continue.x'][type='submit']"
+                ]
+              }
+            },
+            {
+              "category": "account-creation",
+              "container": ["form#login_form div.CBD-Form-Login-alternate"],
+              "fields": {
+                "email": [
+                  "form#login_form div.CBD-Form-Login-alternate input#new_cust_email[name='new_cust_email'][type='email']"
+                ]
+              },
+              "actions": {
+                "submit": [
+                  "form#login_form div.CBD-Form-Login-alternate button#create_account[name='login_continue.x'][type='submit']"
+                ]
+              }
+            }
+          ]
+        },
         "/apps/account/setup": {
           "forms": [
             {
