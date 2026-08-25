@@ -372,6 +372,30 @@
         }
       }
     },
+    "ml.com": {
+      "pathnames": {
+        "/": {
+          "forms": [
+            {
+              "category": "account-login",
+              "container": ["div#signin-form"],
+              "fields": {
+                "username": ["div#signin-form input#oid[name='oid']"],
+                "password": [
+                  "div#signin-form input[name='pass'][type='password']"
+                ],
+                "consentUser": [
+                  "div#signin-form input#saveOnlineID[name='saveOnlineID']"
+                ]
+              },
+              "actions": {
+                "submit": ["div#signin-form button#secure-signin-submit"]
+              }
+            }
+          ]
+        }
+      }
+    },
     "patreon.com": {
       "pathnames": {
         "/login": {
