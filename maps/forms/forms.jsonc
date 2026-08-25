@@ -151,6 +151,22 @@
       ]
     },
     "christianbook.com": {
+      "forms": [
+        {
+          "category": "search",
+          "container": ["form#search-form"],
+          "fields": {
+            "searchTerm": [
+              "form#search-form input#Ntt[name='Ntt'][type='text']"
+            ]
+          },
+          "actions": {
+            "submit": [
+              "form#search-form button#search[name='search'][type='submit']"
+            ]
+          }
+        }
+      ],
       "pathnames": {
         "/apps/login": {
           "forms": [
@@ -170,6 +186,76 @@
                   "form#login_form div.CBD-Form-Login-main button[name='login_continue.x'][type='submit']"
                 ]
               }
+            },
+            {
+              "category": "identity",
+              "container": ["form#login_form div.CBD-Form-Login-alternate"],
+              "fields": {
+                "email": [
+                  "form#login_form div.CBD-Form-Login-alternate input#new_cust_email[name='new_cust_email'][type='email']"
+                ]
+              },
+              "actions": {
+                "submit": [
+                  "form#login_form div.CBD-Form-Login-alternate button#create_account[name='login_continue.x'][type='submit']"
+                ]
+              }
+            },
+            {
+              "category": "signup",
+              "container": ["form#footer-email-signup-form"],
+              "fields": {
+                "email": [
+                  "form#footer-email-signup-form input[name='nav-email-address'][type='email']"
+                ]
+              },
+              "actions": {
+                "submit": [
+                  "form#footer-email-signup-form input[name='signup'][type='submit']"
+                ]
+              }
+            },
+            {
+              "category": "signup",
+              "container": ["form#mob-email-signup-form"],
+              "fields": {
+                "email": [
+                  "form#mob-email-signup-form input[name='nav-email-address'][type='email']"
+                ]
+              },
+              "actions": {
+                "submit": [
+                  "form#mob-email-signup-form input[name='signup'][type='submit']"
+                ]
+              }
+            },
+            {
+              "category": "signup",
+              "container": ["form#top-nav-email-signup-form"],
+              "fields": {
+                "email": [
+                  "form#top-nav-email-signup-form input#nav-email-address[name='nav-email-address'][type='text']"
+                ]
+              },
+              "actions": {
+                "submit": [
+                  "form#top-nav-email-signup-form input#signup[name='signup'][type='submit']"
+                ]
+              }
+            },
+            {
+              "category": "search",
+              "container": ["form#search-form"],
+              "fields": {
+                "searchTerm": [
+                  "form#search-form input#Ntt[name='Ntt'][type='text']"
+                ]
+              },
+              "actions": {
+                "submit": [
+                  "form#search-form button#search[name='search'][type='submit']"
+                ]
+              }
             }
           ]
         },
@@ -177,14 +263,26 @@
           "forms": [
             {
               "category": "account-creation",
-              "container": ["form#account-setup"],
+              "container": ["form#account-setup div.CBD-Account-Setup"],
               "fields": {
                 "email": [
                   "form#account-setup input#email[name='email'][type='text']"
                 ],
                 "newPassword": [
-                  "form#account-setup input#password[name='password'][type='password']"
-                ],
+                  "form#account-setup input#password[name='password'][type='password']",
+                  "form#account-setup input#verify_password[name='verify_password'][type='password']"
+                ]
+              },
+              "actions": {
+                "submit": [
+                  "form#account-setup button[name='create_account'][type='submit']"
+                ]
+              }
+            },
+            {
+              "category": "address",
+              "container": ["form#account-setup div#billing"],
+              "fields": {
                 "firstName": [
                   "form#account-setup input#billing_first_name[name='billing_first_name']"
                 ],
@@ -215,19 +313,19 @@
                   "form#account-setup select#billing_state-all",
                   "form#account-setup input#billing_state-intl"
                 ]
-              },
-              "actions": {
-                "submit": [
-                  "form#account-setup button[name='create_account'][type='submit']"
-                ]
               }
             },
             {
-              "category": "account-creation",
-              "container": ["form#account-setup"],
+              "category": "search",
+              "container": ["form#search-form"],
               "fields": {
-                "newPassword": [
-                  "form#account-setup input#verify_password[name='verify_password'][type='password']"
+                "searchTerm": [
+                  "form#search-form input#Ntt[name='Ntt'][type='text']"
+                ]
+              },
+              "actions": {
+                "submit": [
+                  "form#search-form button#search[name='search'][type='submit']"
                 ]
               }
             }
