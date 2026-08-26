@@ -196,6 +196,168 @@
         }
       ]
     },
+    "christianbook.com": {
+      "forms": [
+        {
+          "category": "search",
+          "container": ["form#search-form"],
+          "fields": {
+            "searchTerm": [
+              "form#search-form input#Ntt[name='Ntt'][type='text']"
+            ]
+          },
+          "actions": {
+            "submit": [
+              "form#search-form button#search[name='search'][type='submit']"
+            ]
+          }
+        },
+        {
+          "category": "signup",
+          "container": ["form#footer-email-signup-form"],
+          "fields": {
+            "email": [
+              "form#footer-email-signup-form input[name='nav-email-address'][type='email']"
+            ]
+          },
+          "actions": {
+            "submit": [
+              "form#footer-email-signup-form input[name='signup'][type='submit']"
+            ]
+          }
+        }
+      ],
+      "pathnames": {
+        "/apps/login": {
+          "forms": [
+            {
+              "category": "account-login",
+              "container": ["form#login_form div.CBD-Form-Login-main"],
+              "fields": {
+                "email": [
+                  "form#login_form div.CBD-Form-Login-main input#email[name='email'][type='email']"
+                ],
+                "password": [
+                  "form#login_form div.CBD-Form-Login-main input#password[name='password'][type='password']"
+                ]
+              },
+              "actions": {
+                "submit": [
+                  "form#login_form div.CBD-Form-Login-main button[name='login_continue.x'][type='submit']"
+                ]
+              }
+            },
+            {
+              "category": "account-creation",
+              "container": ["form#login_form div.CBD-Form-Login-alternate"],
+              "fields": {
+                "email": [
+                  "form#login_form div.CBD-Form-Login-alternate input#new_cust_email[name='new_cust_email'][type='email']"
+                ]
+              },
+              "actions": {
+                "submit": [
+                  "form#login_form div.CBD-Form-Login-alternate button#create_account[name='login_continue.x'][type='submit']"
+                ]
+              }
+            }
+          ]
+        },
+        "/apps/account": {
+          "forms": [
+            {
+              "category": "account-login",
+              "container": ["form#login_form div.CBD-Form-Login-main"],
+              "fields": {
+                "email": [
+                  "form#login_form div.CBD-Form-Login-main input#email[name='email'][type='email']"
+                ],
+                "password": [
+                  "form#login_form div.CBD-Form-Login-main input#password[name='password'][type='password']"
+                ]
+              },
+              "actions": {
+                "submit": [
+                  "form#login_form div.CBD-Form-Login-main button[name='login_continue.x'][type='submit']"
+                ]
+              }
+            },
+            {
+              "category": "account-creation",
+              "container": ["form#login_form div.CBD-Form-Login-alternate"],
+              "fields": {
+                "email": [
+                  "form#login_form div.CBD-Form-Login-alternate input#new_cust_email[name='new_cust_email'][type='email']"
+                ]
+              },
+              "actions": {
+                "submit": [
+                  "form#login_form div.CBD-Form-Login-alternate button#create_account[name='login_continue.x'][type='submit']"
+                ]
+              }
+            }
+          ]
+        },
+        "/apps/account/setup": {
+          "forms": [
+            {
+              "category": "account-creation",
+              "container": ["form#account-setup div.CBD-Account-Setup"],
+              "fields": {
+                "email": [
+                  "form#account-setup input#email[name='email'][type='text']"
+                ],
+                "newPassword": [
+                  "form#account-setup input#password[name='password'][type='password']",
+                  "form#account-setup input#verify_password[name='verify_password'][type='password']"
+                ]
+              },
+              "actions": {
+                "submit": [
+                  "form#account-setup button[name='create_account'][type='submit']"
+                ]
+              }
+            },
+            {
+              "category": "address",
+              "container": ["form#account-setup div#billing"],
+              "fields": {
+                "firstName": [
+                  "form#account-setup input#billing_first_name[name='billing_first_name']"
+                ],
+                "lastName": [
+                  "form#account-setup input#billing_last_name[name='billing_last_name']"
+                ],
+                "organization": [
+                  "form#account-setup input#billing_organization[name='billing_organization']"
+                ],
+                "country": [
+                  "form#account-setup select#billing_nation[name='billing_nation']"
+                ],
+                "addressLine1": [
+                  "form#account-setup input#billing_street[name='billing_street']"
+                ],
+                "addressLine2": [
+                  "form#account-setup input#billing_auxiliary[name='billing_auxiliary']"
+                ],
+                "postalCode": [
+                  "form#account-setup input#billing_zip[name='billing_zip']"
+                ],
+                "addressLevel2": [
+                  "form#account-setup input#billing_city[name='billing_city']"
+                ],
+                "addressLevel1": [
+                  "form#account-setup select#billing_state-usa[name='billing_state']",
+                  "form#account-setup select#billing_state-canada",
+                  "form#account-setup select#billing_state-all",
+                  "form#account-setup input#billing_state-intl"
+                ]
+              }
+            }
+          ]
+        }
+      }
+    },
     "eversource.com": {
       "pathnames": {
         "/security/account/login": {
@@ -387,6 +549,28 @@
           "actions": {
             "submit": [
               "form[id^='flt-semantic-node-']:has(input#email) flt-semantics[role='button'][flt-semantics-identifier='null_Button_Default_Title']"
+            ]
+          }
+        }
+      ]
+    },
+    "myprime.com": {
+      "forms": [
+        {
+          "category": "account-login",
+          // login modal on the home page
+          "container": ["div#sign-in-form form[role='form']"],
+          "fields": {
+            "username": [
+              "div#sign-in-form form[role='form'] input#username[name='sign-in-form-username'][type='text']"
+            ],
+            "password": [
+              "div#sign-in-form form[role='form'] input#password[name='sign-in-form-password'][type='password']"
+            ]
+          },
+          "actions": {
+            "submit": [
+              "div#sign-in-form form[role='form'] button#sign-in-button-submit[type='button']"
             ]
           }
         }
