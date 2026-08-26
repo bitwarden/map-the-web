@@ -60,7 +60,7 @@
                   "app-signin app-username form:has(input#username[name='username']) button.btn-sign-in"
                 ],
                 "submit": [
-                  "app-signin app-password form:has(input#password[name='password']) button.btn-sign-in"
+                  "app-signin app-password form:has(input#password[name='password']) button.btn-sign-in[type='submit']"
                 ]
               }
             },
