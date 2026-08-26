@@ -100,7 +100,299 @@
         }
       },
       "required": ["category", "fields"],
-      "additionalProperties": false
+      "additionalProperties": false,
+      "allOf": [{ "$ref": "#/$defs/categoryFieldKeyRestrictions" }]
+    },
+    "categoryFieldKeyRestrictions": {
+      "description": "Field keys that cannot describe a field on a form of a given category. A key is listed only where its presence contradicts the category's meaning. Concerns that cross domains (an address block on a checkout page, a card block on a registration page) are described as separate form entries, each with its own category.",
+      "allOf": [
+        {
+          "$comment": "Registration collects a new password, never a current one. Payment and search concerns belong to their own form entries.",
+          "if": {
+            "type": "object",
+            "properties": {
+              "category": {
+                "const": "account-creation"
+              }
+            },
+            "required": ["category"]
+          },
+          "then": {
+            "type": "object",
+            "properties": {
+              "fields": {
+                "type": "object",
+                "propertyNames": {
+                  "not": {
+                    "anyOf": [
+                      {
+                        "$ref": "#/$defs/paymentCardFieldKeys"
+                      },
+                      {
+                        "enum": ["password", "searchTerm"]
+                      }
+                    ]
+                  }
+                }
+              }
+            }
+          }
+        },
+        {
+          "$comment": "Sign-in collects the existing password. Payment and search concerns belong to their own form entries.",
+          "if": {
+            "type": "object",
+            "properties": {
+              "category": {
+                "const": "account-login"
+              }
+            },
+            "required": ["category"]
+          },
+          "then": {
+            "type": "object",
+            "properties": {
+              "fields": {
+                "type": "object",
+                "propertyNames": {
+                  "not": {
+                    "anyOf": [
+                      {
+                        "$ref": "#/$defs/paymentCardFieldKeys"
+                      },
+                      {
+                        "enum": ["newPassword", "searchTerm"]
+                      }
+                    ]
+                  }
+                }
+              }
+            }
+          }
+        },
+        {
+          "$comment": "Recovery flows may legitimately ask for a remembered previous password, and some verify identity with card details, so only search is excluded.",
+          "if": {
+            "type": "object",
+            "properties": {
+              "category": {
+                "const": "account-recovery"
+              }
+            },
+            "required": ["category"]
+          },
+          "then": {
+            "type": "object",
+            "properties": {
+              "fields": {
+                "type": "object",
+                "propertyNames": {
+                  "not": {
+                    "enum": ["searchTerm"]
+                  }
+                }
+              }
+            }
+          }
+        },
+        {
+          "$comment": "Changing a stored payment method is a payment-card form, not an account update. Search belongs to its own form entry.",
+          "if": {
+            "type": "object",
+            "properties": {
+              "category": {
+                "const": "account-update"
+              }
+            },
+            "required": ["category"]
+          },
+          "then": {
+            "type": "object",
+            "properties": {
+              "fields": {
+                "type": "object",
+                "propertyNames": {
+                  "not": {
+                    "anyOf": [
+                      {
+                        "$ref": "#/$defs/paymentCardFieldKeys"
+                      },
+                      {
+                        "enum": ["searchTerm"]
+                      }
+                    ]
+                  }
+                }
+              }
+            }
+          }
+        },
+        {
+          "$comment": "Address collection carries no authentication or payment concern.",
+          "if": {
+            "type": "object",
+            "properties": {
+              "category": {
+                "const": "address"
+              }
+            },
+            "required": ["category"]
+          },
+          "then": {
+            "type": "object",
+            "properties": {
+              "fields": {
+                "type": "object",
+                "propertyNames": {
+                  "not": {
+                    "anyOf": [
+                      {
+                        "$ref": "#/$defs/paymentCardFieldKeys"
+                      },
+                      {
+                        "enum": ["password", "newPassword", "oneTimeCode"]
+                      }
+                    ]
+                  }
+                }
+              }
+            }
+          }
+        },
+        {
+          "$comment": "Identity forms collect personal information; card details are payment data, not identity data. Password and search concerns belong to their own form entries.",
+          "if": {
+            "type": "object",
+            "properties": {
+              "category": {
+                "const": "identity"
+              }
+            },
+            "required": ["category"]
+          },
+          "then": {
+            "type": "object",
+            "properties": {
+              "fields": {
+                "type": "object",
+                "propertyNames": {
+                  "not": {
+                    "anyOf": [
+                      {
+                        "$ref": "#/$defs/paymentCardFieldKeys"
+                      },
+                      {
+                        "enum": ["password", "newPassword", "searchTerm"]
+                      }
+                    ]
+                  }
+                }
+              }
+            }
+          }
+        },
+        {
+          "$comment": "Card entry carries no authentication or search concern. A one-time code is allowed for 3-D Secure challenges.",
+          "if": {
+            "type": "object",
+            "properties": {
+              "category": {
+                "const": "payment-card"
+              }
+            },
+            "required": ["category"]
+          },
+          "then": {
+            "type": "object",
+            "properties": {
+              "fields": {
+                "type": "object",
+                "propertyNames": {
+                  "not": {
+                    "enum": ["password", "newPassword", "searchTerm"]
+                  }
+                }
+              }
+            }
+          }
+        },
+        {
+          "$comment": "Search forms may use context-specific data keys, but never authentication or payment credentials.",
+          "if": {
+            "type": "object",
+            "properties": {
+              "category": {
+                "const": "search"
+              }
+            },
+            "required": ["category"]
+          },
+          "then": {
+            "type": "object",
+            "properties": {
+              "fields": {
+                "type": "object",
+                "propertyNames": {
+                  "not": {
+                    "anyOf": [
+                      {
+                        "$ref": "#/$defs/paymentCardFieldKeys"
+                      },
+                      {
+                        "enum": ["password", "newPassword", "oneTimeCode"]
+                      }
+                    ]
+                  }
+                }
+              }
+            }
+          }
+        },
+        {
+          "$comment": "Newsletter, contact, and similar signups do not create credentials or take payment; those are account-creation and payment-card forms. Search belongs to its own form entry.",
+          "if": {
+            "type": "object",
+            "properties": {
+              "category": {
+                "const": "signup"
+              }
+            },
+            "required": ["category"]
+          },
+          "then": {
+            "type": "object",
+            "properties": {
+              "fields": {
+                "type": "object",
+                "propertyNames": {
+                  "not": {
+                    "anyOf": [
+                      {
+                        "$ref": "#/$defs/paymentCardFieldKeys"
+                      },
+                      {
+                        "enum": ["password", "newPassword", "searchTerm"]
+                      }
+                    ]
+                  }
+                }
+              }
+            }
+          }
+        }
+      ]
+    },
+    "paymentCardFieldKeys": {
+      "description": "Field keys that describe payment card data.",
+      "enum": [
+        "cardholderName",
+        "cardNumber",
+        "cardExpirationDate",
+        "cardExpirationMonth",
+        "cardExpirationYear",
+        "cardCvv",
+        "cardType"
+      ]
     },
     "formPurposeCategory": {
       "type": "string",
