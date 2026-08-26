@@ -529,6 +529,10 @@ form (`account-login`); the field keys in each situation describe the fields
 in the same way, and disambiguation of purpose is distinguished by the form
 `category`.
 
+However, some fields are inherently incompatible with some form categories
+(e.g. the presence of a `password` field precludes the form belonging to the
+`account-creation` category). Those cases are represented in the Forms map schema.
+
 The kind of field input is also not implied by the field key name or
 definition. For example, a `password` selector may describe an `input`
 element with a `text` or `password` value of the `type` attribute.
