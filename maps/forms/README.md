@@ -25,6 +25,7 @@ may or may not utilize the HTML `form` tag. See the project
     - [Multiple Forms](#multiple-forms)
     - [Category](#category)
   - [Selector Philosophy](#selector-philosophy)
+    - [User-Facing Values](#user-facing-values)
   - [Container](#container)
   - [Fields](#fields)
     - [Field Keys](#field-keys)
@@ -404,6 +405,36 @@ changes. The same rule applies independently to each segment of a
 boundary-crossing selector, so `iframe#login-frame >>> input[name='username']`
 satisfies it on both sides; `#login-frame >>> input[name='username']` does
 not.
+
+### User-Facing Values
+
+Brittleness is desirable when it tracks the page's _structure_; it is not
+desirable when it tracks the page's _content_. Attribute values that are shown
+to the user change independently of the structure that surrounds them: copy is
+reworded, a string is A/B tested, the page is served in another locale, and in
+the case of `value` on a text input the attribute reflects whatever the visitor
+has typed. A selector that breaks for any of those reasons has not identified a
+changed target; it has failed to describe an unchanged one.
+
+Selectors should therefore use user-facing values **sparingly**. Prefer an
+anchor that describes the target's shape rather than its copy:
+
+| Prefer | Over |
+| --- | --- |
+| `input#email[name='email']` | `input[placeholder='Email address']` |
+| `input[autocomplete='current-password']` | `input[aria-label='Password']` |
+| `button[type='submit'][data-testid='login']` | `input[type='submit'][value='Log in']` |
+
+The selector linter warns on matchers against `placeholder`, `title`, `alt`,
+`value`, `aria-label`, `aria-placeholder`, and `aria-description`. Existence
+checks are not flagged: `input[placeholder]` asserts that the attribute is
+present, not what it says, so it describes structure rather than content.
+
+The warning is advisory, not an error. Some targets genuinely offer nothing
+else to distinguish them (e.g. two structurally identical inputs in the same
+container). Where a user-facing value is the only viable anchor, keep it and
+note in a comment why no alternative exists, so the entry can be
+revisited if the site adds one.
 
 ## Container
 
@@ -802,3 +833,8 @@ The distinction between "irrelevant" and "no information" is important. An
     an unusual DOM structure (deeply nested shadow roots, dynamically injected
     containers), add context in the change pull request explaining why that path
     is necessary.
+
+13. **Avoid matching user-facing values.** Values the user reads (e.g.
+    `placeholder`, `aria-label`, `title`) describe the page's content, not its
+    structure, and change without the target changing. Prefer a non-user-facing
+    anchor where possible; see [User-Facing Values](#user-facing-values).
