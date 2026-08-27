@@ -530,6 +530,42 @@
         }
       ]
     },
+    "open.texanscu.org": {
+      "forms": [
+        {
+          "category": "account-creation",
+          "container": [
+            "form[method='POST'][action='/default-form-action']:has(input[name='person.firstName'])"
+          ],
+          "fields": {
+            "firstName": [
+              "form[method='POST'][action='/default-form-action'] input[name='person.firstName'][type='text']"
+            ],
+            "middleName": [
+              "form[method='POST'][action='/default-form-action'] input[name='person.middleName'][type='text']"
+            ],
+            "lastName": [
+              "form[method='POST'][action='/default-form-action'] input[name='person.lastName'][type='text']"
+            ],
+            "honorificSuffix": [
+              "form[method='POST'][action='/default-form-action'] input[id='person.suffix'][role='combobox']",
+              "form[method='POST'][action='/default-form-action'] input[name='person.suffix'][type='hidden']"
+            ],
+            "email": [
+              "form[method='POST'][action='/default-form-action'] input[name='person.emailPrimary'][type='email']"
+            ],
+            "phone": [
+              "form[method='POST'][action='/default-form-action'] input[name='person.phoneMobile'][type='text']"
+            ]
+          },
+          "actions": {
+            "submit": [
+              "form[method='POST'][action='/default-form-action'] button[type='submit'][data-testid='button-2.0']"
+            ]
+          }
+        }
+      ]
+    },
     "ml.com": {
       "pathnames": {
         "/": {
@@ -706,6 +742,41 @@
           ]
         }
       }
+    },
+    "texanscu.org": {
+      "forms": [
+        {
+          "category": "account-login",
+          "container": ["form.olb__form[action*='Authentication/Username']"],
+          "fields": {
+            "username": [
+              "form.olb__form[action*='Authentication/Username'] input#UserName[name='UserName'][type='text']"
+            ],
+            "password": [
+              "form.olb__form[action*='Authentication/Username'] input#Password[name='Password'][type='password']"
+            ]
+          },
+          "actions": {
+            "submit": [
+              "form.olb__form[action*='Authentication/Username'] button[type='submit'][aria-label='Log In']"
+            ]
+          }
+        },
+        {
+          "category": "search",
+          "container": ["form.kdx-site-search.site-search"],
+          "fields": {
+            "searchTerm": [
+              "form.kdx-site-search.site-search input.form-control[placeholder='Search'][type='text']"
+            ]
+          },
+          "actions": {
+            "submit": [
+              "form.kdx-site-search.site-search button#site-search-icon[type='submit']"
+            ]
+          }
+        }
+      ]
     },
     "tiktok.com": {
       "forms": [
