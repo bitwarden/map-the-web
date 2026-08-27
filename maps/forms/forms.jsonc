@@ -37,6 +37,54 @@
         }
       ]
     },
+    "accountview.lpl.com": {
+      "pathnames": {
+        "/web/login": {
+          "forms": [
+            {
+              "category": "account-login",
+              "container": [
+                "app-signin app-username form:has(input#username[name='username'])",
+                "app-signin app-password form:has(input#password[name='password'])"
+              ],
+              "fields": {
+                "username": [
+                  "app-signin app-username form:has(input#username[name='username']) input#username[name='username'][type='search']"
+                ],
+                "password": [
+                  "app-signin app-password form:has(input#password[name='password']) input#password[name='password'][type='password']"
+                ]
+              },
+              "actions": {
+                "next": [
+                  "app-signin app-username form:has(input#username[name='username']) button.btn-sign-in"
+                ],
+                "submit": [
+                  "app-signin app-password form:has(input#password[name='password']) button.btn-sign-in[type='submit']"
+                ]
+              }
+            },
+            {
+              "category": "account-creation",
+              "container": ["app-signup form[method='post']"],
+              "fields": {
+                "email": [
+                  "app-signup form[method='post'] input#inputEmail[name='inputUserName'][type='email']"
+                ],
+                "phone": [
+                  "app-signup form[method='post'] input#tel[name='inputPhone']"
+                ]
+              },
+              "actions": {
+                "submit": [
+                  "app-signup form[method='post'] div.findMeButton button[type='submit']"
+                ]
+              }
+            }
+          ]
+        }
+      }
+    },
     "app.composer.trade": {
       "pathnames": {
         "/login": {
