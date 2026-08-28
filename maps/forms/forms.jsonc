@@ -578,6 +578,83 @@
         }
       ]
     },
+    "oge.com": {
+      "pathnames": {
+        // Path scoped so other portal pages keep heuristics.
+        "/": {
+          "forms": [
+            {
+              "category": "account-login",
+              "container": ["form#loginForm[name='loginForm']"],
+              "fields": {
+                "email": [
+                  "form#loginForm[name='loginForm'] input#userName[name='userName'][type='text']"
+                ],
+                "password": [
+                  "form#loginForm[name='loginForm'] input#signInoverlayPassword[name='password'][type='password']"
+                ],
+                "consentUser": [
+                  "form#loginForm[name='loginForm'] input#chkRememberMeP[name='chkRememberMeP'][type='checkbox']"
+                ]
+              },
+              "actions": {
+                "submit": [
+                  "form#loginForm[name='loginForm'] button#osa_btn_login_new[name='btn_login_new'][type='submit']"
+                ]
+              }
+            }
+          ]
+        },
+        "/web/portal": {
+          "forms": [
+            {
+              "category": "account-login",
+              "container": ["form#loginForm[name='loginForm']"],
+              "fields": {
+                "email": [
+                  "form#loginForm[name='loginForm'] input#userName[name='userName'][type='text']"
+                ],
+                "password": [
+                  "form#loginForm[name='loginForm'] input#signInoverlayPassword[name='password'][type='password']"
+                ],
+                "consentUser": [
+                  "form#loginForm[name='loginForm'] input#chkRememberMeP[name='chkRememberMeP'][type='checkbox']"
+                ]
+              },
+              "actions": {
+                "submit": [
+                  "form#loginForm[name='loginForm'] button#osa_btn_login_new[name='btn_login_new'][type='submit']"
+                ]
+              }
+            }
+          ]
+        },
+        "/web/portal/label_ord/signin": {
+          "forms": [
+            {
+              "category": "account-login",
+              "container": ["form#loginForm[name='loginForm']"],
+              "fields": {
+                "email": [
+                  "form#loginForm[name='loginForm'] input#userName[name='userName'][type='text']"
+                ],
+                "password": [
+                  "form#loginForm[name='loginForm'] input#signInoverlayPassword[name='password'][type='password']"
+                ],
+                "consentUser": [
+                  "form#loginForm[name='loginForm'] input#chkRememberMeP[name='chkRememberMeP'][type='checkbox']"
+                ]
+              },
+              "actions": {
+                "submit": [
+                  "form#loginForm[name='loginForm'] button#osa_btn_login_new[name='btn_login_new'][type='submit']"
+                ]
+              }
+            }
+          ]
+        }
+      }
+    },
     "open.texanscu.org": {
       "forms": [
         {
