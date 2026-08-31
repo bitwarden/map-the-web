@@ -1079,6 +1079,34 @@
         }
       ]
     },
+    "usdigital.bmo.com": {
+      "pathnames": {
+        "/www": {
+          "forms": [
+            {
+              "category": "account-login",
+              "container": ["form[capcoform][translationpath='login']"],
+              "fields": {
+                "username": [
+                  "form[capcoform][translationpath='login'] ion-input[data-id='username'] input.native-input[name='username'][type='text']"
+                ],
+                "password": [
+                  "form[capcoform][translationpath='login'] capco-toggle-password ion-input[data-id='password'] input.native-input[name='password'][type='password']"
+                ],
+                "consentUser": [
+                  "form[capcoform][translationpath='login'] ion-checkbox#login-remember[name='remember']"
+                ]
+              },
+              "actions": {
+                "submit": [
+                  "form[capcoform][translationpath='login'] ion-button#login-buttons-primary >>> button.button-native[type='submit']"
+                ]
+              }
+            }
+          ]
+        }
+      }
+    },
     "webtests.dev": {
       "pathnames": {
         "/forms/login/ambiguous-inputs": {
