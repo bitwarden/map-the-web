@@ -1664,6 +1664,149 @@ describe("lintMapData traversal", () => {
 });
 
 // ---------------------------------------------------------------------------
+// Field-scoped actions
+// ---------------------------------------------------------------------------
+
+describe("field-scoped actions", () => {
+  const mapWith = (form: Record<string, unknown>) => ({
+    hosts: { "example.com": { forms: [form] } },
+  });
+
+  it("returns no issues for a well-formed field-scoped action", () => {
+    const { errors, warnings } = lintMapData(
+      mapWith({
+        category: "account-login",
+        fields: { password: ["input#pass"] },
+        actions: {
+          submit: ["button#go"],
+          fieldVisibility: { password: ["button#show-pass"] },
+        },
+      }),
+    );
+    assert.equal(errors.length, 0);
+    assert.equal(warnings.length, 0);
+  });
+
+  it("lints selectors nested under a field-scoped action", () => {
+    const { errors, warnings } = lintMapData(
+      mapWith({
+        category: "account-login",
+        fields: { password: ["input#pass"] },
+        actions: { fieldVisibility: { password: [".show-pass"] } },
+      }),
+    );
+    assert.equal(errors.length, 1);
+    assert.match(errors[0].message, /Class-only selector/);
+    assert.equal(warnings.length, 0);
+  });
+
+  it("reports the field key in the location path", () => {
+    const { warnings } = lintMapData(
+      mapWith({
+        category: "account-login",
+        fields: { password: ["input#pass"] },
+        actions: { fieldVisibility: { password: ["button"] } },
+      }),
+    );
+    assert.equal(warnings.length, 1);
+    assert.match(warnings[0].location, /actions\.fieldVisibility\.password/);
+  });
+
+  it("lints each field's selectors independently", () => {
+    const { warnings } = lintMapData(
+      mapWith({
+        category: "account-creation",
+        fields: { newPassword: ["input#pass1"], cardCvv: ["input#cvv"] },
+        actions: {
+          fieldVisibility: { newPassword: ["button"], cardCvv: ["button"] },
+        },
+      }),
+    );
+    const bare = warnings.filter((w) =>
+      /Bare element selector/.test(w.message),
+    );
+    assert.equal(bare.length, 2);
+  });
+
+  it("warns when the targeted field is not declared under fields", () => {
+    const { errors, warnings } = lintMapData(
+      mapWith({
+        category: "account-login",
+        fields: { password: ["input#pass"] },
+        actions: { fieldVisibility: { newPassword: ["button#show-pass"] } },
+      }),
+    );
+    assert.equal(errors.length, 0);
+    assert.equal(warnings.length, 1);
+    assert.match(warnings[0].message, /does not declare under "fields"/);
+    assert.match(warnings[0].message, /newPassword/);
+    assert.equal(warnings[0].selector, "button#show-pass");
+  });
+
+  it("warns when the form declares no fields at all", () => {
+    const { warnings } = lintMapData(
+      mapWith({
+        category: "account-login",
+        actions: { fieldVisibility: { password: ["button#show-pass"] } },
+      }),
+    );
+    const orphaned = warnings.filter((w) =>
+      /does not declare under "fields"/.test(w.message),
+    );
+    assert.equal(orphaned.length, 1);
+  });
+
+  it("does not warn when a duplicate selector appears under a different field", () => {
+    // Duplicate detection is scoped to a single alternatives array; the same
+    // control legitimately cannot serve two fields, but that is a schema-level
+    // authoring question, not a duplicate-within-array error.
+    const { errors } = lintMapData(
+      mapWith({
+        category: "account-creation",
+        fields: { newPassword: ["input#pass1"], cardCvv: ["input#cvv"] },
+        actions: {
+          fieldVisibility: {
+            newPassword: ["button#reveal"],
+            cardCvv: ["button#reveal"],
+          },
+        },
+      }),
+    );
+    assert.equal(errors.length, 0);
+  });
+
+  it("still reports duplicates within one field's selector array", () => {
+    const { errors } = lintMapData(
+      mapWith({
+        category: "account-login",
+        fields: { password: ["input#pass"] },
+        actions: {
+          fieldVisibility: {
+            password: ["button#reveal", "button#reveal"],
+          },
+        },
+      }),
+    );
+    assert.equal(errors.length, 1);
+    assert.match(errors[0].message, /Duplicate selector/);
+  });
+
+  it("ignores a field-scoped action value that is neither array nor object", () => {
+    const { errors, warnings } = lintMapData(
+      mapWith({
+        category: "account-login",
+        fields: { password: ["input#pass"] },
+        // Shape violation; the schema rejects it and the linter has nothing
+        // to lint rather than throwing.
+        actions: { fieldVisibility: "button#show-pass" },
+      }) as never,
+    );
+    assert.equal(errors.length, 0);
+    assert.equal(warnings.length, 0);
+  });
+});
+
+// ---------------------------------------------------------------------------
 // Attribute matchers: explicitly supported
 // ---------------------------------------------------------------------------
 

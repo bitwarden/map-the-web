@@ -43,6 +43,8 @@ may or may not utilize the HTML `form` tag. See the project
       - [Shadow DOM](#shadow-dom)
       - [Iframes](#iframes)
   - [Actions](#actions)
+    - [Form-Scoped Actions](#form-scoped-actions)
+    - [Field-Scoped Actions](#field-scoped-actions)
   - [Null and Empty Semantics](#null-and-empty-semantics)
   - [Authoring Guidelines](#authoring-guidelines)
 
@@ -67,6 +69,7 @@ bump for the Forms Map schema:
 | Schema description or documentation changes | Patch |
 | Tightening a validation pattern that does not reject previously-valid data | Patch |
 | Adding a new field key, action key, or category | Minor |
+| Adding a new action key whose value shape differs from the existing keys of that property (e.g. the first [field-scoped action](#field-scoped-actions)) | Minor |
 | Adding a new optional property to a form entry | Minor |
 | Removing or renaming a key, category, or required property | Major |
 | Making a previously optional property required | Major |
@@ -79,6 +82,11 @@ bump for the Forms Map schema:
 > consumers that validate Map data against a schema must use the schema included
 > in the same release (see [Releases](../../README.md#releases)); a stale schema
 > copy will reject data containing newly added values.
+>
+> The same reasoning covers a new action key with an unfamiliar value shape:
+> consumers should determine an action value's shape from its key rather than
+> assuming every value in `actions` is a selector array, and skip keys they do
+> not recognize.
 
 ## Data Structure Overview
 
@@ -737,9 +745,25 @@ Mixed boundary types compose naturally:
 
 ## Actions
 
-The optional `actions` object maps action keys to arrays of CSS selectors.
-Each key identifies a form action or progression element; these describe
-structural interactions (not data) that a consumer may need to trigger.
+The optional `actions` object maps action keys to selectors. Each key
+identifies an action or progression element; these describe structural
+interactions (not data) that a consumer may need to trigger.
+
+Action keys fall into two scopes, distinguished by the shape of their value:
+
+- **Form-scoped** keys describe an action on the form as a whole. Their value
+  is a selector array.
+- **Field-scoped** keys describe an action on one specific field. Their value
+  is an object keyed by [field key](#field-keys), each mapping to a selector
+  array.
+
+Every action selector follows the same boundary-crossing conventions as field
+selectors (see
+[Boundary-Crossing Selectors](#boundary-crossing-selectors-)). Unlike field
+selector arrays, action selector arrays do not support
+[selector sequences](#selector-sequences) at either scope.
+
+### Form-Scoped Actions
 
 ```json
 {
@@ -763,11 +787,44 @@ structural interactions (not data) that a consumer may need to trigger.
 | `cancel` | Cancel or abandon the form |
 | `reset` | Reset the form to its initial state |
 
-Action values are arrays of CSS selector strings, following the same
-boundary-crossing conventions as field selectors (see
-[Boundary-Crossing Selectors](#boundary-crossing-selectors-)). Unlike field
-selector arrays, action selector arrays do not support
-[selector sequences](#selector-sequences).
+### Field-Scoped Actions
+
+Some controls act on a single field rather than the form. Keying these by
+field preserves which field the control belongs to, which a flat action key
+cannot express when a form has more than one eligible field.
+
+```json
+{
+  "fields": {
+    "newPassword": ["input#password", "input#password-confirm"],
+    "cardCvv": ["input#cvv"]
+  },
+  "actions": {
+    "submit": ["button[type='submit']"],
+    "fieldVisibility": {
+      "newPassword": [
+        "button#toggle-password",
+        "button#toggle-password-confirm"
+      ],
+      "cardCvv": ["button#toggle-cvv"]
+    }
+  }
+}
+```
+
+| Key | Description |
+| --- | --- |
+| `fieldVisibility` | Control that changes whether a field's value is displayed in plain text (e.g. a password reveal button) |
+
+A field key used under a field-scoped action should also appear in the form's
+`fields`; the selector linter warns when it does not, since the action would
+have no field to operate on.
+
+`fieldVisibility` describes the control, not a direction or a state. A single
+button that flips between reveal and conceal, and a pair of distinct show and
+hide elements rendered one at a time, are both described by this key. The Map
+does not describe which state the field is in when a consumer encounters it,
+nor which direction activating the control will move it.
 
 ## Null and Empty Semantics
 

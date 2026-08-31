@@ -459,7 +459,29 @@
     },
     "actionKey": {
       "description": "Identifies actions that belong to the form. These describe structural interactions (not data) that a consumer may need to trigger.",
+      "anyOf": [
+        { "$ref": "#/$defs/formScopedActionKey" },
+        { "$ref": "#/$defs/fieldScopedActionKey" }
+      ]
+    },
+    "formScopedActionKey": {
+      "description": "Action keys whose scope is the form as a whole. Their values are selector arrays.",
       "enum": ["submit", "save", "next", "previous", "cancel", "reset"]
+    },
+    "fieldScopedActionKey": {
+      "description": "Action keys whose scope is an individual field rather than the form. Their values are objects keyed by field key.",
+      "enum": ["fieldVisibility"]
+    },
+    "fieldScopedAction": {
+      "type": "object",
+      "description": "Maps field keys to arrays of CSS selectors for a field-scoped action. Each key identifies the field the action operates on; that field is expected to also appear in the form's 'fields'.",
+      "propertyNames": {
+        "$ref": "#/$defs/fieldKey"
+      },
+      "additionalProperties": {
+        "$ref": "#/$defs/selectorArray"
+      },
+      "minProperties": 1
     },
     "fields": {
       "type": "object",
@@ -474,7 +496,13 @@
     },
     "actions": {
       "type": "object",
-      "description": "Maps action keys to arrays of CSS selectors. Each key identifies a form action or progression element.",
+      "description": "Maps action keys to selectors. Form-scoped keys map to arrays of CSS selectors; field-scoped keys map to an object keyed by field key.",
+      "properties": {
+        "fieldVisibility": {
+          "$ref": "#/$defs/fieldScopedAction",
+          "description": "Controls that toggle whether a field's value is displayed in plain text (e.g. a password reveal button)."
+        }
+      },
       "propertyNames": {
         "$ref": "#/$defs/actionKey"
       },

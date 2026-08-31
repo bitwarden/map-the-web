@@ -13,6 +13,8 @@ export interface Location {
   category?: string;
   kind?: string;
   key?: string;
+  /** Set for field-scoped actions: the field key the action operates on. */
+  fieldKey?: string;
   selectorIndex?: number;
   sequenceIndex?: number;
 }
@@ -44,11 +46,21 @@ export interface LintResult {
  */
 export type CompositeSelectorArray = (string | string[])[];
 
+/**
+ * Selectors for a field-scoped action (e.g. `fieldVisibility`), keyed by the
+ * field key the action operates on.
+ */
+export type FieldScopedActionSelectors = Record<string, string[]>;
+
 export interface Form {
   category?: string;
   container?: string[];
   fields?: Record<string, CompositeSelectorArray>;
-  actions?: Record<string, string[]>;
+  /**
+   * Form-scoped action keys hold a selector array; field-scoped action keys
+   * hold an object keyed by field key.
+   */
+  actions?: Record<string, string[] | FieldScopedActionSelectors>;
 }
 
 export interface HostEntry {

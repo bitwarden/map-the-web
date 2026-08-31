@@ -194,7 +194,14 @@ export function formatLocation(location: Location): string {
   }
 
   parts.push(`[${location.category}]`);
-  parts.push(`${location.kind}.${location.key}`);
+
+  // Field-scoped actions carry an extra level: the field the action operates
+  // on (e.g. "actions.fieldVisibility.password").
+  const keyPath =
+    location.fieldKey != null
+      ? `${location.key}.${location.fieldKey}`
+      : location.key;
+  parts.push(`${location.kind}.${keyPath}`);
 
   // `selectorIndex`: position in the outer alternatives array
   // `sequenceIndex`: position within a selector sequence (when applicable)
@@ -1072,18 +1079,77 @@ function lintForms(
       }
     }
 
-    // Action selectors
+    // Action selectors. Form-scoped keys (e.g. `submit`) hold a selector
+    // array; field-scoped keys (e.g. `fieldVisibility`) hold an object keyed
+    // by the field the action operates on. Branch on the value's shape rather
+    // than the key so an unrecognized key is still traversed; the schema is
+    // what rejects a key/shape mismatch.
     if (form.actions) {
-      for (const [actionKey, selectors] of Object.entries(form.actions)) {
-        lintSelectorArray(
-          selectors,
-          { ...context, category, kind: "actions", key: actionKey },
-          errors,
-          warnings,
-        );
+      for (const [actionKey, value] of Object.entries(form.actions)) {
+        const actionLocation = {
+          ...context,
+          category,
+          kind: "actions",
+          key: actionKey,
+        };
+
+        if (Array.isArray(value)) {
+          lintSelectorArray(value, actionLocation, errors, warnings);
+          continue;
+        }
+
+        // Anything that is neither an array nor an object holds no selectors
+        // to lint; the schema reports the shape violation.
+        if (value == null || typeof value !== "object") {
+          continue;
+        }
+
+        for (const [fieldKey, selectors] of Object.entries(value)) {
+          if (!Array.isArray(selectors)) {
+            continue;
+          }
+          const fieldActionLocation = { ...actionLocation, fieldKey };
+          lintFieldScopedActionTarget(
+            form,
+            actionKey,
+            fieldKey,
+            selectors,
+            fieldActionLocation,
+            warnings,
+          );
+          lintSelectorArray(selectors, fieldActionLocation, errors, warnings);
+        }
       }
     }
   }
+}
+
+/**
+ * Warn when a field-scoped action names a field the form does not declare.
+ * The action describes something a consumer does to a specific field, so a
+ * field key with no corresponding `fields` entry leaves the action with
+ * nothing to apply to; it is nearly always a typo or a stale key left behind
+ * when the field was renamed or removed.
+ */
+function lintFieldScopedActionTarget(
+  form: Form,
+  actionKey: string,
+  fieldKey: string,
+  selectors: string[],
+  location: Location,
+  warnings: Finding[],
+): void {
+  if (form.fields && Object.hasOwn(form.fields, fieldKey)) {
+    return;
+  }
+
+  warnings.push({
+    location: formatLocation({ ...location, selectorIndex: 0 }),
+    selector: typeof selectors[0] === "string" ? selectors[0] : null,
+    message:
+      `Field-scoped action "${actionKey}" targets field "${fieldKey}", which this form does not declare under "fields". ` +
+      `Add the field or correct the key; as authored, the action has no field to operate on.`,
+  });
 }
 
 /**

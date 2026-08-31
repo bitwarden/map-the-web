@@ -97,16 +97,20 @@ function findLineInSource(
 
   // 3. kind.key (e.g., "fields.username", "actions.submit", "container.container")
   //    narrows the search to the specific array that holds the selector.
+  //    Field-scoped actions carry a third segment (the field the action
+  //    operates on, e.g. "actions.fieldVisibility.password"); walk each in
+  //    turn so the anchor lands inside the nested object.
   const kindKey = parts.find((p) => /^(fields|actions|container)\./.test(p));
   if (kindKey) {
-    const key = kindKey.split(".")[1];
-    const next = source.indexOf(`"${key}":`, position);
-    if (next !== -1) {
-      position = next;
+    for (const key of kindKey.split(".").slice(1)) {
+      const next = source.indexOf(`"${key}":`, position);
+      if (next !== -1) {
+        position = next;
+      }
+      // If a key isn't found we keep the position reached so far rather than
+      // bailing; the selector anchor below will still point somewhere
+      // reasonable.
     }
-    // If the key isn't found we fall back to the host-scoped search rather
-    // than bailing; the selector anchor below will still point somewhere
-    // reasonable.
   }
 
   // 4. Find the first occurrence of the selector within the scope. For
