@@ -487,6 +487,32 @@
         }
       }
     },
+    "banking.easybank.de": {
+      "pathnames": {
+        "/logintransaction/firstlevel": {
+          "forms": [
+            {
+              "category": "account-login",
+              "container": ["div.login-form__fields"],
+              "fields": {
+                "username": [
+                  "div.login-form__fields vc-text-box#UserName[autocomplete='username'] input#UserName-field"
+                ],
+                // The password input has the `autocomplete` attribute value of "off"
+                "password": [
+                  "div.login-form__fields vc-text-box#Password input#Password-field"
+                ]
+              },
+              "actions": {
+                "submit": [
+                  "vc-tabitem#OnlineBanking vc-button-group#FirstLevelButtonGroup vc-button button#btn-NextButton"
+                ]
+              }
+            }
+          ]
+        }
+      }
+    },
     "factorio.com": {
       "pathnames": {
         "/login": {
