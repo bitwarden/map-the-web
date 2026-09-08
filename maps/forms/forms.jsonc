@@ -582,6 +582,33 @@
         }
       ]
     },
+    "emcins.com": {
+      "pathnames": {
+        "/emc/default.asp": {
+          "forms": [
+            {
+              "category": "account-login",
+              "container": [
+                "form.primary-auth-form[data-se='o-form']:has(input#okta-signin-username)"
+              ],
+              "fields": {
+                "username": [
+                  "form.primary-auth-form[data-se='o-form'] input#okta-signin-username[name='username'][type='text']"
+                ],
+                "password": [
+                  "form.primary-auth-form[data-se='o-form'] input#okta-signin-password[name='password'][type='password']"
+                ]
+              },
+              "actions": {
+                "submit": [
+                  "form.primary-auth-form[data-se='o-form'] input#okta-signin-submit[type='submit']"
+                ]
+              }
+            }
+          ]
+        }
+      }
+    },
     "myprime.com": {
       "forms": [
         {
