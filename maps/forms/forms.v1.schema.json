@@ -33,11 +33,15 @@
   "$defs": {
     "host": {
       "type": "object",
-      "description": "Form descriptions and pathname-specific overrides for a host.",
+      "description": "Form descriptions, fragment-specific overrides, and pathname-specific overrides for a host.",
       "properties": {
         "forms": {
           "$ref": "#/$defs/formContentArray",
-          "description": "Site-wide fallback form descriptions. Used when no pathname-specific entry matches."
+          "description": "Site-wide fallback form descriptions. Used when no key in 'pathnames' matches and no site-wide fragment entry matches."
+        },
+        "fragments": {
+          "$ref": "#/$defs/fragments",
+          "description": "Site-wide fragment-specific form descriptions, for fragment states that render the same form content on any pathname of this host. Used when the matching pathname entry neither names the same fragment key nor supplies 'forms', and for pathnames with no entry."
         },
         "pathnames": {
           "$ref": "#/$defs/pathnames"
@@ -51,12 +55,46 @@
       "description": "Maps URL pathnames to page-specific form descriptions. Keys must start with '/'.",
       "additionalProperties": {
         "oneOf": [
+          { "$ref": "#/$defs/pathnameEntry" },
+          {
+            "type": "null",
+            "description": "This specific page is irrelevant to the forms concern, including its fragment states."
+          }
+        ]
+      },
+      "propertyNames": {
+        "description": "URL pathname starting with '/'. Must not contain query strings or fragments, and must not have a trailing slash (excepting a sole '/' value itself).",
+        "pattern": "^/([^?#/]+(/[^?#/]+)*)?$"
+      },
+      "minProperties": 1
+    },
+    "pathnameEntry": {
+      "type": "object",
+      "description": "Form descriptions and fragment-specific overrides for a pathname.",
+      "properties": {
+        "forms": {
+          "$ref": "#/$defs/formContentArray",
+          "description": "Form descriptions for this specific pathname. Used when this pathname's 'fragments' does not name the URL's fragment; takes precedence over the host-level 'fragments'. When absent, the host-level 'forms' does not apply to this pathname."
+        },
+        "fragments": {
+          "$ref": "#/$defs/fragments",
+          "description": "Fragment-specific form descriptions for this pathname."
+        }
+      },
+      "additionalProperties": false,
+      "minProperties": 1
+    },
+    "fragments": {
+      "type": "object",
+      "description": "Maps URI fragments to fragment-specific form descriptions, for pages whose form content is determined by the fragment (e.g. hash-based client-side routing). Keys must start with '#'.",
+      "additionalProperties": {
+        "oneOf": [
           {
             "type": "object",
             "properties": {
               "forms": {
                 "$ref": "#/$defs/formContentArray",
-                "description": "Form descriptions for this specific pathname."
+                "description": "Form descriptions for this specific fragment."
               }
             },
             "required": ["forms"],
@@ -64,13 +102,13 @@
           },
           {
             "type": "null",
-            "description": "This specific page is irrelevant to the forms concern."
+            "description": "This specific fragment state is irrelevant to the forms concern. At the pathname level this also suppresses a host-level entry for the same fragment key."
           }
         ]
       },
       "propertyNames": {
-        "description": "URL pathname starting with '/'. Must not contain query strings or fragments, and must not have a trailing slash (excepting a sole '/' value itself).",
-        "pattern": "^/([^?#/]+(/[^?#/]+)*)?$"
+        "description": "URI fragment starting with '#', authored exactly as a URL parser reports it (percent-encoded per the WHATWG URL Standard) and matched by exact string comparison. Must not contain whitespace, which a URL parser always percent-encodes.",
+        "pattern": "^#\\S+$"
       },
       "minProperties": 1
     },

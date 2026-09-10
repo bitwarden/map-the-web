@@ -61,6 +61,22 @@ describe("formatLocation", () => {
     );
   });
 
+  it("includes fragment after pathname when present", () => {
+    const result = formatLocation({
+      host: "example.com",
+      pathname: "/",
+      fragment: "#/login",
+      category: "account-login",
+      kind: "fields",
+      key: "password",
+      selectorIndex: 0,
+    });
+    assert.equal(
+      result,
+      "example.com > / > #/login > [account-login] > fields.password > [0]",
+    );
+  });
+
   it("reads outside-in for a sequence location (composite position first, then inner position)", () => {
     const result = formatLocation({
       host: "example.com",
@@ -1565,6 +1581,117 @@ describe("lintMapData traversal", () => {
     assert.equal(warnings.length, 1);
     assert.match(warnings[0].message, /Bare element selector/);
     assert.match(warnings[0].location, /\/login/);
+  });
+
+  it("lints selectors under host-level fragments", () => {
+    const data = {
+      hosts: {
+        "example.com": {
+          fragments: {
+            "#login": {
+              forms: [
+                {
+                  category: "account-login",
+                  fields: { username: ["input"] },
+                },
+              ],
+            },
+          },
+        },
+      },
+    };
+    const { errors, warnings } = lintMapData(data);
+    assert.equal(errors.length, 0);
+    assert.equal(warnings.length, 1);
+    assert.match(warnings[0].message, /Bare element selector/);
+    assert.equal(
+      warnings[0].location,
+      "example.com > #login > [account-login] > fields.username > [0]",
+    );
+  });
+
+  it("lints selectors under fragments", () => {
+    const data = {
+      hosts: {
+        "example.com": {
+          pathnames: {
+            "/": {
+              fragments: {
+                "#/login": {
+                  forms: [
+                    {
+                      category: "account-login",
+                      fields: { username: ["input"] },
+                    },
+                  ],
+                },
+              },
+            },
+          },
+        },
+      },
+    };
+    const { errors, warnings } = lintMapData(data);
+    assert.equal(errors.length, 0);
+    assert.equal(warnings.length, 1);
+    assert.match(warnings[0].message, /Bare element selector/);
+    assert.match(warnings[0].location, /\/ > #\/login/);
+  });
+
+  it("lints a pathname's own forms alongside its fragments", () => {
+    const data = {
+      hosts: {
+        "example.com": {
+          pathnames: {
+            "/account": {
+              forms: [
+                {
+                  category: "account-login",
+                  fields: { username: ["input"] },
+                },
+              ],
+              fragments: {
+                "#register": {
+                  forms: [
+                    {
+                      category: "account-creation",
+                      fields: { username: ["span"] },
+                    },
+                  ],
+                },
+              },
+            },
+          },
+        },
+      },
+    };
+    const { errors, warnings } = lintMapData(data);
+    assert.equal(errors.length, 0);
+    assert.equal(warnings.length, 2);
+    assert.ok(warnings.some((w) => /\/account > \[/.test(w.location)));
+    assert.ok(warnings.some((w) => /\/account > #register/.test(w.location)));
+  });
+
+  it("skips null fragment entries at both the host and pathname levels", () => {
+    const data = {
+      hosts: {
+        "example.com": {
+          fragments: {
+            "#irrelevant": null,
+          },
+          pathnames: {
+            "/": {
+              fragments: {
+                "#/irrelevant": null,
+              },
+            },
+          },
+        },
+      },
+    };
+    const { errors, warnings } = lintMapData(data);
+    assert.equal(errors.length, 0);
+    assert.equal(warnings.length, 0);
   });
 
   it("skips null host entries", () => {

@@ -19,11 +19,15 @@ may or may not utilize the HTML `form` tag. See the project
     - [The `www` subdomain](#the-www-subdomain)
     - [Ports](#ports)
   - [Pathnames](#pathnames)
-    - [Entry Hierarchy](#entry-hierarchy)
     - [Trailing Slashes](#trailing-slashes)
+  - [Fragments](#fragments)
+    - [When a Fragment Entry Applies](#when-a-fragment-entry-applies)
+    - [Fragment Keys](#fragment-keys)
+    - [Host-Level Fragments](#host-level-fragments)
   - [Forms](#forms)
     - [Multiple Forms](#multiple-forms)
     - [Category](#category)
+  - [Entry Hierarchy](#entry-hierarchy)
   - [Selector Philosophy](#selector-philosophy)
     - [User-Facing Values](#user-facing-values)
   - [Container](#container)
@@ -52,7 +56,7 @@ There is presently no mechanism embedded within the Forms Map for:
 
 - describing the age of individual host entries
 - form rendering timings
-- distinguishing URLs by query string and/or fragment that affect rendered form content
+- distinguishing URLs by a query string that affects rendered form content
 - fields which lack any static targetable qualities (e.g. sites that randomize tag name/attribute values on each render)
 - indicators of irrelevant data at the form field level
 
@@ -67,7 +71,7 @@ bump for the Forms Map schema:
 | Schema description or documentation changes | Patch |
 | Tightening a validation pattern that does not reject previously-valid data | Patch |
 | Adding a new field key, action key, or category | Minor |
-| Adding a new optional property to a form entry | Minor |
+| Adding a new optional property to a host, pathname, fragment, or form entry | Minor |
 | Removing or renaming a key, category, or required property | Major |
 | Making a previously optional property required | Major |
 | Changing the meaning of an existing key | Major |
@@ -87,15 +91,27 @@ bump for the Forms Map schema:
   "schemaVersion": "1.0.0",
   "hosts": {
     "<host>": {
-      "forms": [ ... ],           // optional — site-wide fallback
-      "pathnames": {              // optional
-        "<pathname>": {
+      "forms": [ ... ],           // optional; site-wide fallback
+      "fragments": {              // optional; site-wide fragment states
+        "<fragment>": {
           "forms": [ ... ]
         },
-        "<pathname>": null        // signals this page should be skipped
+        "<fragment>": null        // signals this fragment state has no relevant forms
+      },
+      "pathnames": {              // optional
+        "<pathname>": {
+          "forms": [ ... ],       // optional; pathname-wide fallback
+          "fragments": {          // optional
+            "<fragment>": {
+              "forms": [ ... ]
+            },
+            "<fragment>": null    // signals this fragment state has no relevant forms
+          }
+        },
+        "<pathname>": null        // signals this page has no relevant forms
       }
     },
-    "<host>": null                // signals all pages on this host should be skipped
+    "<host>": null                // signals all pages on this host have no relevant forms
   }
 }
 ```
@@ -171,8 +187,8 @@ counterparts:
   (with the potential exception of [www](#the-www-subdomain))
 - `example.com` and `example.com:8443` require separate entries
 
-Populated host key values **must** be objects with `forms` and/or `pathnames`
-keys with valid values. Use a `null` value to authoritatively indicate when
+Populated host key values **must** be objects with `forms`, `fragments`, and/or
+`pathnames` keys with valid values. Use a `null` value to authoritatively indicate when
 there are no relevant forms across the host's pages. See also:
 [Null and Empty Semantics](#null-and-empty-semantics)
 
@@ -263,18 +279,6 @@ Empty objects (`{}`) should not be used for pathname key values; use `null` to
 authoritatively indicate when the page is irrelevant to the forms concern. See
 also: [Null and Empty Semantics](#null-and-empty-semantics)
 
-### Entry Hierarchy
-
-When resolving entry hierarchy for a URL:
-
-1. **Exact pathname match**: If the URL's pathname matches a key in `pathnames`,
-   that entry should be considered the most relevant description of the URL.
-2. **Host fallback**: If no pathname matches, the host-level `forms` should be
-   considered the most relevant description of the URL.
-
-Pathname entries fully override the host entry values. They do not "merge" with
-them.
-
 ### Trailing Slashes
 
 Pathname keys should omit trailing slashes. Consumers are expected to normalize
@@ -305,6 +309,221 @@ pathname key with no host-level `forms` fallback:
   }
 }
 ```
+
+## Fragments
+
+The optional `fragments` object maps
+[URI fragments](https://developer.mozilla.org/en-US/docs/Web/URI/Reference/Fragment)
+to fragment-specific entries (e.g. `/auth#register`). It describes pages whose
+form content is determined by the fragment, a pattern commonly used by
+hash-based client-side routing.
+
+It appears within a `pathnames` entry, where it describes fragment states of
+that one page, or alongside the host-level `forms`, where it describes
+fragment states that render the same form content on any page of the host (see
+[Host-Level Fragments](#host-level-fragments)).
+
+```jsonc
+{
+  "schemaVersion": "1.0.0",
+  "hosts": {
+    "example.com": {
+      "pathnames": {
+        "/": {
+          "fragments": {
+            // In this example, we're describing a login form that only appears on the
+            // homepage when the `#login` fragment is active
+            "#login": {
+              "forms": [
+                {
+                  "category": "account-login",
+                  "fields": {
+                    "email": ["input#login-email"],
+                    "password": ["input#login-password"]
+                  }
+                }
+              ]
+            },
+            "#/register": {
+              "forms": [
+                {
+                  "category": "account-creation",
+                  "fields": {
+                    "email": ["input#register-email"],
+                    "newPassword": ["input#register-password"]
+                  }
+                }
+              ]
+            },
+            "#/help": null
+          }
+        }
+      }
+    }
+  }
+}
+```
+
+A `pathnames` entry may carry _both_ `forms` and `fragments`. The `forms` value then
+describes the page in any fragment state that **no** `fragments` key matches (e.g. `/auth#login` and `/auth` are distinct cases covered under the `pathnames` entry).
+
+```jsonc
+{
+  "pathnames": {
+    "/account": {
+      "forms": [
+        {
+          "category": "account-login",
+          "fields": {
+            "email": ["input#email"],
+            "password": ["input#password"]
+          }
+        }
+      ],
+      "fragments": {
+        "#recover": {
+          "forms": [
+            {
+              "category": "account-recovery",
+              "fields": {
+                "email": ["input#recovery-email"]
+              }
+            }
+          ]
+        }
+      }
+    }
+  }
+}
+```
+
+### When a Fragment Entry Applies
+
+Fragment entries should be used sparingly. Only use a fragment entry when the targeted form is **absent from the document**
+until the fragment is active (e.g. a hash router that mounts a route's
+components, or a `hashchange` handler that renders the form on demand).
+
+Do not add a fragment entry when the fragment only scrolls to, or reveals, a
+form that is already in the document.
+
+> [!NOTE]
+> Unlike the pathname, a fragment changes without a navigation event. Consumers should be prepared to handle such fragment changes.
+
+### Fragment Keys
+
+Fragment keys must start with `#` and must not contain whitespace. The `#` is
+included so the key maps directly onto the fragment as a URL parser reports it.
+
+**Author keys exactly as `URL.hash` reports the fragment**, and match them by
+exact string comparison. A URL parser percent-encodes whitespace, non-ASCII
+characters, `"`, `<`, `>`, and `` ` `` when it serializes a fragment, so those
+appear in a key in their encoded form:
+
+| Fragment as presented | Fragment key |
+| --- | --- |
+| `#/search/a b` | `#/search/a%20b` |
+| `#café` | `#caf%C3%A9` |
+| `#/login` | `#/login` |
+
+Do not percent-decode either side before comparing. Decoding would conflate
+fragments that a URL parser keeps distinct (`#a%2Fb` and `#a/b` are different
+states), and `decodeURIComponent` raises a `URIError` on fragments that parse
+perfectly well, such as `#%zz`.
+
+Matching is case-sensitive, applies to percent-encoding as well (`%2f` and
+`%2F` are distinct), and applies no trailing-slash normalization; `#/login`,
+`#/Login`, and `#/login/` are three different keys. Author the entry with the
+form the site actually produces.
+
+A further `#` symbol is permitted after the first one. Everything following the first
+`#` is part of the fragment, and a URL parser does not encode subsequent ones, so
+`#/login#step2` is a reachable state and a valid key.
+
+> [!NOTE]
+> Entries do not represent or imply representation of a fragment within a full URI.
+> For example, a fragment may be preceded by a query string in a URI:
+> `https://www.example.com/account?utm_content="textlink"&utm_medium="search"#/login`
+> Consequently, consumers are advised to handle matching against fragments as an
+> independent concern rather than via string assembly and comparison.
+
+### Host-Level Fragments
+
+Every HTTP(S) URL carries a pathname of at least `/`, so a fragment is
+always reachable under a `pathnames` key; `https://example.com#login` is keyed
+as `pathnames["/"].fragments["#login"]`.
+
+A host-level `fragments` therefore does not exist to describe a fragment with
+no path. It describes a fragment state that renders the same form content on
+**any** page of the host, such as a header link (`<a href="#login">`) that
+opens the same login modal site-wide:
+
+```json
+{
+  "hosts": {
+    "example.com": {
+      "fragments": {
+        "#login": {
+          "forms": [
+            {
+              "category": "account-login",
+              "container": ["div#login-modal"],
+              "fields": {
+                "email": ["input#modal-email"],
+                "password": ["input#modal-password"]
+              }
+            }
+          ]
+        }
+      }
+    }
+  }
+}
+```
+
+This carries the same burden as any host-level entry: it asserts the behavior
+holds across the whole host. Where the fragment renders different content on
+different pages, or exists on only some of them, describe it under the
+relevant `pathnames` entries instead.
+
+A site-wide fragment entry reaches every page with no `pathnames` entry, and any page
+whose entry neither has the same fragment key nor a `forms` property.
+
+```jsonc
+{
+  "hosts": {
+    "example.com": {
+      "fragments": {
+        "#login": { "forms": [ ... ] }          // the site-wide modal
+      },
+      "pathnames": {
+        "/welcome": {
+          "fragments": {
+            "#login": { "forms": [ ... ] }      // a different modal, here only
+          }
+        },
+        "/status": {
+          "fragments": {
+            "#login": null                      // no modal on this page
+          }
+        },
+        "/account": {
+          "forms": [ ... ]                      // page describes itself
+        }
+      }
+    }
+  }
+}
+```
+
+Here `/welcome#login` describes its own modal, `/status#login` describes none,
+and `/account#login` resolves to the account page's own `forms` rather than the
+modal. Every other page of the host continues to resolve `#login` to the
+site-wide entry.
+
+Because a page's own `forms` precludes the site-wide `fragments`, a page
+that has both its own forms and the site-wide fragment state must restate the
+fragment under its own `fragments`. See
+[Entry Hierarchy](#entry-hierarchy) for the full order.
 
 ## Forms
 
@@ -380,6 +599,69 @@ relevant to their concerns).
 | `payment-card`     | Credit/debit card payment                          |
 | `search`           | Search form                                        |
 | `signup`           | Newsletter, sweepstakes, unsubscribe, or general contact signup (not account creation) |
+
+## Entry Hierarchy
+
+A URL resolves to no more than one entry, with precedence given to the most
+specific match. Page-level entries are considered ahead of site-wide ones, and
+within each level a fragment is considered ahead of `forms`. Specificity is
+ranked as follows:
+
+1. **Page fragment**: If the URL has a fragment, its pathname matches
+   a key in `pathnames`, and that entry's `fragments` contains the fragment,
+   that fragment entry should be considered the most relevant description of
+   the URL.
+2. **Page forms**: Otherwise, if the URL's pathname matches a key in
+   `pathnames` that has `forms`, those forms should be considered the most
+   relevant description of the URL.
+3. **Site-wide fragment**: Otherwise, if the URL has a fragment and the
+   host-level `fragments` contains it, that fragment entry should be considered
+   the most relevant description of the URL.
+4. **Site-wide forms**: Otherwise, if no key in `pathnames` matched, the
+   host-level `forms` should be considered the most relevant description of the
+   URL.
+
+**A URI is only represented by the most specific matching entry.** Once a
+`pathnames` entry supplies a matching fragment or any `forms`, resolution stops
+at the page level; the host-level `fragments` and `forms` do not contribute
+toward describing that page. Where a page also presents a site-wide form or
+fragment state, restate it under that page's own entry.
+
+Given this map entry, consider how various URIs at the host are described:
+
+```jsonc
+{
+  "hosts": {
+    "example.com": {
+      "fragments": {
+        "#login": { "forms": [ ... ] }        // form A
+      },
+      "pathnames": {
+        "/": {
+          "fragments": {
+            "#register": { "forms": [ ... ] }, // form B
+            "#login": { "forms": [ ... ] }     // form C
+          }
+        },
+        "/account": {
+          "forms": [ ... ]                     // form D
+        }
+      }
+    }
+  }
+}
+```
+
+| URL | Described by | Why |
+| --- | --- | --- |
+| `example.com#login` | `C` | The root pathname entry replaces the site-wide one |
+| `example.com#register` | `B` | Only the root pathname describes this fragment |
+| `example.com/account#login` | `D` | `/account` describes itself, so the site-wide claim at the host level does not apply |
+| `example.com/account` | `D` | The page's own `forms` |
+| `example.com/help#login` | `A` | No `/help` entry, so the site-wide claim applies |
+| `example.com/help` | nothing | No `/help` entry and no host-level `forms` |
+| `example.com` | nothing | `/` matched but has no `forms`, and no fragment is present |
+| `example.com#help` | nothing | `/` matched, does not describe `#help`, and there is no site-wide `#help` |
 
 ## Selector Philosophy
 
@@ -531,7 +813,7 @@ in the same way, and disambiguation of purpose is distinguished by the form
 
 However, some fields are inherently incompatible with some form categories
 (e.g. the presence of a `password` field precludes the form belonging to the
-`account-creation` category). Those cases are represented in the Forms map schema.
+`account-creation` category). Those cases are represented in the Forms Map schema.
 
 The kind of field input is also not implied by the field key name or
 definition. For example, a `password` selector may describe an `input`
@@ -763,8 +1045,8 @@ structural interactions (not data) that a consumer may need to trigger.
 | `cancel` | Cancel or abandon the form |
 | `reset` | Reset the form to its initial state |
 
-Action values are arrays of CSS selector strings, following the same
-boundary-crossing conventions as field selectors (see
+Action selectors follow the same boundary-crossing conventions as field
+selectors (see
 [Boundary-Crossing Selectors](#boundary-crossing-selectors-)). Unlike field
 selector arrays, action selector arrays do not support
 [selector sequences](#selector-sequences).
@@ -779,9 +1061,16 @@ interpretation at each level:
 | Host key             | `null`  | All pages on this host are irrelevant to the forms concern             |
 | Host key             | omitted | No forms information about this host                                   |
 | `forms` (host-level) | omitted | No forms information that applies site-wide                            |
+| `fragments` (host-level) | omitted | No forms information about fragment states that apply site-wide |
 | `pathnames`          | omitted | No page-specific forms information                                     |
-| Pathname key         | `null`  | This specific page is irrelevant to the forms concern                  |
-| Pathname key         | omitted | No information about this page; host-level `forms` information applies |
+| Pathname key         | `null`  | This specific page is irrelevant to the forms concern, including its fragment states |
+| Pathname key         | omitted | No information about this page; the host-level entry applies           |
+| `forms` (pathname-level) | omitted | No forms information about this page outside the fragment states it describes; the host-level `forms` does not apply, though a host-level `fragments` entry may |
+| `fragments` (pathname-level) | omitted | No fragment-specific forms information about this page      |
+| Fragment key (host-level) | `null` | This fragment state is irrelevant to the forms concern across the host |
+| Fragment key (pathname-level) | `null` | This fragment state is irrelevant to the forms concern on this page, regardless of host-level `fragments` entries of the same fragment |
+| Fragment key (host-level) | omitted | No information about this fragment state site-wide; the host-level `forms` applies when no `pathnames` key matched |
+| Fragment key (pathname-level) | omitted | No information about this fragment state on this page; the page's `forms` applies, else the host-level `fragments` entry for the key |
 
 The distinction between "irrelevant" and "no information" is important. An
 "irrelevant" signal indicates the page was evaluated and deliberately excluded
@@ -815,30 +1104,42 @@ The distinction between "irrelevant" and "no information" is important. An
 
 7. **Avoid redundancy.** If all pages on a host use the same form, put it in
    host-level `forms` and omit `pathnames`. Only add pathname entries for pages
-   that differ.
+   that differ. A fragment state that renders the same form on every page
+   belongs in the host-level `fragments` for the same reason. Note that a page
+   supplying its own `forms` masks the site-wide `fragments`, so such a page
+   must restate any fragment state it also has; see
+   [Host-Level Fragments](#host-level-fragments).
 
 8. **Keep pathnames exact.** Pathname keys must exactly match the URL path.
-   Wildcards and pattern matching are not supported.
+   Wildcards and pattern matching are not supported. This also applies to
+   [fragment keys](#fragment-keys).
 
-9. **Treat hosts as exact matches.** `example.com`, `subdomain.example.com`,
-   and `example.com:8443` are different host keys. Author entries under the
-   non-`www` host as canonical; only add a separate `www.` entry if its forms
-   differ from the non-`www` counterpart (see
-   [The `www` subdomain](#the-www-subdomain)).
+9. **Only use fragments when they change the page's relevant content.** Add a
+   `fragments` entry when the form is absent from the document until the
+   fragment is active (e.g. hash routing). A fragment that only scrolls to or
+   reveals an already-present form belongs under the pathname's `forms`; see
+   [When a Fragment Entry Applies](#when-a-fragment-entry-applies).
 
-10. **Omit what you don't need.** If a host has no site-wide fallback, omit
-    `forms`. If there are no page-specific entries, omit `pathnames`.
+10. **Treat hosts as exact matches.** `example.com`, `subdomain.example.com`,
+    and `example.com:8443` are different host keys. Author entries under the
+    non-`www` host as canonical; only add a separate `www.` entry if its forms
+    differ from the non-`www` counterpart (see
+    [The `www` subdomain](#the-www-subdomain)).
 
-11. **Remove stale entries.** If a site updates to use standard mechanisms (e.g.
+11. **Omit what you don't need.** If a host has no site-wide fallback, omit
+    `forms`. If there are no page-specific entries, omit `pathnames`. If a host
+    or page has no fragment-specific entries, omit `fragments`.
+
+12. **Remove stale entries.** If a site updates to use standard mechanisms (e.g.
     `autocomplete` attributes) that make the Map entry unnecessary, remove it.
     Maps are a stopgap, not a permanent fixture.
 
-12. **Document non-obvious selectors.** If a selector targets an element through
+13. **Document non-obvious selectors.** If a selector targets an element through
     an unusual DOM structure (deeply nested shadow roots, dynamically injected
     containers), add context in the change pull request explaining why that path
     is necessary.
 
-13. **Avoid matching user-facing values.** Values the user reads (e.g.
+14. **Avoid matching user-facing values.** Values the user reads (e.g.
     `placeholder`, `aria-label`, `title`) describe the page's content, not its
     structure, and change without the target changing. Prefer a non-user-facing
     anchor where possible; see [User-Facing Values](#user-facing-values).

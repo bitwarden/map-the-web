@@ -14,6 +14,7 @@ import type {
   CompositeSelectorArray,
   Form,
   FormMapData,
+  FragmentEntry,
 } from "./types.mts";
 
 /** Tokens that carry an optional `namespace` (the only ones we render). */
@@ -191,6 +192,10 @@ export function formatLocation(location: Location): string {
 
   if (location.pathname) {
     parts.push(location.pathname);
+  }
+
+  if (location.fragment) {
+    parts.push(location.fragment);
   }
 
   parts.push(`[${location.category}]`);
@@ -1016,6 +1021,11 @@ export function lintMapData(data: FormMapData): LintResult {
       lintForms(hostEntry.forms, { host }, allErrors, allWarnings);
     }
 
+    // Host-level (site-wide) fragment forms
+    if (hostEntry.fragments) {
+      lintFragments(hostEntry.fragments, { host }, allErrors, allWarnings);
+    }
+
     // Pathname-level forms
     if (hostEntry.pathnames) {
       for (const [pathname, pathEntry] of Object.entries(hostEntry.pathnames)) {
@@ -1030,11 +1040,47 @@ export function lintMapData(data: FormMapData): LintResult {
             allWarnings,
           );
         }
+
+        // Fragment-level forms
+        if (pathEntry.fragments) {
+          lintFragments(
+            pathEntry.fragments,
+            { host, pathname },
+            allErrors,
+            allWarnings,
+          );
+        }
       }
     }
   }
 
   return { errors: allErrors, warnings: allWarnings };
+}
+
+/**
+ * Lint all selectors within a `fragments` map. Shared by the host level
+ * (site-wide fragment states) and the pathname level, which differ only in
+ * the surrounding context.
+ */
+function lintFragments(
+  fragments: Record<string, FragmentEntry | null>,
+  context: Location,
+  errors: Finding[],
+  warnings: Finding[],
+): void {
+  for (const [fragment, fragmentEntry] of Object.entries(fragments)) {
+    if (fragmentEntry == null) {
+      continue;
+    }
+    if (fragmentEntry.forms) {
+      lintForms(
+        fragmentEntry.forms,
+        { ...context, fragment },
+        errors,
+        warnings,
+      );
+    }
+  }
 }
 
 /**
