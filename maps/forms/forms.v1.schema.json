@@ -7,7 +7,7 @@
   "properties": {
     "schemaVersion": {
       "type": "string",
-      "const": "1.0.0",
+      "const": "1.1.0",
       "description": "Schema version this file conforms to. Must match the version expected by the schema."
     },
     "hosts": {
