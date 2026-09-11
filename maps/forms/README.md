@@ -88,7 +88,7 @@ bump for the Forms Map schema:
 
 ```jsonc
 {
-  "schemaVersion": "1.0.0",
+  "schemaVersion": "1.1.0",
   "hosts": {
     "<host>": {
       "forms": [ ... ],           // optional; site-wide fallback
@@ -120,7 +120,7 @@ A complex entry may look like:
 
 ```json
 {
-  "schemaVersion": "1.0.0",
+  "schemaVersion": "1.1.0",
   "hosts": {
     "example.com": {
       "forms": [
@@ -240,7 +240,7 @@ must start with `/`.
 
 ```json
 {
-  "schemaVersion": "1.0.0",
+  "schemaVersion": "1.1.0",
   "hosts": {
     "example.com": {
       "forms": [
@@ -325,7 +325,7 @@ fragment states that render the same form content on any page of the host (see
 
 ```jsonc
 {
-  "schemaVersion": "1.0.0",
+  "schemaVersion": "1.1.0",
   "hosts": {
     "example.com": {
       "pathnames": {
