@@ -5,9 +5,10 @@ using CSS selectors. It enables consuming applications to locate specific fields
 without relying on heuristic determinations or page-specific detection logic.
 
 This Map describes the page. It does not prescribe or imply how
-a consumer of this Map should behave. Additionally, the term "form" here
-describes the user-facing concept of users supplying data to a website, which
-may or may not utilize the HTML `form` tag. See the project
+a consumer of this Map should behave (though it may offer examples or
+suggestions). Additionally, the term "form" here describes the user-facing
+concept of one or more related input fields that a user supplies values to,
+which may or may not utilize the HTML `form` tag. See the project
 [README](../../README.md) for broader mapping philosophies.
 
 - [Forms Map](#forms-map)
@@ -59,6 +60,7 @@ There is presently no mechanism embedded within the Forms Map for:
 - distinguishing URLs by a query string that affects rendered form content
 - fields which lack any static targetable qualities (e.g. sites that randomize tag name/attribute values on each render)
 - indicators of irrelevant data at the form field level
+- representing site structures that repeat across host domains (e.g. regional subdomains, brand platforms)
 
 ## Schema Version Bumps
 
@@ -143,7 +145,7 @@ A complex entry may look like:
               "category": "account-creation",
               "fields": {
                 "username": ["input#reg-email"],
-                "password": ["input#reg-password"]
+                "newPassword": ["input#reg-password"]
               }
             }
           ]
@@ -276,8 +278,8 @@ object (empty values would have the same meaning as excluding the `pathnames`
 property altogether).
 
 Empty objects (`{}`) should not be used for pathname key values; use `null` to
-authoritatively indicate when the page is irrelevant to the forms concern. See
-also: [Null and Empty Semantics](#null-and-empty-semantics)
+authoritatively indicate that the page presents no forms in scope of this Map.
+See also: [Null and Empty Semantics](#null-and-empty-semantics)
 
 ### Trailing Slashes
 
@@ -331,7 +333,7 @@ fragment states that render the same form content on any page of the host (see
       "pathnames": {
         "/": {
           "fragments": {
-            // In this example, we're describing a login form that only appears on the
+            // This example describes a login form that only appears on the
             // homepage when the `#login` fragment is active
             "#login": {
               "forms": [
@@ -480,13 +482,13 @@ opens the same login modal site-wide:
 }
 ```
 
-This carries the same burden as any host-level entry: it asserts the behavior
-holds across the whole host. Where the fragment renders different content on
-different pages, or exists on only some of them, describe it under the
-relevant `pathnames` entries instead.
+Like any host-level entry, this describes every page of the host. Where the
+fragment renders different content on different pages, or exists on only some
+of them, describe it under the relevant `pathnames` entries instead.
 
-A site-wide fragment entry reaches every page with no `pathnames` entry, and any page
-whose entry neither has the same fragment key nor a `forms` property.
+A site-wide fragment entry reaches every page with no `pathnames` entry, and any
+page whose entry is not `null` and has neither the same fragment key nor a
+`forms` property.
 
 ```jsonc
 {
@@ -528,7 +530,7 @@ fragment under its own `fragments`. See
 ## Forms
 
 Each entry in a `forms` array describes one logical form on a page. "Form" here
-refers to the user-facing concept of a form — a group of related input fields —
+refers to the user-facing concept of a form (a group of related input fields)
 and does not require a literal HTML `<form>` element.
 
 ```json
@@ -554,11 +556,11 @@ populated array. See also: [Null and Empty Semantics](#null-and-empty-semantics)
 A page may have more than one logical form. Each gets its own entry in the
 `forms` array. Common reasons for multiple entries include:
 
-- **Mixed form types** — e.g. a login form and a registration form on the same
+- **Mixed form types**: e.g. a login form and a registration form on the same
   page
-- **Multivariate layouts** — A/B tests or feature flags that change which form
+- **Multivariate layouts**: A/B tests or feature flags that change which form
   appears
-- **Multi-step flows** — Single-page applications where different forms render
+- **Multi-step flows**: Single-page applications where different forms render
   at the same URL
 
 ```json
@@ -614,8 +616,9 @@ ranked as follows:
 2. **Page forms**: Otherwise, if the URL's pathname matches a key in
    `pathnames` that has `forms`, those forms should be considered the most
    relevant description of the URL.
-3. **Site-wide fragment**: Otherwise, if the URL has a fragment and the
-   host-level `fragments` contains it, that fragment entry should be considered
+3. **Site-wide fragment**: Otherwise, if the URL has a fragment, the URL's
+   pathname did not match a `null` key in `pathnames`, and the host-level
+   `fragments` contains the fragment, that fragment entry should be considered
    the most relevant description of the URL.
 4. **Site-wide forms**: Otherwise, if no key in `pathnames` matched, the
    host-level `forms` should be considered the most relevant description of the
@@ -624,10 +627,12 @@ ranked as follows:
 **A URI is only represented by the most specific matching entry.** Once a
 `pathnames` entry supplies a matching fragment or any `forms`, resolution stops
 at the page level; the host-level `fragments` and `forms` do not contribute
-toward describing that page. Where a page also presents a site-wide form or
-fragment state, restate it under that page's own entry.
+toward describing that page. A `null` pathname entry stops resolution the same
+way: the page presents no forms in scope of this Map in any of its fragment
+states, so no host-level entry describes it. Where a page also presents a
+site-wide form or fragment state, restate it under that page's own entry.
 
-Given this map entry, consider how various URIs at the host are described:
+Given this Map entry, consider how various URIs at the host are described:
 
 ```jsonc
 {
@@ -645,7 +650,8 @@ Given this map entry, consider how various URIs at the host are described:
         },
         "/account": {
           "forms": [ ... ]                     // form D
-        }
+        },
+        "/legal": null
       }
     }
   }
@@ -656,18 +662,19 @@ Given this map entry, consider how various URIs at the host are described:
 | --- | --- | --- |
 | `example.com#login` | `C` | The root pathname entry replaces the site-wide one |
 | `example.com#register` | `B` | Only the root pathname describes this fragment |
-| `example.com/account#login` | `D` | `/account` describes itself, so the site-wide claim at the host level does not apply |
+| `example.com/account#login` | `D` | `/account` describes its own forms, so the host-level entry does not apply |
 | `example.com/account` | `D` | The page's own `forms` |
-| `example.com/help#login` | `A` | No `/help` entry, so the site-wide claim applies |
+| `example.com/help#login` | `A` | No `/help` entry, so the site-wide claim of the host-level entry applies |
 | `example.com/help` | nothing | No `/help` entry and no host-level `forms` |
 | `example.com` | nothing | `/` matched but has no `forms`, and no fragment is present |
 | `example.com#help` | nothing | `/` matched, does not describe `#help`, and there is no site-wide `#help` |
+| `example.com/legal#login` | nothing | `/legal` is irrelevant, including its fragment states, so the site-wide claim does not apply |
 
 ## Selector Philosophy
 
 Forms Map selectors are not stylesheet selectors. A stylesheet selector aims
 for _resilience_; it should keep matching the same conceptual element as the
-page evolves, so the styling survives. A map selector aims for the opposite:
+page evolves, so the styling survives. A Map selector aims for the opposite:
 it is a curated record of what a known target (that is, the full node
 hierarchy described by the selector, not just the leaf) looks like today. Tag
 drift, attribute renaming, or structural change of the target is the kind of
@@ -741,7 +748,7 @@ The `fields` object maps keys to arrays of CSS selectors. Each key identifies
 the **user data concept** that a form field captures. A consumer should be
 able to determine what value belongs in the field from the key name and form
 [category](#category) alone. Selector specificity should not rely on other
-selectors (e.g. `container` selector).
+selectors (e.g. a `container` selector).
 
 ```json
 {
@@ -767,7 +774,7 @@ Field keys are constrained to the following set:
 | `firstName` | Given name |
 | `middleName` | Middle or additional name |
 | `lastName` | Family name |
-| `honorificSuffix` | Suffix (Jr., PhD., etc.) |
+| `honorificSuffix` | Suffix (Jr., PhD, etc.) |
 | `email` | Email address |
 | `phone` | Full telephone number (single combined field) |
 | `phoneCountryCode` | Country code (e.g. "1", "44") |
@@ -779,10 +786,10 @@ Field keys are constrained to the following set:
 | `addressLine1` | First line of street address |
 | `addressLine2` | Second line of street address |
 | `addressLine3` | Third line of street address |
-| `addressLevel1` | Broadest administrative division (e.g. State, province, prefecture, canton, county, region) |
-| `addressLevel2` | Locality (e.g. City, town, village, municipality) |
-| `addressLevel3` | Sub-locality (e.g. District, suburb, ward, borough) |
-| `addressLevel4` | Finest-grained subdivision (e.g. Block, neighborhood section) |
+| `addressLevel1` | Broadest administrative division (e.g. state, province, prefecture, canton, county, region) |
+| `addressLevel2` | Locality (e.g. city, town, village, municipality) |
+| `addressLevel3` | Sub-locality (e.g. district, suburb, ward, borough) |
+| `addressLevel4` | Finest-grained subdivision (e.g. block, neighborhood section) |
 | `postalCode` | ZIP or postal code |
 | `country` | Country or territory |
 | `birthdate` | Full birth date (single combined field) |
@@ -883,8 +890,8 @@ the input and `search` to describe the form category.
 
 Each field key maps to an array of one or more items. Each item is either:
 
-- A **selector string** — a single CSS selector targeting one element
-- A **selector sequence** (array of strings) — an ordered list of CSS selectors
+- A **selector string**: a single CSS selector targeting one element
+- A **selector sequence** (array of strings): an ordered list of CSS selectors
   targeting multiple elements that together compose a single value for the field
 
 The array as a whole represents alternatives for locating the concern. The
@@ -929,7 +936,7 @@ an ordered array of selectors within the outer alternatives array.
 }
 ```
 
-Order is significant within a sequence. The map does not specify how the value
+Order is significant within a sequence. The Map does not specify how the value
 is split across the elements.
 
 A field may include both individual selectors and sequences as alternatives:
@@ -1058,24 +1065,26 @@ interpretation at each level:
 
 | Location             | Value   | Meaning                                                                |
 | -------------------- | ------- | ---------------------------------------------------------------------- |
-| Host key             | `null`  | All pages on this host are irrelevant to the forms concern             |
+| Host key             | `null`  | No page on this host presents forms in scope of this Map               |
 | Host key             | omitted | No forms information about this host                                   |
 | `forms` (host-level) | omitted | No forms information that applies site-wide                            |
 | `fragments` (host-level) | omitted | No forms information about fragment states that apply site-wide |
 | `pathnames`          | omitted | No page-specific forms information                                     |
-| Pathname key         | `null`  | This specific page is irrelevant to the forms concern, including its fragment states |
+| Pathname key         | `null`  | This specific page presents no in-scope forms (includes page fragment states) |
 | Pathname key         | omitted | No information about this page; the host-level entry applies           |
 | `forms` (pathname-level) | omitted | No forms information about this page outside the fragment states it describes; the host-level `forms` does not apply, though a host-level `fragments` entry may |
 | `fragments` (pathname-level) | omitted | No fragment-specific forms information about this page      |
-| Fragment key (host-level) | `null` | This fragment state is irrelevant to the forms concern across the host |
-| Fragment key (pathname-level) | `null` | This fragment state is irrelevant to the forms concern on this page, regardless of host-level `fragments` entries of the same fragment |
+| Fragment key (host-level) | `null` | This fragment state presents no in-scope forms anywhere on the host |
+| Fragment key (pathname-level) | `null` | This fragment state presents no in-scope forms on this page, regardless of host-level `fragments` entries of the same fragment |
 | Fragment key (host-level) | omitted | No information about this fragment state site-wide; the host-level `forms` applies when no `pathnames` key matched |
 | Fragment key (pathname-level) | omitted | No information about this fragment state on this page; the page's `forms` applies, else the host-level `fragments` entry for the key |
 
-The distinction between "irrelevant" and "no information" is important. An
-"irrelevant" signal indicates the page was evaluated and deliberately excluded
-(a consumer may use this signal to skip form detection heuristics, for example).
-"No information" means the page has not been mapped or mapping is unnecessary.
+The distinction between a `null` value and an omission is important. A `null`
+indicates that the page presents no forms in scope of this Map. The key's
+presence is what indicates the page was evaluated and deliberately excluded (a
+consumer may use this signal to skip form detection heuristics, for example). An
+omission states nothing about the page: it has not been mapped, or mapping is
+unnecessary.
 
 ## Authoring Guidelines
 

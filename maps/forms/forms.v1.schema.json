@@ -8,7 +8,7 @@
     "schemaVersion": {
       "type": "string",
       "const": "1.1.0",
-      "description": "Schema version this file conforms to. Must match the version expected by the schema."
+      "description": "Schema version this file conforms to."
     },
     "hosts": {
       "type": "object",
@@ -22,7 +22,7 @@
           { "$ref": "#/$defs/host" },
           {
             "type": "null",
-            "description": "All pages on this host are irrelevant to the forms concern."
+            "description": "No page on this host presents forms in scope of the Forms Map."
           }
         ]
       }
@@ -41,7 +41,7 @@
         },
         "fragments": {
           "$ref": "#/$defs/fragments",
-          "description": "Site-wide fragment-specific form descriptions, for fragment states that render the same form content on any pathname of this host. Used when the matching pathname entry neither names the same fragment key nor supplies 'forms', and for pathnames with no entry."
+          "description": "Site-wide fragment-specific form descriptions, for fragment states that render the same form content on any pathname of this host. Used for pathnames with no entry, and when the matching pathname entry is not null and neither names the same fragment key nor supplies 'forms'."
         },
         "pathnames": {
           "$ref": "#/$defs/pathnames"
@@ -58,7 +58,7 @@
           { "$ref": "#/$defs/pathnameEntry" },
           {
             "type": "null",
-            "description": "This specific page is irrelevant to the forms concern, including its fragment states."
+            "description": "This specific page presents no forms in scope of the Forms Map, in any of its fragment states. No host-level 'forms' or 'fragments' entry describes it."
           }
         ]
       },
@@ -102,7 +102,7 @@
           },
           {
             "type": "null",
-            "description": "This specific fragment state is irrelevant to the forms concern. At the pathname level this also suppresses a host-level entry for the same fragment key."
+            "description": "This specific fragment state presents no forms in scope of the Forms Map. At the pathname level this also suppresses a host-level entry for the same fragment key."
           }
         ]
       },
