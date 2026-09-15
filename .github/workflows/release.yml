@@ -137,3 +137,15 @@ jobs:
             dist/manifest.schema.json \
             dist/checksums.sha256 \
             dist/*.v*.json
+
+  purge-cache:
+    name: Purge cache
+    needs: release # runs after release and gates on the release succeeding
+    uses: ./.github/workflows/_purge_cache.yml
+    secrets:
+      AZURE_SUBSCRIPTION_ID: ${{ secrets.AZURE_SUBSCRIPTION_ID }}
+      AZURE_TENANT_ID: ${{ secrets.AZURE_TENANT_ID }}
+      AZURE_CLIENT_ID: ${{ secrets.AZURE_CLIENT_ID }}
+    permissions:
+      contents: read
+      id-token: write
