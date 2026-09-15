@@ -7,8 +7,8 @@
   "properties": {
     "schemaVersion": {
       "type": "string",
-      "const": "1.0.0",
-      "description": "Schema version this file conforms to. Must match the version expected by the schema."
+      "const": "1.1.0",
+      "description": "Schema version this file conforms to."
     },
     "hosts": {
       "type": "object",
@@ -22,7 +22,7 @@
           { "$ref": "#/$defs/host" },
           {
             "type": "null",
-            "description": "All pages on this host are irrelevant to the forms concern."
+            "description": "No page on this host presents forms in scope of the Forms Map."
           }
         ]
       }
@@ -33,11 +33,15 @@
   "$defs": {
     "host": {
       "type": "object",
-      "description": "Form descriptions and pathname-specific overrides for a host.",
+      "description": "Form descriptions, fragment-specific overrides, and pathname-specific overrides for a host.",
       "properties": {
         "forms": {
           "$ref": "#/$defs/formContentArray",
-          "description": "Site-wide fallback form descriptions. Used when no pathname-specific entry matches."
+          "description": "Site-wide fallback form descriptions. Used when no key in 'pathnames' matches and no site-wide fragment entry matches."
+        },
+        "fragments": {
+          "$ref": "#/$defs/fragments",
+          "description": "Site-wide fragment-specific form descriptions, for fragment states that render the same form content on any pathname of this host. Used when the matching pathname entry neither names the same fragment key nor supplies 'forms', and for pathnames with no entry."
         },
         "pathnames": {
           "$ref": "#/$defs/pathnames"
@@ -51,12 +55,46 @@
       "description": "Maps URL pathnames to page-specific form descriptions. Keys must start with '/'.",
       "additionalProperties": {
         "oneOf": [
+          { "$ref": "#/$defs/pathnameEntry" },
+          {
+            "type": "null",
+            "description": "This specific page presents no forms in scope of the Forms Map, in any of its fragment states."
+          }
+        ]
+      },
+      "propertyNames": {
+        "description": "URL pathname starting with '/'. Must not contain query strings or fragments, and must not have a trailing slash (excepting a sole '/' value itself).",
+        "pattern": "^/([^?#/]+(/[^?#/]+)*)?$"
+      },
+      "minProperties": 1
+    },
+    "pathnameEntry": {
+      "type": "object",
+      "description": "Form descriptions and fragment-specific overrides for a pathname.",
+      "properties": {
+        "forms": {
+          "$ref": "#/$defs/formContentArray",
+          "description": "Form descriptions for this specific pathname. Used when this pathname's 'fragments' does not name the URL's fragment; takes precedence over the host-level 'fragments'. When absent, the host-level 'forms' does not apply to this pathname."
+        },
+        "fragments": {
+          "$ref": "#/$defs/fragments",
+          "description": "Fragment-specific form descriptions for this pathname."
+        }
+      },
+      "additionalProperties": false,
+      "minProperties": 1
+    },
+    "fragments": {
+      "type": "object",
+      "description": "Maps URI fragments to fragment-specific form descriptions, for pages whose form content is determined by the fragment (e.g. hash-based client-side routing). Keys must start with '#'.",
+      "additionalProperties": {
+        "oneOf": [
           {
             "type": "object",
             "properties": {
               "forms": {
                 "$ref": "#/$defs/formContentArray",
-                "description": "Form descriptions for this specific pathname."
+                "description": "Form descriptions for this specific fragment."
               }
             },
             "required": ["forms"],
@@ -64,13 +102,13 @@
           },
           {
             "type": "null",
-            "description": "This specific page is irrelevant to the forms concern."
+            "description": "This specific fragment state presents no forms in scope of the Forms Map. At the pathname level this also suppresses a host-level entry for the same fragment key."
           }
         ]
       },
       "propertyNames": {
-        "description": "URL pathname starting with '/'. Must not contain query strings or fragments, and must not have a trailing slash (excepting a sole '/' value itself).",
-        "pattern": "^/([^?#/]+(/[^?#/]+)*)?$"
+        "description": "URI fragment starting with '#', authored exactly as a URL parser reports it (percent-encoded per the WHATWG URL Standard) and matched by exact string comparison. Must not contain whitespace, which a URL parser always percent-encodes.",
+        "pattern": "^#\\S+$"
       },
       "minProperties": 1
     },
@@ -100,7 +138,299 @@
         }
       },
       "required": ["category", "fields"],
-      "additionalProperties": false
+      "additionalProperties": false,
+      "allOf": [{ "$ref": "#/$defs/categoryFieldKeyRestrictions" }]
+    },
+    "categoryFieldKeyRestrictions": {
+      "description": "Field keys that cannot describe a field on a form of a given category. A key is listed only where its presence contradicts the category's meaning. Concerns that cross domains (an address block on a checkout page, a card block on a registration page) are described as separate form entries, each with its own category.",
+      "allOf": [
+        {
+          "$comment": "Registration collects a new password, never a current one. Payment and search concerns belong to their own form entries.",
+          "if": {
+            "type": "object",
+            "properties": {
+              "category": {
+                "const": "account-creation"
+              }
+            },
+            "required": ["category"]
+          },
+          "then": {
+            "type": "object",
+            "properties": {
+              "fields": {
+                "type": "object",
+                "propertyNames": {
+                  "not": {
+                    "anyOf": [
+                      {
+                        "$ref": "#/$defs/paymentCardFieldKeys"
+                      },
+                      {
+                        "enum": ["password", "searchTerm"]
+                      }
+                    ]
+                  }
+                }
+              }
+            }
+          }
+        },
+        {
+          "$comment": "Sign-in collects the existing password. Payment and search concerns belong to their own form entries.",
+          "if": {
+            "type": "object",
+            "properties": {
+              "category": {
+                "const": "account-login"
+              }
+            },
+            "required": ["category"]
+          },
+          "then": {
+            "type": "object",
+            "properties": {
+              "fields": {
+                "type": "object",
+                "propertyNames": {
+                  "not": {
+                    "anyOf": [
+                      {
+                        "$ref": "#/$defs/paymentCardFieldKeys"
+                      },
+                      {
+                        "enum": ["newPassword", "searchTerm"]
+                      }
+                    ]
+                  }
+                }
+              }
+            }
+          }
+        },
+        {
+          "$comment": "Recovery flows may legitimately ask for a remembered previous password, and some verify identity with card details, so only search is excluded.",
+          "if": {
+            "type": "object",
+            "properties": {
+              "category": {
+                "const": "account-recovery"
+              }
+            },
+            "required": ["category"]
+          },
+          "then": {
+            "type": "object",
+            "properties": {
+              "fields": {
+                "type": "object",
+                "propertyNames": {
+                  "not": {
+                    "enum": ["searchTerm"]
+                  }
+                }
+              }
+            }
+          }
+        },
+        {
+          "$comment": "Changing a stored payment method is a payment-card form, not an account update. Search belongs to its own form entry.",
+          "if": {
+            "type": "object",
+            "properties": {
+              "category": {
+                "const": "account-update"
+              }
+            },
+            "required": ["category"]
+          },
+          "then": {
+            "type": "object",
+            "properties": {
+              "fields": {
+                "type": "object",
+                "propertyNames": {
+                  "not": {
+                    "anyOf": [
+                      {
+                        "$ref": "#/$defs/paymentCardFieldKeys"
+                      },
+                      {
+                        "enum": ["searchTerm"]
+                      }
+                    ]
+                  }
+                }
+              }
+            }
+          }
+        },
+        {
+          "$comment": "Address collection carries no authentication or payment concern.",
+          "if": {
+            "type": "object",
+            "properties": {
+              "category": {
+                "const": "address"
+              }
+            },
+            "required": ["category"]
+          },
+          "then": {
+            "type": "object",
+            "properties": {
+              "fields": {
+                "type": "object",
+                "propertyNames": {
+                  "not": {
+                    "anyOf": [
+                      {
+                        "$ref": "#/$defs/paymentCardFieldKeys"
+                      },
+                      {
+                        "enum": ["password", "newPassword", "oneTimeCode"]
+                      }
+                    ]
+                  }
+                }
+              }
+            }
+          }
+        },
+        {
+          "$comment": "Identity forms collect personal information; card details are payment data, not identity data. Password and search concerns belong to their own form entries.",
+          "if": {
+            "type": "object",
+            "properties": {
+              "category": {
+                "const": "identity"
+              }
+            },
+            "required": ["category"]
+          },
+          "then": {
+            "type": "object",
+            "properties": {
+              "fields": {
+                "type": "object",
+                "propertyNames": {
+                  "not": {
+                    "anyOf": [
+                      {
+                        "$ref": "#/$defs/paymentCardFieldKeys"
+                      },
+                      {
+                        "enum": ["password", "newPassword", "searchTerm"]
+                      }
+                    ]
+                  }
+                }
+              }
+            }
+          }
+        },
+        {
+          "$comment": "Card entry carries no authentication or search concern. A one-time code is allowed for 3-D Secure challenges.",
+          "if": {
+            "type": "object",
+            "properties": {
+              "category": {
+                "const": "payment-card"
+              }
+            },
+            "required": ["category"]
+          },
+          "then": {
+            "type": "object",
+            "properties": {
+              "fields": {
+                "type": "object",
+                "propertyNames": {
+                  "not": {
+                    "enum": ["password", "newPassword", "searchTerm"]
+                  }
+                }
+              }
+            }
+          }
+        },
+        {
+          "$comment": "Search forms may use context-specific data keys, but never authentication or payment credentials.",
+          "if": {
+            "type": "object",
+            "properties": {
+              "category": {
+                "const": "search"
+              }
+            },
+            "required": ["category"]
+          },
+          "then": {
+            "type": "object",
+            "properties": {
+              "fields": {
+                "type": "object",
+                "propertyNames": {
+                  "not": {
+                    "anyOf": [
+                      {
+                        "$ref": "#/$defs/paymentCardFieldKeys"
+                      },
+                      {
+                        "enum": ["password", "newPassword", "oneTimeCode"]
+                      }
+                    ]
+                  }
+                }
+              }
+            }
+          }
+        },
+        {
+          "$comment": "Newsletter, contact, and similar signups do not create credentials or take payment; those are account-creation and payment-card forms. Search belongs to its own form entry.",
+          "if": {
+            "type": "object",
+            "properties": {
+              "category": {
+                "const": "signup"
+              }
+            },
+            "required": ["category"]
+          },
+          "then": {
+            "type": "object",
+            "properties": {
+              "fields": {
+                "type": "object",
+                "propertyNames": {
+                  "not": {
+                    "anyOf": [
+                      {
+                        "$ref": "#/$defs/paymentCardFieldKeys"
+                      },
+                      {
+                        "enum": ["password", "newPassword", "searchTerm"]
+                      }
+                    ]
+                  }
+                }
+              }
+            }
+          }
+        }
+      ]
+    },
+    "paymentCardFieldKeys": {
+      "description": "Field keys that describe payment card data.",
+      "enum": [
+        "cardholderName",
+        "cardNumber",
+        "cardExpirationDate",
+        "cardExpirationMonth",
+        "cardExpirationYear",
+        "cardCvv",
+        "cardType"
+      ]
     },
     "formPurposeCategory": {
       "type": "string",
@@ -160,6 +490,7 @@
         "cardType",
         "consentTerms",
         "consentPrivacy",
+        "consentRememberUser",
         "consentUser",
         "searchTerm"
       ]

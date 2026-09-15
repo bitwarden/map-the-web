@@ -61,6 +61,22 @@ describe("formatLocation", () => {
     );
   });
 
+  it("includes fragment after pathname when present", () => {
+    const result = formatLocation({
+      host: "example.com",
+      pathname: "/",
+      fragment: "#/login",
+      category: "account-login",
+      kind: "fields",
+      key: "password",
+      selectorIndex: 0,
+    });
+    assert.equal(
+      result,
+      "example.com > / > #/login > [account-login] > fields.password > [0]",
+    );
+  });
+
   it("reads outside-in for a sequence location (composite position first, then inner position)", () => {
     const result = formatLocation({
       host: "example.com",
@@ -891,6 +907,101 @@ describe("empty-value attribute matchers", () => {
 });
 
 // ---------------------------------------------------------------------------
+// Warnings: user-facing (content) attribute values
+// ---------------------------------------------------------------------------
+
+describe("user-facing attribute values", () => {
+  const contentWarnings = (selector: string): Finding[] =>
+    warningsFor(selector).filter((w) =>
+      /matches against a user-facing value/.test(w.message),
+    );
+
+  it("warns on [placeholder='...']", () => {
+    const warnings = contentWarnings(
+      "input[type='text'][placeholder='Email address']",
+    );
+    assert.equal(warnings.length, 1);
+    assert.match(warnings[0].message, /\[placeholder='Email address'\]/);
+  });
+
+  it("warns on [title='...']", () => {
+    const warnings = contentWarnings("input#user[title='Your username']");
+    assert.equal(warnings.length, 1);
+  });
+
+  it("warns on [aria-label='...']", () => {
+    const warnings = contentWarnings("input#pass[aria-label='Password']");
+    assert.equal(warnings.length, 1);
+  });
+
+  it("warns on [alt='...']", () => {
+    const warnings = contentWarnings("img#logo[alt='Company logo']");
+    assert.equal(warnings.length, 1);
+  });
+
+  it("warns on [value='...']", () => {
+    const warnings = contentWarnings("input[type='submit'][value='Log in']");
+    assert.equal(warnings.length, 1);
+  });
+
+  it("warns on [aria-placeholder='...']", () => {
+    const warnings = contentWarnings(
+      "div#code[role='textbox'][aria-placeholder='Enter code']",
+    );
+    assert.equal(warnings.length, 1);
+  });
+
+  it("warns on [aria-description='...']", () => {
+    const warnings = contentWarnings(
+      "input#pin[aria-description='Six digits']",
+    );
+    assert.equal(warnings.length, 1);
+  });
+
+  it("warns once per matcher when several are present", () => {
+    const warnings = contentWarnings(
+      "input#user[placeholder='Email'][title='Your email']",
+    );
+    assert.equal(warnings.length, 1);
+    assert.match(warnings[0].message, /\[placeholder='Email'\]/);
+    assert.match(warnings[0].message, /\[title='Your email'\]/);
+  });
+
+  it("warns on a substring match against a user-facing value", () => {
+    const warnings = contentWarnings("input#user[placeholder*='Email']");
+    assert.equal(warnings.length, 1);
+    assert.match(warnings[0].message, /\[placeholder\*='Email'\]/);
+  });
+
+  it("warns when nested inside :not()", () => {
+    const warnings = contentWarnings("input#user:not([placeholder='Email'])");
+    assert.equal(warnings.length, 1);
+  });
+
+  it("warns on a matcher in any boundary-crossing segment", () => {
+    const warnings = contentWarnings(
+      "iframe#auth[title='Sign in frame'] >>> input#user[name='user']",
+    );
+    assert.equal(warnings.length, 1);
+    assert.match(warnings[0].message, /\[title='Sign in frame'\]/);
+  });
+
+  it("does not warn on the existence matcher [placeholder]", () => {
+    const warnings = contentWarnings("input#user[placeholder]");
+    assert.equal(warnings.length, 0);
+  });
+
+  it("does not warn on an attribute whose value is not user-facing copy", () => {
+    const { errors, warnings } = lintSelector(
+      "input#user[name='username'][autocomplete='username']",
+      loc(),
+    );
+    assert.equal(errors.length, 0);
+    assert.equal(warnings.length, 0);
+  });
+});
+
+// ---------------------------------------------------------------------------
 // Errors: empty-or-whitespace-only selector
 // ---------------------------------------------------------------------------
 
@@ -1470,6 +1581,117 @@ describe("lintMapData traversal", () => {
     assert.equal(warnings.length, 1);
     assert.match(warnings[0].message, /Bare element selector/);
     assert.match(warnings[0].location, /\/login/);
+  });
+
+  it("lints selectors under host-level fragments", () => {
+    const data = {
+      hosts: {
+        "example.com": {
+          fragments: {
+            "#login": {
+              forms: [
+                {
+                  category: "account-login",
+                  fields: { username: ["input"] },
+                },
+              ],
+            },
+          },
+        },
+      },
+    };
+    const { errors, warnings } = lintMapData(data);
+    assert.equal(errors.length, 0);
+    assert.equal(warnings.length, 1);
+    assert.match(warnings[0].message, /Bare element selector/);
+    assert.equal(
+      warnings[0].location,
+      "example.com > #login > [account-login] > fields.username > [0]",
+    );
+  });
+
+  it("lints selectors under fragments", () => {
+    const data = {
+      hosts: {
+        "example.com": {
+          pathnames: {
+            "/": {
+              fragments: {
+                "#/login": {
+                  forms: [
+                    {
+                      category: "account-login",
+                      fields: { username: ["input"] },
+                    },
+                  ],
+                },
+              },
+            },
+          },
+        },
+      },
+    };
+    const { errors, warnings } = lintMapData(data);
+    assert.equal(errors.length, 0);
+    assert.equal(warnings.length, 1);
+    assert.match(warnings[0].message, /Bare element selector/);
+    assert.match(warnings[0].location, /\/ > #\/login/);
+  });
+
+  it("lints a pathname's own forms alongside its fragments", () => {
+    const data = {
+      hosts: {
+        "example.com": {
+          pathnames: {
+            "/account": {
+              forms: [
+                {
+                  category: "account-login",
+                  fields: { username: ["input"] },
+                },
+              ],
+              fragments: {
+                "#register": {
+                  forms: [
+                    {
+                      category: "account-creation",
+                      fields: { username: ["span"] },
+                    },
+                  ],
+                },
+              },
+            },
+          },
+        },
+      },
+    };
+    const { errors, warnings } = lintMapData(data);
+    assert.equal(errors.length, 0);
+    assert.equal(warnings.length, 2);
+    assert.ok(warnings.some((w) => /\/account > \[/.test(w.location)));
+    assert.ok(warnings.some((w) => /\/account > #register/.test(w.location)));
+  });
+
+  it("skips null fragment entries at both the host and pathname levels", () => {
+    const data = {
+      hosts: {
+        "example.com": {
+          fragments: {
+            "#irrelevant": null,
+          },
+          pathnames: {
+            "/": {
+              fragments: {
+                "#/irrelevant": null,
+              },
+            },
+          },
+        },
+      },
+    };
+    const { errors, warnings } = lintMapData(data);
+    assert.equal(errors.length, 0);
+    assert.equal(warnings.length, 0);
   });
 
   it("skips null host entries", () => {

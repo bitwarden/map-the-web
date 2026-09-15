@@ -14,6 +14,7 @@ import type {
   CompositeSelectorArray,
   Form,
   FormMapData,
+  FragmentEntry,
 } from "./types.mts";
 
 /** Tokens that carry an optional `namespace` (the only ones we render). */
@@ -132,6 +133,37 @@ const NON_CONTAINER_TAGS = new Set([
 ]);
 
 /**
+ * Attributes whose values are user-facing content. Their values change independently of
+ * the page's structure (reworded copy, a translated locale, an A/B'd string, live user
+ * input in the case of `value`), so a selector that matches against them describes the
+ * page's content rather than its shape.
+ */
+const CONTENT_ATTRIBUTES = new Set([
+  "placeholder",
+  "title",
+  "alt",
+  "value",
+  "aria-label",
+  "aria-placeholder",
+  "aria-description",
+]);
+
+/**
+ * Rendering of each css-what attribute action back to its CSS operator, used
+ * to echo a matcher in a finding message. `exists` has no operator (`[attr]`).
+ */
+const ATTRIBUTE_ACTION_OPERATORS = new Map([
+  ["exists", ""],
+  ["equals", "="],
+  ["element", "~="],
+  ["start", "^="],
+  ["end", "$="],
+  ["any", "*="],
+  ["hyphen", "|="],
+  ["not", "!="],
+]);
+
+/**
  * Attribute-matcher actions (css-what names) that, with an empty value, are
  * equivalent to the existence check `[attr]`. Authors who write these almost
  * always mean something else.
@@ -160,6 +192,10 @@ export function formatLocation(location: Location): string {
 
   if (location.pathname) {
     parts.push(location.pathname);
+  }
+
+  if (location.fragment) {
+    parts.push(location.fragment);
   }
 
   parts.push(`[${location.category}]`);
@@ -472,6 +508,34 @@ function findAlwaysFalseEmpty(tokens: Selector[]): string[] {
         t.value === "",
     )
     .map((t) => `[${t.name}${ALWAYS_FALSE_EMPTY_ACTIONS.get(t.action)}'']`);
+}
+
+/**
+ * Render an attribute matcher back to readable CSS (e.g. `[placeholder='Email']`).
+ */
+function renderAttributeMatcher(token: AttributeSelector): string {
+  const operator = ATTRIBUTE_ACTION_OPERATORS.get(token.action);
+  if (!operator) {
+    return `[${token.name}]`;
+  }
+  return `[${token.name}${operator}'${token.value}']`;
+}
+
+/**
+ * Find attribute matchers that match against user-facing content.
+ *
+ * Existence checks (e.g. `[placeholder]`) are excluded.
+ */
+function findContentAttributeMatchers(tokens: Selector[]): string[] {
+  return tokens
+    .filter(
+      (t): t is AttributeSelector =>
+        t.type === "attribute" &&
+        CONTENT_ATTRIBUTES.has(t.name.toLowerCase()) &&
+        t.action !== "exists" &&
+        t.value !== "",
+    )
+    .map(renderAttributeMatcher);
 }
 
 /**
@@ -864,6 +928,19 @@ export function lintSelector(raw: string, location: Location): LintResult {
         });
       }
 
+      // User-facing attribute value warning. Applies inside functional pseudos as well:
+      // e.g. `:not([placeholder='Email'])`
+      const contentMatchers = findContentAttributeMatchers(allTokens);
+      if (contentMatchers.length > 0) {
+        warnings.push({
+          location: formattedLocation,
+          selector: raw,
+          message:
+            `Attribute matcher ${contentMatchers.join(", ")} matches against a user-facing value, which describes the page's content rather than its structure and can change without the target changing (reworded copy, another locale, live user input). ` +
+            `Prefer a non-user-facing anchor (e.g. \`name\`, \`id\`, \`type\`, \`autocomplete\`, or a custom data attribute) if possible.`,
+        });
+      }
+
       // Empty-value attribute matcher errors (top-level only; nested
       // inside :not() may be intentional; e.g. "has no class attr").
       const existenceEq = findExistenceEquivalentEmpty(tokens);
@@ -944,6 +1021,11 @@ export function lintMapData(data: FormMapData): LintResult {
       lintForms(hostEntry.forms, { host }, allErrors, allWarnings);
     }
 
+    // Host-level (site-wide) fragment forms
+    if (hostEntry.fragments) {
+      lintFragments(hostEntry.fragments, { host }, allErrors, allWarnings);
+    }
+
     // Pathname-level forms
     if (hostEntry.pathnames) {
       for (const [pathname, pathEntry] of Object.entries(hostEntry.pathnames)) {
@@ -958,11 +1040,47 @@ export function lintMapData(data: FormMapData): LintResult {
             allWarnings,
           );
         }
+
+        // Fragment-level forms
+        if (pathEntry.fragments) {
+          lintFragments(
+            pathEntry.fragments,
+            { host, pathname },
+            allErrors,
+            allWarnings,
+          );
+        }
       }
     }
   }
 
   return { errors: allErrors, warnings: allWarnings };
+}
+
+/**
+ * Lint all selectors within a `fragments` map. Shared by the host level
+ * (site-wide fragment states) and the pathname level, which differ only in
+ * the surrounding context.
+ */
+function lintFragments(
+  fragments: Record<string, FragmentEntry | null>,
+  context: Location,
+  errors: Finding[],
+  warnings: Finding[],
+): void {
+  for (const [fragment, fragmentEntry] of Object.entries(fragments)) {
+    if (fragmentEntry == null) {
+      continue;
+    }
+    if (fragmentEntry.forms) {
+      lintForms(
+        fragmentEntry.forms,
+        { ...context, fragment },
+        errors,
+        warnings,
+      );
+    }
+  }
 }
 
 /**
