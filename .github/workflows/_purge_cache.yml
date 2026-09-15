@@ -4,7 +4,7 @@ on:
   workflow_call:
     inputs:
       environment:
-        description: "Which edge to purge: both, usqa, or usprod."
+        description: "Which edge to purge: both, usprod, or usqa."
         type: string
         default: both
         required: false
@@ -23,71 +23,12 @@ on:
         default: both
         options:
           - both
-          - usqa
           - usprod
+          - usqa
 
 permissions: {}
 
 jobs:
-  purge-usqa:
-    name: Purge USQA
-    if: inputs.environment == 'both' || inputs.environment == 'usqa'
-    runs-on: ubuntu-24.04
-    timeout-minutes: 5
-    permissions:
-      contents: read
-      id-token: write
-    steps:
-      - name: Log in to Azure
-        uses: bitwarden/gh-actions/azure-login@main
-        with:
-          subscription_id: ${{ secrets.AZURE_SUBSCRIPTION_ID }}
-          tenant_id: ${{ secrets.AZURE_TENANT_ID }}
-          client_id: ${{ secrets.AZURE_CLIENT_ID }}
-
-      - name: Get Azure Key Vault secrets
-        id: get-kv-secrets
-        uses: bitwarden/gh-actions/get-keyvault-secrets@main
-        with:
-          keyvault: gh-map-the-web
-          secrets: "fastly-fillassist-purge-key-nonprod,fastly-fillassist-sid-nonprod"
-
-      - name: Log out from Azure
-        if: always()
-        uses: bitwarden/gh-actions/azure-logout@main
-
-      - name: Soft purge fillassist-release
-        env:
-          FASTLY_KEY: ${{ steps.get-kv-secrets.outputs.fastly-fillassist-purge-key-nonprod }}
-          FASTLY_SERVICE_ID: ${{ steps.get-kv-secrets.outputs.fastly-fillassist-sid-nonprod }}
-          SERVICE_LABEL: fillassist.qa.bitwarden.pw
-        run: |
-          set -euo pipefail
-
-          if [[ -z "$FASTLY_KEY" || -z "$FASTLY_SERVICE_ID" ]]; then
-            echo "::error::No Fastly purge credentials for ${SERVICE_LABEL}."
-            echo "- failed \`${SERVICE_LABEL}\`, credentials unavailable" >> "$GITHUB_STEP_SUMMARY"
-            exit 1
-          fi
-
-          BODY="$(mktemp)"
-
-          # Soft purge only: a hard purge drops the stale_if_error copy with the object.
-          STATUS="$(curl -sS -o "$BODY" -w '%{http_code}' \
-            --retry 3 --retry-connrefused --retry-delay 5 --max-time 30 \
-            -X POST \
-            -H "Fastly-Key: ${FASTLY_KEY}" \
-            -H "Fastly-Soft-Purge: 1" \
-            "https://api.fastly.com/service/${FASTLY_SERVICE_ID}/purge/fillassist-release")" || STATUS="000"
-
-          if [[ "$STATUS" != "200" ]]; then
-            echo "::error::Soft purge for ${SERVICE_LABEL} returned HTTP ${STATUS}."
-            echo "- failed \`${SERVICE_LABEL}\`, HTTP ${STATUS}" >> "$GITHUB_STEP_SUMMARY"
-            exit 1
-          fi
-
-          echo "- purged \`${SERVICE_LABEL}\`, id $(jq -r '.id // "unknown"' <"$BODY")" >> "$GITHUB_STEP_SUMMARY"
-
   purge-usprod:
     name: Purge USPROD
     if: inputs.environment == 'both' || inputs.environment == 'usprod'
@@ -120,6 +61,65 @@ jobs:
           FASTLY_KEY: ${{ steps.get-kv-secrets.outputs.fastly-fillassist-purge-key-usprod }}
           FASTLY_SERVICE_ID: ${{ steps.get-kv-secrets.outputs.fastly-fillassist-sid-usprod }}
           SERVICE_LABEL: fillassist.bitwarden.com
+        run: |
+          set -euo pipefail
+
+          if [[ -z "$FASTLY_KEY" || -z "$FASTLY_SERVICE_ID" ]]; then
+            echo "::error::No Fastly purge credentials for ${SERVICE_LABEL}."
+            echo "- failed \`${SERVICE_LABEL}\`, credentials unavailable" >> "$GITHUB_STEP_SUMMARY"
+            exit 1
+          fi
+
+          BODY="$(mktemp)"
+
+          # Soft purge only: a hard purge drops the stale_if_error copy with the object.
+          STATUS="$(curl -sS -o "$BODY" -w '%{http_code}' \
+            --retry 3 --retry-connrefused --retry-delay 5 --max-time 30 \
+            -X POST \
+            -H "Fastly-Key: ${FASTLY_KEY}" \
+            -H "Fastly-Soft-Purge: 1" \
+            "https://api.fastly.com/service/${FASTLY_SERVICE_ID}/purge/fillassist-release")" || STATUS="000"
+
+          if [[ "$STATUS" != "200" ]]; then
+            echo "::error::Soft purge for ${SERVICE_LABEL} returned HTTP ${STATUS}."
+            echo "- failed \`${SERVICE_LABEL}\`, HTTP ${STATUS}" >> "$GITHUB_STEP_SUMMARY"
+            exit 1
+          fi
+
+          echo "- purged \`${SERVICE_LABEL}\`, id $(jq -r '.id // "unknown"' <"$BODY")" >> "$GITHUB_STEP_SUMMARY"
+
+  purge-usqa:
+    name: Purge USQA
+    if: inputs.environment == 'both' || inputs.environment == 'usqa'
+    runs-on: ubuntu-24.04
+    timeout-minutes: 5
+    permissions:
+      contents: read
+      id-token: write
+    steps:
+      - name: Log in to Azure
+        uses: bitwarden/gh-actions/azure-login@main
+        with:
+          subscription_id: ${{ secrets.AZURE_SUBSCRIPTION_ID }}
+          tenant_id: ${{ secrets.AZURE_TENANT_ID }}
+          client_id: ${{ secrets.AZURE_CLIENT_ID }}
+
+      - name: Get Azure Key Vault secrets
+        id: get-kv-secrets
+        uses: bitwarden/gh-actions/get-keyvault-secrets@main
+        with:
+          keyvault: gh-map-the-web
+          secrets: "fastly-fillassist-purge-key-nonprod,fastly-fillassist-sid-nonprod"
+
+      - name: Log out from Azure
+        if: always()
+        uses: bitwarden/gh-actions/azure-logout@main
+
+      - name: Soft purge fillassist-release
+        env:
+          FASTLY_KEY: ${{ steps.get-kv-secrets.outputs.fastly-fillassist-purge-key-nonprod }}
+          FASTLY_SERVICE_ID: ${{ steps.get-kv-secrets.outputs.fastly-fillassist-sid-nonprod }}
+          SERVICE_LABEL: fillassist.qa.bitwarden.pw
         run: |
           set -euo pipefail
 
