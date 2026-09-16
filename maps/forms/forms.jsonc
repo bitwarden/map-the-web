@@ -1135,6 +1135,36 @@
         }
       ]
     },
+    "webapp.sjcfl.us": {
+      "pathnames": {
+        "/WebappExtLogin/default.aspx": {
+          "forms": [
+            {
+              "category": "account-login",
+              "container": [
+                "form#form1.page-wrapper:has(input#usernameoremail)"
+              ],
+              "fields": {
+                "email": [
+                  "form#form1.page-wrapper input#usernameoremail[name='ctl00$ContentPlaceHolder1$usernameoremail'][type='text']"
+                ],
+                "username": [
+                  "form#form1.page-wrapper input#usernameoremail[name='ctl00$ContentPlaceHolder1$usernameoremail'][type='text']"
+                ],
+                "password": [
+                  "form#form1.page-wrapper input#password[name='ctl00$ContentPlaceHolder1$password'][type='password']"
+                ]
+              },
+              "actions": {
+                "submit": [
+                  "form#form1.page-wrapper input#cmdLogin[name='ctl00$ContentPlaceHolder1$cmdLogin'][type='button']"
+                ]
+              }
+            }
+          ]
+        }
+      }
+    },
     "webtests.dev": {
       "pathnames": {
         "/forms/login/ambiguous-inputs": {
