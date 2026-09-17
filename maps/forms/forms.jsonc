@@ -387,6 +387,32 @@
               }
             }
           ]
+        },
+        "/login.aspx": {
+          "forms": [
+            {
+              "category": "account-login",
+              "container": [
+                "form#aspnetForm[name='aspnetForm']:has(input#ctl00_cntMain_txtCustCode)"
+              ],
+              "fields": {
+                "username": [
+                  "form#aspnetForm input#ctl00_cntMain_txtCustCode[name='ctl00$cntMain$txtCustCode'][type='text']"
+                ],
+                "password": [
+                  "form#aspnetForm input#ctl00_cntMain_txtPassword[name='ctl00$cntMain$txtPassword'][type='password']"
+                ],
+                "consentTerms": [
+                  "form#aspnetForm a#ctl00_cntMain_chkTerms_ToggleButton"
+                ]
+              },
+              "actions": {
+                "submit": [
+                  "form#aspnetForm input#ctl00_cntMain_btnLogin[name='ctl00$cntMain$btnLogin'][type='image']"
+                ]
+              }
+            }
+          ]
         }
       }
     },
