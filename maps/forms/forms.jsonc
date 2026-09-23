@@ -360,6 +360,62 @@
         }
       }
     },
+    "eservices.cipc.co.za": {
+      "pathnames": {
+        "/Login.aspx": {
+          "forms": [
+            {
+              "category": "account-login",
+              "container": [
+                "form#aspnetForm[name='aspnetForm']:has(input#ctl00_cntMain_txtCustCode)"
+              ],
+              "fields": {
+                "username": [
+                  "form#aspnetForm input#ctl00_cntMain_txtCustCode[name='ctl00$cntMain$txtCustCode'][type='text']"
+                ],
+                "password": [
+                  "form#aspnetForm input#ctl00_cntMain_txtPassword[name='ctl00$cntMain$txtPassword'][type='password']"
+                ],
+                "consentTerms": [
+                  "form#aspnetForm a#ctl00_cntMain_chkTerms_ToggleButton"
+                ]
+              },
+              "actions": {
+                "submit": [
+                  "form#aspnetForm input#ctl00_cntMain_btnLogin[name='ctl00$cntMain$btnLogin'][type='image']"
+                ]
+              }
+            }
+          ]
+        },
+        "/login.aspx": {
+          "forms": [
+            {
+              "category": "account-login",
+              "container": [
+                "form#aspnetForm[name='aspnetForm']:has(input#ctl00_cntMain_txtCustCode)"
+              ],
+              "fields": {
+                "username": [
+                  "form#aspnetForm input#ctl00_cntMain_txtCustCode[name='ctl00$cntMain$txtCustCode'][type='text']"
+                ],
+                "password": [
+                  "form#aspnetForm input#ctl00_cntMain_txtPassword[name='ctl00$cntMain$txtPassword'][type='password']"
+                ],
+                "consentTerms": [
+                  "form#aspnetForm a#ctl00_cntMain_chkTerms_ToggleButton"
+                ]
+              },
+              "actions": {
+                "submit": [
+                  "form#aspnetForm input#ctl00_cntMain_btnLogin[name='ctl00$cntMain$btnLogin'][type='image']"
+                ]
+              }
+            }
+          ]
+        }
+      }
+    },
     "eversource.com": {
       "pathnames": {
         "/security/account/login": {
@@ -1131,6 +1187,36 @@
           }
         }
       ]
+    },
+    "webapp.sjcfl.us": {
+      "pathnames": {
+        "/WebappExtLogin/default.aspx": {
+          "forms": [
+            {
+              "category": "account-login",
+              "container": [
+                "form#form1.page-wrapper:has(input#usernameoremail)"
+              ],
+              "fields": {
+                "email": [
+                  "form#form1.page-wrapper input#usernameoremail[name='ctl00$ContentPlaceHolder1$usernameoremail'][type='text']"
+                ],
+                "username": [
+                  "form#form1.page-wrapper input#usernameoremail[name='ctl00$ContentPlaceHolder1$usernameoremail'][type='text']"
+                ],
+                "password": [
+                  "form#form1.page-wrapper input#password[name='ctl00$ContentPlaceHolder1$password'][type='password']"
+                ]
+              },
+              "actions": {
+                "submit": [
+                  "form#form1.page-wrapper input#cmdLogin[name='ctl00$ContentPlaceHolder1$cmdLogin'][type='button']"
+                ]
+              }
+            }
+          ]
+        }
+      }
     },
     "webtests.dev": {
       "pathnames": {
