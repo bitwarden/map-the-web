@@ -61,7 +61,13 @@ for (const file of files) {
   if (!validate(data)) {
     console.error(red(`Validation failed: ${file}`));
     for (const err of validate.errors ?? []) {
-      console.error(red(`  ${err.instancePath || "/"}: ${err.message}`));
+      // `propertyNames` failures identify the offending key only in `params`.
+      const propertyName = (err.params as { propertyName?: string })
+        ?.propertyName;
+      const subject = propertyName ? ` "${propertyName}"` : "";
+      console.error(
+        red(`  ${err.instancePath || "/"}:${subject} ${err.message}`),
+      );
     }
     hasErrors = true;
   } else {
