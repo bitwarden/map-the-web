@@ -1,5 +1,5 @@
 {
-  "schemaVersion": "1.0.0",
+  "schemaVersion": "1.1.0",
   "hosts": {
     "account.rogers.com": {
       "forms": [
@@ -537,6 +537,41 @@
                 "submit": [
                   "button[data-trackid='form-signup-cta'][type='submit']"
                 ]
+              }
+            }
+          ]
+        }
+      }
+    },
+    "accounts.crowdin.com": {
+      "forms": [
+        // This form exists across the hostname platform at `accounts.crowdin.com/<org>/login`,
+        // but we don't have a way to represent that here (at the time of authoring), so we're
+        // representing it globally across the hostname, and accurately at `/login`
+        {
+          "category": "account-login",
+          "container": ["form#login_form"],
+          "fields": {
+            "username": ["form#login_form input#login_login"],
+            "password": ["form#login_form input#login_password"]
+          },
+          "actions": {
+            "submit": ["form#login_form button[type='submit']"]
+          }
+        }
+      ],
+      "pathnames": {
+        "/login": {
+          "forms": [
+            {
+              "category": "account-login",
+              "container": ["form#login_form"],
+              "fields": {
+                "username": ["form#login_form input#login_login"],
+                "password": ["form#login_form input#login_password"]
+              },
+              "actions": {
+                "submit": ["form#login_form button[type='submit']"]
               }
             }
           ]

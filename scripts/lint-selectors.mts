@@ -86,9 +86,14 @@ function findLineInSource(
     return null;
   }
 
-  // 2. Optional pathname appears as the second segment when it starts with "/".
-  if (parts[1] && parts[1].startsWith("/")) {
-    const next = source.indexOf(`"${parts[1]}":`, position);
+  // 2. Optional pathname ("/...") and fragment ("#...") follow the host, in
+  //    that order. Neither can contain whitespace, so the " > " split above
+  //    never divides one of them across parts.
+  for (const part of parts.slice(1, 3)) {
+    if (!part.startsWith("/") && !part.startsWith("#")) {
+      break;
+    }
+    const next = source.indexOf(`"${part}":`, position);
     if (next === -1) {
       return null;
     }

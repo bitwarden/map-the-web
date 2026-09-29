@@ -10,6 +10,7 @@
 export interface Location {
   host: string;
   pathname?: string;
+  fragment?: string;
   category?: string;
   kind?: string;
   key?: string;
@@ -53,10 +54,16 @@ export interface Form {
 
 export interface HostEntry {
   forms?: Form[];
+  fragments?: Record<string, FragmentEntry | null>;
   pathnames?: Record<string, PathEntry | null>;
 }
 
 export interface PathEntry {
+  forms?: Form[];
+  fragments?: Record<string, FragmentEntry | null>;
+}
+
+export interface FragmentEntry {
   forms?: Form[];
 }
 
