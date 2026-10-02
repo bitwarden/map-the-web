@@ -594,10 +594,18 @@
             {
               "category": "account-login",
               "fields": {
-                // Labeled "Email or phone"; accepts either identifier type, so
-                // `username` is used over `email`. [type] and [autocomplete] are
-                // stable on this step (no "Show password"-style toggle) and are
-                // kept for intentional brittleness.
+                // Labeled "Email or phone"; one input accepts any of these
+                // identifier concepts, so it is mapped under email, phone, and
+                // username (consistent with the one-input-many-keys shape used
+                // for tiktok.com's shared email/username input). [type] and
+                // [autocomplete] are stable on this step (no "Show password"-
+                // style toggle) and are kept for intentional brittleness.
+                "email": [
+                  "input#identifierId[name='identifier'][type='text'][autocomplete='username webauthn']"
+                ],
+                "phone": [
+                  "input#identifierId[name='identifier'][type='text'][autocomplete='username webauthn']"
+                ],
                 "username": [
                   "input#identifierId[name='identifier'][type='text'][autocomplete='username webauthn']"
                 ]
