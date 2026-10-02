@@ -578,6 +578,63 @@
         }
       }
     },
+    "accounts.google.com": {
+      // Multi-step Google / Gmail sign-in across two pathnames:
+      // - /v3/signin/identifier   (email-or-phone)
+      // - /v3/signin/challenge/pwd (password; same URL after refresh or reCAPTCHA)
+      // Neither step wraps its inputs in a <form>; Google drives submission via
+      // jsaction handlers on jscontroller-bearing divs. Consequently, no `container`
+      // is supplied on either entry — the field and action selectors are specific
+      // enough to stand alone.
+      "pathnames": {
+        // A reCAPTCHA challenge may also render at this URL (input#ca[name='ca'])
+        // but is intentionally not mapped per the "do not map captchas" guideline.
+        "/v3/signin/identifier": {
+          "forms": [
+            {
+              "category": "account-login",
+              "fields": {
+                // Labeled "Email or phone"; one input accepts any of these
+                // identifier concepts, so it is mapped under email, phone, and
+                // username (consistent with the one-input-many-keys shape used
+                // for tiktok.com's shared email/username input). [type] and
+                // [autocomplete] are stable on this step (no "Show password"-
+                // style toggle) and are kept for intentional brittleness.
+                "email": [
+                  "input#identifierId[name='identifier'][type='text'][autocomplete='username webauthn']"
+                ],
+                "phone": [
+                  "input#identifierId[name='identifier'][type='text'][autocomplete='username webauthn']"
+                ],
+                "username": [
+                  "input#identifierId[name='identifier'][type='text'][autocomplete='username webauthn']"
+                ]
+              },
+              "actions": {
+                "next": ["div#identifierNext button[type='button']"]
+              }
+            }
+          ]
+        },
+        "/v3/signin/challenge/pwd": {
+          "forms": [
+            {
+              "category": "account-login",
+              "fields": {
+                // input[name='Passwd'] survives Gmail's type='password' -> 'text'
+                // and autocomplete='current-password webauthn' -> 'off' flip
+                // triggered by "Show password", which otherwise defeats heuristic
+                // password-field detection on name='Passwd'.
+                "password": ["input[name='Passwd']"]
+              },
+              "actions": {
+                "submit": ["div#passwordNext button[type='button']"]
+              }
+            }
+          ]
+        }
+      }
+    },
     "banking.easybank.de": {
       "pathnames": {
         "/logintransaction/firstlevel": {
