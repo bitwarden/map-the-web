@@ -920,19 +920,32 @@
       "pathnames": {
         "/login": {
           "forms": [
+            // Two-step login at the same URL. Step 1 shows the email field and
+            // "Continue"; step 2 reveals the password field and "Remember me" in
+            // the same form. The password input is present (hidden) from the
+            // initial render and is the same element on step 2.
             {
               "category": "account-login",
-              "container": ["main#main-content form"],
+              "container": ["main#main-content form[method='post']"],
               "fields": {
-                "username": [
-                  "main#main-content form span[class^='EmailPasswordScreen'] ~ div input[autocomplete='email'][name='email']"
+                // Step 2 renders a hidden, disabled copy of the email input ahead
+                // of the visible one; exclude it.
+                "email": [
+                  "main#main-content form[method='post'] input[type='email'][autocomplete='email'][name='email']:not([disabled])"
                 ],
                 "password": [
-                  "main#main-content form input[autocomplete='current-password'][name='current-password']"
+                  "main#main-content form[method='post'] input[type='password'][autocomplete='current-password'][name='current-password']"
                 ]
               },
               "actions": {
-                "submit": ["main#main-content form button[type='submit']"]
+                // "Continue" advances step-1 -> step-2; same DOM element as `submit`.
+                "next": [
+                  "main#main-content form[method='post'] button[type='submit']"
+                ],
+                // "Continue" submits credentials on step-2; same DOM element as `next`.
+                "submit": [
+                  "main#main-content form[method='post'] button[type='submit']"
+                ]
               }
             }
           ]
